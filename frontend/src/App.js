@@ -16,7 +16,8 @@ const Navigation = () => {
             <Link to="/">Home</Link> | 
             {loggedInUser ? (
                 <>
-                    <span>Hello, {loggedInUser}</span> 
+                    <span>Hello, {loggedInUser}</span> |
+                    <Link to="/" onClick={logout}>Logout</Link>
                 </>
             ) : (
                 <>
