@@ -23,6 +23,7 @@ const Register = () => {
             await axios.post('/api/auth/register', { userName, email, password });
             setSuccessMessage('Registration successful! Please login.');
         } catch (error) {
+            setSuccessMessage(null);
             if (error.response) {
                 setError(`Registration failed: ${error.response.data || error.response.statusText}`);
                 console.error('Registration failed with response:', error.response);
