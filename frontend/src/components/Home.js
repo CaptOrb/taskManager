@@ -5,10 +5,7 @@ import TaskList from './TaskList';
 const Home = () => {
   return (
     <div className="App">
-      <header className="App-header">
-        <h1>Task Management</h1>
         <TaskList />
-      </header>
     </div>
   );
 };
