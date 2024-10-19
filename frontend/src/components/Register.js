@@ -7,6 +7,7 @@ const Register = () => {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -17,10 +18,10 @@ const Register = () => {
             return;
         }
         try {
-            setError(''); // Clear any error messages
+            setError('');
 
             await axios.post('/api/auth/register', { userName, email, password });
-            alert('Registration successful!');
+            setSuccessMessage('Registration successful! Please login.');
         } catch (error) {
             if (error.response) {
                 setError(`Registration failed: ${error.response.data || error.response.statusText}`);
@@ -38,6 +39,7 @@ const Register = () => {
     return (
         <div>
             <form onSubmit={handleRegister}>
+            {successMessage && <p style={{ color: 'green' }}>{successMessage}</p>}
                 <input
                     type="text"
                     placeholder="UserName"
