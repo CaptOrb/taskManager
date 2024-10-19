@@ -75,11 +75,11 @@ function Login() {
   >
     Login
   </button>
-  
+  {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
 </form>
 
 
-            {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
+          
         </div>
     )
 }

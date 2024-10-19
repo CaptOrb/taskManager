@@ -31,12 +31,11 @@ public class JwtService {
         Map<String, Object> claims = new HashMap<>();
 
         // Build JWT token with claims, subject, issued time, expiration time, and signing algorithm
-          // Token valid for 3 minutes
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(userName)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 20)) 
+               .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 5000)) // set lower and refresh
                 .signWith(getSignKey(), SignatureAlgorithm.HS256).compact();
     }
 
