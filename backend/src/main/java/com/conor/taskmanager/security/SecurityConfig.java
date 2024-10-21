@@ -33,8 +33,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeRequests(auth -> auth
                         .antMatchers("/api/auth/**").permitAll()
-                      //  .antMatchers("/api/tasks/**").permitAll() // temp for testing
-                        .antMatchers("/api/**").authenticated() // Protect all other API endpoints
+                        .anyRequest().authenticated() // Protect all other API endpoints
                 )
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // JWT is stateless

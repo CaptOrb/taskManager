@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { useNavigate} from 'react-router-dom';
 
 const Register = () => {
     const [userName, setUsername] = useState('');
@@ -8,6 +9,7 @@ const Register = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const navigate = useNavigate(); 
 
     const handleRegister = async (e) => {
         e.preventDefault();
@@ -21,6 +23,7 @@ const Register = () => {
             setError('');
 
             await axios.post('/api/auth/register', { userName, email, password });
+            navigate('/login?success=true');
             setSuccessMessage('Registration successful! Please login.');
         } catch (error) {
             setSuccessMessage(null);

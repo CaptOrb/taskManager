@@ -42,7 +42,8 @@ public class TaskController {
         List<Task> tasks = taskRepo.findByUser(currentUser);
         return ResponseEntity.status(HttpStatus.OK).body(tasks);
     }
-      @PostMapping(value = "/api/create/task", consumes = "application/json", produces = "application/json")
+        
+    @PostMapping(value = "/api/create/task", consumes = "application/json", produces = "application/json")
     public ResponseEntity<Task> createTask(@RequestBody Task task) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepo.findByUserName(username);
