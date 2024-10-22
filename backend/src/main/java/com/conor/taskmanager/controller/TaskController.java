@@ -22,16 +22,15 @@ import com.conor.taskmanager.repository.UserRepository;
 @CrossOrigin(origins = "http://localhost:3000")
 public class TaskController {
 
-  public TaskController() {
-  }
+    public TaskController() {}
 
-  @Autowired
-  TaskRepository taskRepo;
+    @Autowired
+    TaskRepository taskRepo;
 
-  @Autowired
-  UserRepository userRepo;
+    @Autowired
+    UserRepository userRepo;
 
-  @GetMapping(value = "/api/tasks", produces = "application/json")
+    @GetMapping(value = "/api/tasks", produces = "application/json")
     public ResponseEntity<List<Task>> getTasks() {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepo.findByUserName(username);
@@ -44,33 +43,8 @@ public class TaskController {
         return ResponseEntity.status(HttpStatus.OK).body(tasks);
     }
 
-  @GetMapping(value = "/api/tasks/{id}", produces = "application/json")
-public ResponseEntity<Task> getTask(@PathVariable int id) {
-    String username = SecurityContextHolder.getContext().getAuthentication().getName();
-    User currentUser = userRepo.findByUserName(username);
-
-    if (currentUser == null) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-    }
-
-    // Fetch the task by ID and ensure it belongs to the current user
-    Task task = taskRepo.findTaskByID(id);
-
-    if (task == null) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-    }
-
-    if (!currentUser.equals(task.getUser())) {
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
-
-    }
-
-    return ResponseEntity.ok(task);
-}
-
-        
-    @PostMapping(value = "/api/create/task", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<Task> createTask(@RequestBody Task task) {
+    @GetMapping(value = "/api/tasks/{id}", produces = "application/json")
+    public ResponseEntity<Task> getTask(@PathVariable int id) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepo.findByUserName(username);
 
@@ -78,8 +52,40 @@ public ResponseEntity<Task> getTask(@PathVariable int id) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
 
+        Task task = taskRepo.findTaskByID(id);
+
+        if (task == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }
+
+        if (!currentUser.equals(task.getUser())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+        }
+
+        return ResponseEntity.ok(task);
+    }
+
+    @PostMapping(value = "/api/create/task", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<?> createTask(@RequestBody Task task) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepo.findByUserName(username);
+
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        if (task.getTitle() == null || task.getTitle().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Title cannot be empty.");
+        }
+
+        if (task.getDescription() == null || task.getDescription().isEmpty()) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Description cannot be empty.");
+        }
+
         task.setUser(currentUser);
-        
+
         Task savedTask = taskRepo.save(task);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTask);
     }

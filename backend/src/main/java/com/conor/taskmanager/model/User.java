@@ -13,6 +13,7 @@ import javax.persistence.OneToMany;
 import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @Entity
 public class User {
@@ -25,9 +26,11 @@ public class User {
 	private String email;
 
 	@Column(nullable = false, length = 64)
+	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	private String password;
 
 	@Transient
+	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	private String passwordConfirm;
 
 	@Column(name = "user_id", nullable = false, length = 20)
@@ -39,7 +42,6 @@ public class User {
 	@Transient
 	private String jwtToken;
 
-	//TODO any better way than using jsonignore?
 	@JsonIgnore 
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Task> tasks = new ArrayList<>(); 
