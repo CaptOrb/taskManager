@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../hooks/AuthContext';
 import { Link } from 'react-router-dom';
-
+import ReactMarkdown from 'react-markdown';
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,8 +56,8 @@ const TaskList = () => {
   }
 
   // Filter tasks based on active tab
-  const filteredTasks = activeTab === 'completed' 
-    ? tasks.filter(task => task.status === 'COMPLETED') 
+  const filteredTasks = activeTab === 'completed'
+    ? tasks.filter(task => task.status === 'COMPLETED')
     : tasks; // Display all tasks if not in completed tab
 
   return (
@@ -95,7 +95,8 @@ const TaskList = () => {
               <span className="font-semibold">Title: </span>{task.title}
             </h3>
             <p className="text-gray-700 dark:text-gray-300">
-              <span className="font-semibold">Description: </span> {task.description}
+              <span className="font-semibold">Description: </span>
+              <ReactMarkdown>{task.description}</ReactMarkdown>
             </p>
             <p className="text-sm">
               <span className="font-semibold text-gray-500 dark:text-gray-400">Status: </span> {task.status}

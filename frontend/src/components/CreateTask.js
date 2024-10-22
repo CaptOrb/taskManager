@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
+import ReactMarkdown from 'react-markdown';
 const CreateTask = () => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -71,17 +71,22 @@ const CreateTask = () => {
                 </div>
           
                 <div className="mb-4">
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-white">Description</label>
-                    <textarea
-                        id="description"
-                        rows="4"
-                        placeholder="Description"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        required
-                        className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-                    ></textarea>
-                </div>
+            <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-white">Description</label>
+            <textarea
+                id="description"
+                rows="4"
+                placeholder="Enter description (supports Markdown)"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+            ></textarea>
+
+            <h4 className="mt-4 text-lg font-semibold">Preview:</h4>
+            <div className="p-4 bg-gray-100 border rounded-lg dark:bg-gray-800 dark:text-white">
+                <ReactMarkdown>{description}</ReactMarkdown>
+            </div>
+        </div>
 
                 <div className="mb-4">
                     <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-white">Due Date</label>
