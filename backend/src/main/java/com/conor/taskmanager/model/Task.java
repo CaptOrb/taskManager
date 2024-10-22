@@ -21,7 +21,7 @@ public class Task {
     private String description;
 
     @Column(nullable = false)
-    private Status status = Status.NOT_STARTED;
+    private Status status = Status.PENDING;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
@@ -35,7 +35,7 @@ public class Task {
 
     public Task() {
         this.createdDate = LocalDateTime.now();
-        this.status = Status.NOT_STARTED;
+        this.status = Status.PENDING;
     }
 
     public Task(int id, String title, String description, Status status, Priority priority, LocalDateTime dueDate) {
@@ -112,7 +112,7 @@ public class Task {
 
     
     public enum Status {
-        NOT_STARTED,
+        PENDING,
         IN_PROGRESS,
         COMPLETED,   
      }

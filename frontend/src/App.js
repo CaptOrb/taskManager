@@ -11,6 +11,7 @@ import NotFound from './components/NotFound';
 import Footer from './components/Footer';
 import Header from './components/Header';
 import CreateTask from './components/CreateTask';
+import TaskDetail from './components/TaskDetail';
 import ProtectedRoute from './hooks/ProtectedRoute'; // Import the ProtectedRoute component
 function App() {
     return (
@@ -21,15 +22,23 @@ function App() {
                     <main className="flex-grow p-6"> {/* takes up the remaining space so footer can stay on bottom of page */}
                         <Routes>
                             <Route path="/" element={<Home />} />
-                            
-                            <Route 
-    path="/createTask" 
-    element={
-        <ProtectedRoute>
-            <CreateTask /> {/* This is the protected CreateTask component */}
-        </ProtectedRoute>
-    }
-/>
+
+                            <Route
+                                path="/createTask"
+                                element={
+                                    <ProtectedRoute>
+                                        <CreateTask /> {/* This is the protected CreateTask component */}
+                                    </ProtectedRoute>
+                                } />
+
+                            <Route
+                                path="/tasks/:id"
+                                element={
+                                    <ProtectedRoute>
+                                        <TaskDetail />
+                                    </ProtectedRoute>
+                                }
+                            />
 
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />

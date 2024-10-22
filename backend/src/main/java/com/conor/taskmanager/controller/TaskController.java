@@ -8,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -42,6 +43,31 @@ public class TaskController {
         List<Task> tasks = taskRepo.findByUser(currentUser);
         return ResponseEntity.status(HttpStatus.OK).body(tasks);
     }
+
+  @GetMapping(value = "/api/tasks/{id}", produces = "application/json")
+public ResponseEntity<Task> getTask(@PathVariable int id) {
+    String username = SecurityContextHolder.getContext().getAuthentication().getName();
+    User currentUser = userRepo.findByUserName(username);
+
+    if (currentUser == null) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+    }
+
+    // Fetch the task by ID and ensure it belongs to the current user
+    Task task = taskRepo.findTaskByID(id);
+
+    if (task == null) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+    }
+
+    if(currentUser!= task.getUser()){
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
+
+    }
+
+    return ResponseEntity.status(HttpStatus.OK).body(task);
+}
+
         
     @PostMapping(value = "/api/create/task", consumes = "application/json", produces = "application/json")
     public ResponseEntity<Task> createTask(@RequestBody Task task) {
