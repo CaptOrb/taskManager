@@ -60,12 +60,12 @@ public ResponseEntity<Task> getTask(@PathVariable int id) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
     }
 
-    if(currentUser!= task.getUser()){
+    if (!currentUser.equals(task.getUser())) {
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
 
     }
 
-    return ResponseEntity.status(HttpStatus.OK).body(task);
+    return ResponseEntity.ok(task);
 }
 
         
