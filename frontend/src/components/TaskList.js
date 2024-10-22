@@ -3,12 +3,15 @@ import axios from 'axios';
 import { useAuth } from '../hooks/AuthContext';
 import { Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
+
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { loggedInUser } = useAuth();
   const [activeTab, setActiveTab] = useState('all'); // State to manage active tab
+  const [currentPage, setCurrentPage] = useState(1); // Current page
+  const tasksPerPage = 5; // Number of tasks per page
 
   useEffect(() => {
     if (loggedInUser) {
@@ -56,12 +59,30 @@ const TaskList = () => {
   }
 
   // Filter tasks based on active tab
-  const filteredTasks = activeTab === 'completed'
-    ? tasks.filter(task => task.status === 'COMPLETED')
+  const filteredTasks = activeTab === 'completed' 
+    ? tasks.filter(task => task.status === 'COMPLETED') 
     : tasks; // Display all tasks if not in completed tab
 
+  // Pagination logic
+  const indexOfLastTask = currentPage * tasksPerPage;
+  const indexOfFirstTask = indexOfLastTask - tasksPerPage;
+  const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask);
+  const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
+  const completedTaskCount = tasks.filter(task => task.status === 'COMPLETED').length;
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
   return (
-    <div className="w-3/5 mx-auto  mt-3 p-3 bg-white shadow-lg rounded-lg dark:bg-gray-800">
+    <div className="max-w-lg mx-auto mt-8 p-6 bg-white shadow-lg rounded-lg dark:bg-gray-800">
       <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Task List</h2>
 
       <div className="flex mb-4">
@@ -71,12 +92,14 @@ const TaskList = () => {
         >
           All Tasks
         </button>
-        <button
-          onClick={() => setActiveTab('completed')}
-          className={`ml-2 px-4 py-2 font-semibold ${activeTab === 'completed' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
-        >
-          Completed Tasks
-        </button>
+        {completedTaskCount > 0 && (
+          <button
+            onClick={() => setActiveTab('completed')}
+            className={`ml-2 px-4 py-2 font-semibold ${activeTab === 'completed' ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'}`}
+          >
+            Completed Tasks
+          </button>
+        )}
         <Link
           to="/createTask"
           className="ml-4 text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800"
@@ -86,7 +109,7 @@ const TaskList = () => {
       </div>
 
       <ul className="space-y-4">
-        {filteredTasks.map((task) => (
+        {currentTasks.map((task) => (
           <li
             key={task.id}
             className="p-4 bg-gray-50 rounded-lg shadow-sm border border-gray-200 dark:bg-gray-700 dark:border-gray-600"
@@ -110,6 +133,25 @@ const TaskList = () => {
           </li>
         ))}
       </ul>
+
+      {/* Pagination Controls */}
+      <div className="flex justify-between mt-4">
+        <button
+          onClick={handlePreviousPage}
+          disabled={currentPage === 1}
+          className={`px-4 py-2 font-semibold text-white rounded-lg ${currentPage === 1 ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-700'}`}
+        >
+          Previous
+        </button>
+        <p className="text-gray-700 dark:text-gray-300">{`Page ${currentPage} of ${totalPages}`}</p>
+        <button
+          onClick={handleNextPage}
+          disabled={currentPage === totalPages}
+          className={`px-4 py-2 font-semibold text-white rounded-lg ${currentPage === totalPages ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-500 hover:bg-blue-700'}`}
+        >
+          Next
+        </button>
+      </div>
     </div>
   );
 };
