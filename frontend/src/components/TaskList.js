@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../hooks/AuthContext';
 import { Link } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
@@ -14,7 +15,8 @@ const TaskList = () => {
   const [statusFilter, setStatusFilter] = useState('ALL'); 
   const [urgencyFilter, setUrgencyFilter] = useState('ANY');
   const [sortOrder, setSortOrder] = useState('createdDate');
-  
+  const navigate = useNavigate();
+
   useEffect(() => {
     if (loggedInUser) {
       fetchTasks();
@@ -144,32 +146,45 @@ const TaskList = () => {
       </div>
 
       <ul className="space-y-4">
-        {currentTasks.map((task) => (
-          <li
-            key={task.id}
-            className="p-4 bg-gray-50 rounded-lg shadow-sm border border-gray-200 dark:bg-gray-700 dark:border-gray-600"
-          >
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-        <Link to={`/tasks/${task.id}`} className="hover:underline">
-          <span className="font-semibold">Title: </span>{task.title}
-        </Link>
+  {currentTasks.map((task) => (
+    <li
+      key={task.id}
+      className="p-4 bg-gray-50 rounded-lg shadow-sm border border-gray-200 dark:bg-gray-700 dark:border-gray-600 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+      onClick={() => navigate(`/tasks/${task.id}`)} // Clickable card
+    >
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+        {task.title}
       </h3>
 
-            <p className="text-sm">
-              <span className="font-semibold text-gray-500 dark:text-gray-400">Status: </span> {task.status}
-            </p>
-            <p className="text-sm">
-              <span className="font-semibold text-gray-500 dark:text-gray-400">Created Date: </span> {new Date(task.createdDate).toLocaleString()}
-            </p>
-            <p className="text-sm">
-              <span className="font-semibold text-gray-500 dark:text-gray-400">Due Date: </span> {new Date(task.dueDate).toLocaleString()}
-            </p>
-            <p className="text-sm">
-              <span className="font-semibold text-gray-500 dark:text-gray-400">Priority: </span> {task.priority}
-            </p>
-          </li>
-        ))}
-      </ul>
+      <p className="text-sm">
+        <span className="font-semibold text-gray-500 dark:text-gray-400">Status: </span>
+        {task.status}
+      </p>
+      <p className="text-sm">
+        <span className="font-semibold text-gray-500 dark:text-gray-400">Created Date: </span>
+        {new Date(task.createdDate).toLocaleString()}
+      </p>
+      <p className="text-sm">
+        <span className="font-semibold text-gray-500 dark:text-gray-400">Due Date: </span>
+        {new Date(task.dueDate).toLocaleString()}
+      </p>
+      <p className="text-sm">
+  <span className="font-semibold text-gray-500 dark:text-gray-400">Priority: </span>
+  <span className={task.priority === 'HIGH' ? 'text-red-500' : task.priority === 'MEDIUM' ? 'text-yellow-500' : 'text-green-500'}>
+    {task.priority}
+  </span>
+</p>
+      
+
+      {/* Clear "View Task" Button */}
+      <div className="mt-4">
+        <Link to={`/tasks/${task.id}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+          View Task
+        </Link>
+      </div>
+    </li>
+  ))}
+</ul>
 
       {/* Pagination Controls */}
       {totalPages > 1 && (

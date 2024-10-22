@@ -90,9 +90,21 @@ public class UserController {
     }
 
     @GetMapping("/user")
-    public String getCurrentUser() {
+    public String getCurrentUserName() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication.getName();
+    }
+
+    @GetMapping("/current-user")
+    public ResponseEntity<User> getCurrentUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userRepository.findByUserName(username);
+
+        if (currentUser == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+
+        return ResponseEntity.ok(currentUser);
     }
 
 }
