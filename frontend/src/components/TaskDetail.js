@@ -25,8 +25,8 @@ const TaskDetail = () => {
           setLoading(true);
           const response = await axios.get(`/api/tasks/${id}`, {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`
-            }
+              Authorization: `Bearer ${localStorage.getItem('token')}`,
+            },
           });
           const fetchedTask = response.data;
           setTask(fetchedTask);
@@ -69,7 +69,7 @@ const TaskDetail = () => {
           ...prevTask,
           ...response.data,
         }));
-
+        setError('');
         setIsEditing(false);
       }
     } catch (error) {
@@ -81,7 +81,7 @@ const TaskDetail = () => {
     return <div>Loading task...</div>;
   }
 
-  if (error) {
+  if (error && !isEditing) {
     return <div style={{ color: 'red' }}>{error}</div>;
   }
 
@@ -104,6 +104,8 @@ const TaskDetail = () => {
         <div>
           <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Edit Task</h2>
 
+          {error && <p style={{ color: 'red' }}>{error}</p>}
+
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-white">Title</label>
             <input
@@ -124,11 +126,11 @@ const TaskDetail = () => {
           </div>
 
           <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 dark:text-white">Description Preview</label>
-          <div className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                <ReactMarkdown>{taskDescription}</ReactMarkdown>
+            <label className="block text-sm font-medium text-gray-700 dark:text-white">Description Preview</label>
+            <div className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+              <ReactMarkdown>{taskDescription}</ReactMarkdown>
             </div>
-            </div>
+          </div>
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-white">Status</label>
