@@ -7,7 +7,6 @@
     "@testing-library/react": "^13.4.0",
     "@testing-library/user-event": "^13.5.0",
     "axios": "^1.7.7",
-    "bootstrap": "^5.3.3",
     "frontend": "file:",
     "react": "^18.3.1",
     "react-cookie": "^7.2.1",
@@ -15,7 +14,6 @@
     "react-markdown": "^9.0.1",
     "react-router-dom": "^6.27.0",
     "react-scripts": "5.0.1",
-    "reactstrap": "^9.2.3",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -42,5 +40,5 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:8080"
+  "proxy": "http://backend:8080"
 }
