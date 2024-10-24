@@ -37,14 +37,15 @@ services:
   frontend:
     build:
       context: ./frontend  
-      target: development
+      target: prod
     environment:
-      - NODE_ENV=development 
+      - NODE_ENV=prod
+
     container_name: task-frontend
     networks:
       - my_network
     ports:
-      - "3000:3000"          
+      - "80:80"          
     depends_on:
       - backend
 
