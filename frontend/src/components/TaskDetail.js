@@ -3,6 +3,7 @@ import axios from 'axios';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/AuthContext';
 import ReactMarkdown from 'react-markdown';
+
 const TaskDetail = () => {
   const { id } = useParams();
   const [task, setTask] = useState(null);
@@ -74,6 +75,22 @@ const TaskDetail = () => {
       }
     } catch (error) {
       setError('Error updating task: ' + (error.response?.data || error.message));
+    }
+  };
+
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm("Are you sure you want to delete this task?");
+    if (confirmDelete) {
+      try {
+        await axios.delete(`/api/tasks/delete/${id}`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('token')}`,
+          },
+        });
+        navigate('/');
+      } catch (error) {
+        setError('Error deleting task: ' + (error.response?.data || error.message));
+      }
     }
   };
 
@@ -183,31 +200,56 @@ const TaskDetail = () => {
           </button>
         </div>
       ) : (
-        <div>
+        <div className="max-w-2xl mx-auto mt-8 p-8 bg-white shadow-lg rounded-lg dark:bg-gray-800">
+          <h2 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">{task.title}</h2>
 
-          <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">{task.title}</h2>
-          <p className="text-gray-700 dark:text-gray-300">
-            <span className="font-semibold">Description: </span>
-            <ReactMarkdown>{task.description}</ReactMarkdown> {/* Render description with ReactMarkdown */}
-          </p>
-          <p className="text-sm">
-            <span className="font-semibold text-gray-500 dark:text-gray-400">Status: </span> {task.status}
-          </p>
-          <p className="text-sm">
-            <span className="font-semibold text-gray-500 dark:text-gray-400">Created Date: </span> {new Date(task.createdDate).toLocaleString()}
-          </p>
-          <p className="text-sm">
-            <span className="font-semibold text-gray-500 dark:text-gray-400">Due Date: </span> {new Date(task.dueDate).toLocaleString()}
-          </p>
-          <p className="text-sm">
-            <span className="font-semibold text-gray-500 dark:text-gray-400">Priority: </span> {task.priority}
-          </p>
-          <button
-            onClick={() => setIsEditing(true)}
-            className="text-white bg-yellow-500 hover:bg-yellow-600 font-medium rounded-lg text-sm px-5 py-2.5 mt-4"
-          >
-            Edit Task
-          </button>
+          <div className="mb-6">
+            <div className="mb-4">
+              <p className="text-gray-700 dark:text-gray-300 font-semibold mb-1">Description:</p>
+
+              <div className="bg-gray-50 border border-gray-300 p-4 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <ReactMarkdown>{task.description}</ReactMarkdown>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4 mb-6">
+              <div>
+                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Status:</p>
+                <p className="text-gray-900 dark:text-gray-300">{task.status}</p>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Priority:</p>
+                <p className="text-gray-900 dark:text-gray-300">{task.priority}</p>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Created Date:</p>
+                <p className="text-gray-900 dark:text-gray-300">{new Date(task.createdDate).toLocaleString()}</p>
+              </div>
+
+              <div>
+                <p className="text-sm font-semibold text-gray-500 dark:text-gray-400">Due Date:</p>
+                <p className="text-gray-900 dark:text-gray-300">{new Date(task.dueDate).toLocaleString()}</p>
+              </div>
+            </div>
+
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setIsEditing(true)}
+                className="flex-1 bg-yellow-500 text-white font-medium rounded-lg text-sm px-5 py-2.5 hover:bg-yellow-600"
+              >
+                Edit Task
+              </button>
+
+              <button
+                onClick={handleDelete}
+                className="flex-1 bg-red-700 text-white font-medium rounded-lg text-sm px-5 py-2.5 hover:bg-red-800"
+              >
+                Delete Task
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

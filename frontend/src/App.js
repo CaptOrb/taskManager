@@ -12,7 +12,8 @@ import Footer from './components/Footer';
 import Header from './components/Header';
 import CreateTask from './components/CreateTask';
 import TaskDetail from './components/TaskDetail';
-import ProtectedRoute from './hooks/ProtectedRoute'; // Import the ProtectedRoute component
+import ProtectedRoute from './hooks/ProtectedRoute';
+import MyAccount from './components/MyAccount';
 function App() {
     return (
         <AuthProvider>
@@ -28,6 +29,14 @@ function App() {
                                 element={
                                     <ProtectedRoute>
                                         <CreateTask /> {/* This is the protected CreateTask component */}
+                                    </ProtectedRoute>
+                                } />
+
+                            <Route
+                                path="/account"
+                                element={
+                                    <ProtectedRoute>
+                                        <MyAccount /> {/* This is the protected CreateTask component */}
                                     </ProtectedRoute>
                                 } />
 
