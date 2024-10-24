@@ -15,6 +15,17 @@ services:
       - db:/var/lib/mysql
     networks:
       - my_network
+    command: --default-authentication-plugin=caching_sha2_password
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8081:8080
+    links:
+      - mysqldb
+    networks:
+      - my_network
       
   backend:
     build: 
