@@ -2,7 +2,6 @@ package com.conor.taskmanager.controller;
 
 import java.util.List;
 
-import javax.persistence.EntityNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -142,7 +141,7 @@ public class TaskController {
             Task existingTask = taskService.updateTask(id, updatedTask);
     
             return ResponseEntity.ok(existingTask);
-        } catch (EntityNotFoundException e) {
+        } catch (jakarta.persistence.EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found.");
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
