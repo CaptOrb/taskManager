@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const MyAccount = () => {
     const [userName, setUserName] = useState('');
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchCurrentUser = async () => {
@@ -43,38 +45,46 @@ const MyAccount = () => {
 
     return (
         <div className="max-w-sm mx-auto mt-8">
-        <form className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 dark:bg-gray-800">
+            <form className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 dark:bg-gray-800">
+                <label htmlFor="userName" className="block text-sm font-medium text-gray-700 dark:text-white">
+                    Username
+                </label>
+                <input
+                    type="text"
+                    id="userName"
+                    value={userName}
+                    disabled
+                    aria-label="Username"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                />
 
-            <label htmlFor="userName" className="block text-sm font-medium text-gray-700 dark:text-white">
-                Username
-            </label>
-            <input
-                type="text"
-                id="userName"
-                value={userName}
-                disabled
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            />
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-white">
+                    Email
+                </label>
+                <input
+                    type="email"
+                    id="email"
+                    value={email}
+                    disabled
+                    aria-label="Email"
+                    className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                />
 
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-white">
-                Email
-            </label>
-            <input
-                type="email"
-                id="email"
-                value={email}
-                disabled
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            />
-
-          <button
-            className="text-white bg-red-700 hover:bg-red-800 font-medium rounded-lg text-sm px-5 py-2.5 mb-2"
-          >
-            Cancel
-          </button>
-        </form>
+                <button
+                    type="button"
+                    onClick={() => {
+                        if (window.history.length > 1) {
+                            navigate(-1); 
+                        } else {
+                            navigate('/');
+                        }
+                    }}
+                    className="text-white bg-red-700 hover:bg-red-800 font-medium rounded-lg text-sm px-5 py-2.5 mb-2"
+                >
+                    Cancel
+                </button>
+            </form>
         </div>
-    
     );
 };
 

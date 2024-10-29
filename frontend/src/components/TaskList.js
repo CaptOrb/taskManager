@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../hooks/AuthContext';
 import { Link } from 'react-router-dom';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { loggedInUser } = useAuth();
-  const [activeTab, setActiveTab] = useState('all');
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 5;
   const [statusFilter, setStatusFilter] = useState('ALL'); 
@@ -62,7 +61,6 @@ const TaskList = () => {
     return <div style={{ color: 'red' }}>{error}</div>;
   }
 
-  // Filter tasks based on active tab and filters
   let filteredTasks = tasks;
 
   if (statusFilter !== 'ALL') {

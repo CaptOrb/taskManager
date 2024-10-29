@@ -15,6 +15,11 @@ services:
       - db:/var/lib/mysql
     networks:
       - my_network
+    healthcheck:
+          test: ["CMD", "mysqladmin", "ping", "-h", "mysqldb"]
+          interval: 10s
+          retries: 5
+          timeout: 5s
     command: --default-authentication-plugin=caching_sha2_password
 
   adminer:
@@ -32,6 +37,9 @@ services:
       context: ./backend       
       dockerfile: Dockerfile
     env_file: .env
+    depends_on:
+      mysqldb:
+        condition: service_healthy
     environment:
       SPRING_APPLICATION_JSON: '{
         "spring.datasource.url"  : "jdbc:mysql://mysqldb:$MYSQLDB_DOCKER_PORT/$MYSQLDB_DATABASE?allowPublicKeyRetrieval=true&defaultAuthenticationPlugin=caching_sha2_password",
