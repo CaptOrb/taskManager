@@ -98,7 +98,7 @@ public class TaskController {
         User currentUser = userRepo.findByUserName(username);
     
         if (currentUser == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized: Please log in.");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorised: Please log in.");
         }
     
         Task task = taskRepo.findTaskByID(id);
