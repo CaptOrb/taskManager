@@ -41,7 +41,7 @@ jobs:
         run: |
           cd frontend
           npm install
-              - CI=false npm run build
+          CI=false npm run build
 
   docker-build-and-push:
     runs-on: ubuntu-latest
