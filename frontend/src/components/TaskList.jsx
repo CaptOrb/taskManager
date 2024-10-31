@@ -5,13 +5,13 @@ import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
 const TaskList = () => {
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState([]); // Ensure tasks is always an array
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { loggedInUser } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 5;
-  const [statusFilter, setStatusFilter] = useState('ALL'); 
+  const [statusFilter, setStatusFilter] = useState('ALL');
   const [urgencyFilter, setUrgencyFilter] = useState('ANY');
   const [sortOrder, setSortOrder] = useState('createdDate');
   const navigate = useNavigate();
@@ -29,12 +29,17 @@ const TaskList = () => {
       setLoading(true);
       const response = await axios.get('/api/tasks', {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`
-        }
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
 
-      // Store fetched tasks without sorting
-      setTasks(response.data);
+      // Check if the response data is an array
+      if (Array.isArray(response.data)) {
+        setTasks(response.data);
+      } else {
+        console.error('Expected an array but received:', response.data);
+        setError('Unexpected data format.');
+      }
     } catch (error) {
       setError('Error fetching tasks: ' + (error.response?.data || error.message));
       console.error('Error fetching tasks:', error);
@@ -61,26 +66,34 @@ const TaskList = () => {
     return <div style={{ color: 'red' }}>{error}</div>;
   }
 
-  let filteredTasks = tasks;
+  const getFilteredAndSortedTasks = () => {
+    let filteredTasks = tasks;
 
-  if (statusFilter !== 'ALL') {
-    filteredTasks = filteredTasks.filter(task => task.status === statusFilter);
-  }
+    // Apply filters
+    if (statusFilter !== 'ALL') {
+      filteredTasks = filteredTasks.filter(task => task.status === statusFilter);
+    }
 
-  if (urgencyFilter !== 'ANY') {
-    filteredTasks = filteredTasks.filter(task => task.priority === urgencyFilter);
-  }
+    if (urgencyFilter !== 'ANY') {
+      filteredTasks = filteredTasks.filter(task => task.priority === urgencyFilter);
+    }
 
-  if (sortOrder === 'dueDateAsc') {
-    filteredTasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
-  }   else if (sortOrder === 'createdDate') {
-    filteredTasks.sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
-  } 
-  else if (sortOrder === 'dueDateDesc') {
-    filteredTasks.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
-  }
+    // Sorting logic
+    if (Array.isArray(filteredTasks)) {
+      if (sortOrder === 'dueDateAsc') {
+        return filteredTasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+      } else if (sortOrder === 'createdDate') {
+        return filteredTasks.sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
+      } else if (sortOrder === 'dueDateDesc') {
+        return filteredTasks.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
+      }
+    }
+
+    return filteredTasks; // Return the filtered array
+  };
 
   // Pagination logic
+  const filteredTasks = getFilteredAndSortedTasks();
   const indexOfLastTask = currentPage * tasksPerPage;
   const indexOfFirstTask = indexOfLastTask - tasksPerPage;
   const currentTasks = filteredTasks.slice(indexOfFirstTask, indexOfLastTask);
@@ -144,45 +157,44 @@ const TaskList = () => {
       </div>
 
       <ul className="space-y-4">
-  {currentTasks.map((task) => (
-    <li
-      key={task.id}
-      className="p-4 bg-gray-50 rounded-lg shadow-sm border border-gray-200 dark:bg-gray-700 dark:border-gray-600 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
-      onClick={() => navigate(`/tasks/${task.id}`)} // Clickable card
-    >
-      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-        {task.title}
-      </h3>
+        {currentTasks.map((task) => (
+          <li
+            key={task.id}
+            className="p-4 bg-gray-50 rounded-lg shadow-sm border border-gray-200 dark:bg-gray-700 dark:border-gray-600 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
+            onClick={() => navigate(`/tasks/${task.id}`)} // Clickable card
+          >
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              {task.title}
+            </h3>
 
-      <p className="text-sm">
-        <span className="font-semibold text-gray-500 dark:text-gray-400">Status: </span>
-        {task.status}
-      </p>
-      <p className="text-sm">
-        <span className="font-semibold text-gray-500 dark:text-gray-400">Created Date: </span>
-        {new Date(task.createdDate).toLocaleString()}
-      </p>
-      <p className="text-sm">
-        <span className="font-semibold text-gray-500 dark:text-gray-400">Due Date: </span>
-        {new Date(task.dueDate).toLocaleString()}
-      </p>
-      <p className="text-sm">
-  <span className="font-semibold text-gray-500 dark:text-gray-400">Priority: </span>
-  <span className={task.priority === 'HIGH' ? 'text-red-500' : task.priority === 'MEDIUM' ? 'text-yellow-500' : 'text-green-500'}>
-    {task.priority}
-  </span>
-</p>
-      
+            <p className="text-sm">
+              <span className="font-semibold text-gray-500 dark:text-gray-400">Status: </span>
+              {task.status}
+            </p>
+            <p className="text-sm">
+              <span className="font-semibold text-gray-500 dark:text-gray-400">Created Date: </span>
+              {new Date(task.createdDate).toLocaleString()}
+            </p>
+            <p className="text-sm">
+              <span className="font-semibold text-gray-500 dark:text-gray-400">Due Date: </span>
+              {new Date(task.dueDate).toLocaleString()}
+            </p>
+            <p className="text-sm">
+              <span className="font-semibold text-gray-500 dark:text-gray-400">Priority: </span>
+              <span className={task.priority === 'HIGH' ? 'text-red-500' : task.priority === 'MEDIUM' ? 'text-yellow-500' : 'text-green-500'}>
+                {task.priority}
+              </span>
+            </p>
 
-      {/* Clear "View Task" Button */}
-      <div className="mt-4">
-        <Link to={`/tasks/${task.id}`} className="text-blue-600 dark:text-blue-400 hover:underline">
-          View Task
-        </Link>
-      </div>
-    </li>
-  ))}
-</ul>
+            {/* Clear "View Task" Button */}
+            <div className="mt-4">
+              <Link to={`/tasks/${task.id}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                View Task
+              </Link>
+            </div>
+          </li>
+        ))}
+      </ul>
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
