@@ -1,4 +1,4 @@
-FROM node:20.9.0-bullseye-slim AS build
+FROM node:20.18.0-bullseye-slim AS build
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ COPY . ./
 
 RUN npm run build
 
-FROM node:20.9.0-bullseye-slim AS development
+FROM node:20.18.0-bullseye-slim AS development
 
 WORKDIR /app
 
