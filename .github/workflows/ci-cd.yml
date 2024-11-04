@@ -65,5 +65,12 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and Push Docker Image
+        env:
+          DB_PASSWORD: "fake_password"                # Fake password for testing
+          MYSQL_ROOT_PASSWORD: "fake_root_password"    # Fake root password for testing
+          MYSQLDB_DATABASE: "tasks"                     # Fake database name
+          MYSQLDB_LOCAL_PORT: "3306"                   # Example port (non-sensitive)
+          MYSQLDB_DOCKER_PORT: "3306"                  # Example port (non-sensitive)
+          DB_USERNAME: "fake_username"                 # Fake username for testing
         run: |
           docker compose build
