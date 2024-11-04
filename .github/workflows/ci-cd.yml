@@ -60,12 +60,12 @@ jobs:
 
       - name: Build Docker Image with Docker Compose
         env:
-          DB_PASSWORD: "fake_password"                # Fake password for testing
-          MYSQL_ROOT_PASSWORD: "fake_root_password"    # Fake root password for testing
-          MYSQLDB_DATABASE: "tasks"                     # Fake database name
-          MYSQLDB_LOCAL_PORT: "3306"                   # Example port (non-sensitive)
-          MYSQLDB_DOCKER_PORT: "3306"                  # Example port (non-sensitive)
-          DB_USERNAME: "fake_username"                 # Fake username for testing
+          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}                
+          MYSQL_ROOT_PASSWORD: ${{ secrets.TEST_MYSQL_ROOT_PASSWORD }} # password just for test purposes. not used in production.
+          MYSQLDB_DATABASE: "tasks"                     
+          MYSQLDB_LOCAL_PORT: "3306"                 
+          MYSQLDB_DOCKER_PORT: "3306"                  
+          DB_USERNAME: ${{ secrets.TEST_DB_USERNAME }}                      
         run: |
           docker compose build
 
@@ -90,6 +90,6 @@ jobs:
           docker buildx create --name mybuilder --use || docker buildx use mybuilder
           
           docker buildx build --platform linux/amd64,linux/arm64 \
-            --target prod -t conorb1/task-frontend:vitetest --push frontend/
+            --target prod -t conorb1/task-frontend:vite --push frontend/
           
-          docker buildx build --platform linux/amd64,linux/arm64 -t conorb1/task-backend-test --push backend/
+          docker buildx build --platform linux/amd64,linux/arm64 -t conorb1/task-backend --push backend/
