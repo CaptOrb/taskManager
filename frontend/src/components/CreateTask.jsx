@@ -83,7 +83,7 @@ const CreateTask = () => {
             ></textarea>
 
             <h4 className="mt-4 text-lg font-semibold">Preview:</h4>
-            <div className="p-4 bg-gray-100 border rounded-lg dark:bg-gray-800 dark:text-white">
+            <div className="p-4 bg-gray-100 border rounded-lg dark:bg-gray-800 dark:text-white" wrap="hard">
                 <ReactMarkdown>{description}</ReactMarkdown>
             </div>
         </div>
