@@ -26,7 +26,7 @@ public class Task {
     @Column(length = 50, nullable = false)
     private String title;
 
-    @Column(length = 250, nullable = false)
+    @Column(length = 500, nullable = false)
     private String description;
 
     @Column(nullable = false)

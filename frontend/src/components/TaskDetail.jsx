@@ -138,13 +138,13 @@ const TaskDetail = () => {
             <textarea
               value={taskDescription}
               onChange={(e) => setTaskDescription(e.target.value)}
-              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+              className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white " wrap="hard"
             />
           </div>
 
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-white">Description Preview</label>
-            <div className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+            <div className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white break-words">
               <ReactMarkdown>{taskDescription}</ReactMarkdown>
             </div>
           </div>
@@ -207,7 +207,7 @@ const TaskDetail = () => {
             <div className="mb-4">
               <p className="text-gray-700 dark:text-gray-300 font-semibold mb-1">Description:</p>
 
-              <div className="bg-gray-50 border border-gray-300 p-4 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+              <div className="bg-gray-50 border border-gray-300 p-4 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white break-words">
                 <ReactMarkdown>{task.description}</ReactMarkdown>
               </div>
             </div>

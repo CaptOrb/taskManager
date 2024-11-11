@@ -152,8 +152,17 @@ public class TaskController {
         if (task.getTitle() == null || task.getTitle().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Title cannot be empty.");
         }
-        if (task.getDescription() == null || task.getDescription().isEmpty()) {
+
+        if (task.getTitle().length() > 50) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Title can only be 50 characters.");
+        }
+
+        if (task.getDescription() == null || task.getDescription().strip().isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Description cannot be empty.");
+        }
+
+        if (task.getDescription().length() > 500) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Description can only be 500 characters.");
         }
         return null;
     }
