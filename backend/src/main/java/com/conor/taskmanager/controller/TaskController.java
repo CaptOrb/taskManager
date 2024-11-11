@@ -154,7 +154,7 @@ public class TaskController {
         }
 
         if (task.getTitle().length() > 50) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Title can only be 50 characters.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Title can only be 50 words.");
         }
 
         if (task.getDescription() == null || task.getDescription().strip().isEmpty()) {
@@ -162,7 +162,7 @@ public class TaskController {
         }
 
         if (task.getDescription().length() > 500) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Description can only be 500 characters.");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Description can only be 500 words.");
         }
         return null;
     }

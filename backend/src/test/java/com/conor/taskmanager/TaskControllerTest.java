@@ -178,6 +178,53 @@ public void getTask_whenUnAuthorised() throws Exception {
             .andExpect(status().isForbidden());
 }
 
+@Test
+@WithMockUser(username = "1@1.com", password = "password", roles = {"user"}) 
+public void createTask_whenTitleIsTooLong() throws Exception {
+
+    Task newTask = new Task(1, "New Task That is exceeds the character limit for the task title", "Task description", Status.COMPLETED, Priority.MEDIUM, LocalDateTime.now().plusDays(1));
+
+    User mockUser = new User();
+    mockUser.setUserName("1@1.com");
+    mockUser.setId(1L);
+
+    when(userRepo.findByUserName("1@1.com")).thenReturn(mockUser);
+    when(taskRepo.save(any(Task.class))).thenReturn(newTask);
+
+    mockMvc.perform(post("/api/create/task")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(taskToJson(newTask))) 
+            .andExpect(status().isBadRequest())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(content().string("Title can only be 50 words."));
+}
+
+@Test
+@WithMockUser(username = "1@1.com", password = "password", roles = {"user"}) 
+public void createTask_whenMessageIsTooLong() throws Exception {
+
+
+    String longDescription = "This description is intentionally too long and exceeds the 500 word limit. " +
+    "This is just for testing purposes, to ensure that the system handles large descriptions correctly. " +
+    "It should trigger a validation error because the length exceeds the 500 word limit, which is the constraint placed on this field. " +
+    "The description must be truncated, and this should fail validation, throwing an error message. " +
+    "This text is repeated to simulate a long description. ".repeat(10); 
+    Task newTask = new Task(1, "New Task", longDescription, Status.COMPLETED, Priority.MEDIUM, LocalDateTime.now().plusDays(1));
+
+    User mockUser = new User();
+    mockUser.setUserName("1@1.com");
+    mockUser.setId(1L);
+
+    when(userRepo.findByUserName("1@1.com")).thenReturn(mockUser);
+    when(taskRepo.save(any(Task.class))).thenReturn(newTask);
+
+    mockMvc.perform(post("/api/create/task")
+            .contentType(MediaType.APPLICATION_JSON)
+            .content(taskToJson(newTask))) 
+            .andExpect(status().isBadRequest())
+            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+            .andExpect(content().string("Description can only be 500 words."));
+}
 
 @Test
 @WithMockUser(username = "1@1.com", password = "password", roles = {"user"}) 
