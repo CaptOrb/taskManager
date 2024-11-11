@@ -49,6 +49,7 @@ public class SecurityConfig {
         configuration.addAllowedOrigin("http://localhost");
         configuration.addAllowedOrigin("http://localhost:3000");
         configuration.addAllowedOrigin("https://qube.app.librepush.net");
+        configuration.addAllowedOrigin("https://taskapp.librepush.net");
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);
