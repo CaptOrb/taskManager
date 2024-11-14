@@ -20,14 +20,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-      
-      - name: Cache local Maven repository
-        uses: actions/cache@v3
-        with:
-          path: ~/.m2/repository
-          key: ${{ runner.os }}-maven-${{ hashFiles('**/backend/pom.xml') }}
-          restore-keys: |
-            ${{ runner.os }}-maven-
 
       - name: Clean and Build Backend with Maven
         run: |
