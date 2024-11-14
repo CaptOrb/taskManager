@@ -4,6 +4,7 @@
 
 Task Manager which has a Spring Boot REST API back-end and React front-end. 
 Users can create, update, delete, and view their own tasks with task status tracking and filter by task status, due date and priority.
+See the deployed website at https://taskapp.librepush.net/
 
 ## Prerequisites
 * Docker
