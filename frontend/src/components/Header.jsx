@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../hooks/AuthContext';
 
 const Header = () => {
   const { loggedInUser, logout } = useAuth();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  const toggleDropdown = () => {
+    setDropdownOpen((prevState) => !prevState);
+  };
 
   return (
     <header className="pb-4 mb-8">
@@ -20,58 +25,74 @@ const Header = () => {
             </span>
           </Link>
 
-          <div className="flex items-center lg:order-2">
-            {!loggedInUser ? (
-              <>
-                <Link
-                  to="/login"
-                  className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800"
+          {loggedInUser ? (
+            <div className="relative">
+              <button
+                type="button"
+                className="flex text-sm rounded-full focus:ring-4 focus:ring-gray-300"
+                onClick={toggleDropdown}
+              >
+                <span className="sr-only">Open user menu</span>
+                <svg
+                  className="w-6 h-6 text-gray-800 dark:text-white"
+                  aria-hidden="true"
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
                 >
-                  Log in
-                </Link>
-                <Link
-                  to="/register"
-                  className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800"
-                >
-                  Register
-                </Link>
-              </>
-            ) : (
-              <>
-                <span className="text-gray-800 dark:text-white mr-4">
-                  Hello, {loggedInUser}
-                </span>
-                <Link
-                  to="/"
-                  onClick={logout}
-                  className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800"
-                >
-                  Logout
-                </Link>
-              </>
-            )}
-          </div>
+                  <path
+                    fillRule="evenodd"
+                    d="M12 20a7.966 7.966 0 0 1-5.002-1.756l.002.001v-.683c0-1.794 1.492-3.25 3.333-3.25h3.334c1.84 0 3.333 1.456 3.333 3.25v.683A7.966 7.966 0 0 1 12 20ZM2 12C2 6.477 6.477 2 12 2s10 4.477 10 10c0 5.5-4.44 9.963-9.932 10h-.138C6.438 21.962 2 17.5 2 12Zm10-5c-1.84 0-3.333 1.455-3.333 3.25S10.159 13.5 12 13.5c1.84 0 3.333-1.455 3.333-3.25S13.841 7 12 7Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </button>
 
-          {loggedInUser && (
-            <div className="hidden justify-between items-center w-full lg:flex lg:w-auto lg:order-1">
-              <ul className="flex flex-col mt-4 font-medium lg:flex-row lg:space-x-8 lg:mt-0">
-                <li>
-                  <Link
-                    to="/createTask"
-                    className="block py-2 pr-4 pl-3 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-primary-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-gray-700"
-                  >
-                    Create Task
-                  </Link>
-                </li>
-                <li>
-                  <Link
-                    to="/account"
-                    className="block py-2 pr-4 pl-3 text-gray-700 border-b border-gray-100 hover:bg-gray-50 lg:hover:bg-transparent lg:border-0 lg:hover:text-primary-700 lg:p-0 dark:text-gray-400 lg:dark:hover:text-white dark:hover:bg-gray-700 dark:hover:text-white lg:dark:hover:bg-transparent dark:border-gray-700"
-                  >
-                    My Account
-                  </Link>
-                </li>
-              </ul>
+              {dropdownOpen && (
+                <div className="absolute left-1/2 transform -translate-x-1/2 mt-2 w-48 bg-white divide-y divide-gray-100 rounded-lg shadow-lg dark:bg-gray-700 dark:divide-gray-500">
+                <div className="px-4 py-3">
+                    <span className="block text-sm text-gray-900 dark:text-white">
+                      {loggedInUser}
+                    </span>
+                  </div>
+                  <ul className="py-2">
+                    <li>
+                      <Link
+                        to="/account"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                      >
+                        My Account
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/"
+                        onClick={logout}
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 dark:text-gray-200 dark:hover:text-white"
+                      >
+                        Logout
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center lg:order-2">
+              <Link
+                to="/login"
+                className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800"
+              >
+                Log in
+              </Link>
+              <Link
+                to="/register"
+                className="text-gray-800 dark:text-white hover:bg-gray-50 focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 mr-2 dark:hover:bg-gray-700 focus:outline-none dark:focus:ring-gray-800"
+              >
+                Register
+              </Link>
             </div>
           )}
         </div>

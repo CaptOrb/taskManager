@@ -115,12 +115,12 @@ const TaskList = () => {
     <div className="max-w-xl mx-auto p-4 bg-white shadow-lg rounded-lg dark:bg-gray-800">
       <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Task List</h2>
 
-      <div className="flex mt-4 mb-4">
+      <div className="flex flex-col mt-4 mb-4">
+      <div className="flex flex-col sm:flex-row gap-4 sm:gap-4">
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="border rounded p-2 mr-2"
-        >
+          className="block w-auto appearance-none border rounded p-2 bg-white text-gray-800 pl-3 pr-6">
           <option value="ALL">All Statuses</option>
           <option value="PENDING">Pending</option>
           <option value="IN_PROGRESS">In Progress</option>
@@ -130,8 +130,7 @@ const TaskList = () => {
         <select
           value={urgencyFilter}
           onChange={(e) => setUrgencyFilter(e.target.value)}
-          className="border rounded p-2 mr-2"
-        >
+          className="block w-auto appearance-none border rounded p-2 bg-white text-gray-800 pl-3 pr-6">
           <option value="ANY">Any Priority</option>
           <option value="LOW">Low</option>
           <option value="MEDIUM">Medium</option>
@@ -141,20 +140,19 @@ const TaskList = () => {
         <select
           value={sortOrder}
           onChange={(e) => setSortOrder(e.target.value)}
-          className="border rounded p-2"
-        >
+          className="block w-auto appearance-none border rounded p-2 bg-white text-gray-800 pl-3 pr-6">
           <option value="createdDate">Recently Created</option>
           <option value="dueDateAsc">Due Date: Ascending</option>
           <option value="dueDateDesc">Due Date: Descending</option>
         </select>
-
-        <Link
-          to="/createTask"
-          className="ml-4 text-white bg-blue-500 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none"
-        >
-          Create Task
-        </Link>
       </div>
+
+      <Link
+        to="/createTask"
+        className="mt-4 text-white bg-blue-500 hover:bg-blue-700 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-4 lg:px-5 py-2 lg:py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none">
+        Create Task
+      </Link>
+    </div>
 
       <ul className="space-y-4">
         {currentTasks.map((task) => (
