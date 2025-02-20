@@ -37,7 +37,11 @@ const TaskDetail = () => {
           setTaskPriority(fetchedTask.priority);
           setTaskDueDate(new Date(fetchedTask.dueDate).toISOString().slice(0, 16));
         } catch (error) {
+          if (error.response?.status === 404  || error.response?.status === 403) {
+            navigate('/');
+          } else {
           setError('Error fetching task: ' + (error.response?.data || error.message));
+          }
         } finally {
           setLoading(false);
         }
