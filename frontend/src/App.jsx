@@ -36,7 +36,7 @@ function App() {
                                 path="/account"
                                 element={
                                     <ProtectedRoute>
-                                        <MyAccount /> {/* This is the protected CreateTask component */}
+                                        <MyAccount /> {}
                                     </ProtectedRoute>
                                 } />
 
