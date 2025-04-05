@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 
 const TaskList = () => {
-  const [tasks, setTasks] = useState([]); // Ensure tasks is always an array
+  const [tasks, setTasks] = useState([]); 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const { loggedInUser } = useAuth();
@@ -41,7 +41,8 @@ const TaskList = () => {
         setError('Unexpected data format.');
       }
     } catch (error) {
-      setError('Error fetching tasks: ' + (error.response?.data || error.message));
+      setError('Error fetching tasks: ');
+      // setError('Error fetching tasks: ' + (error.response?.data || error.message));
       console.error('Error fetching tasks:', error);
     } finally {
       setLoading(false);

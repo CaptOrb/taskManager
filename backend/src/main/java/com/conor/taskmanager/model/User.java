@@ -23,7 +23,7 @@ public class User {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	@Column(nullable = false, unique = true, length = 45)
+	@Column(nullable = false, unique = true, length = 254)
 	private String email;
 
 	@Column(nullable = false, length = 64)
@@ -34,7 +34,7 @@ public class User {
 	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
 	private String passwordConfirm;
 
-	@Column(name = "user_id", nullable = false, length = 20)
+    @Column(name = "user_name", nullable = false, length = 32)
 	private String userName;
 
 	@Column(nullable = false, length = 64)
