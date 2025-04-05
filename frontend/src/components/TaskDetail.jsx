@@ -111,7 +111,7 @@ const TaskDetail = () => {
   }
 
   return (
-    <div className="max-w-xl mx-auto mt-8 p-6 bg-white shadow-lg rounded-lg dark:bg-gray-800">
+    <div className="max-w-xl mx-auto p-6 bg-white shadow-lg rounded-lg dark:bg-gray-800">
       <Link to="/">
         <button
           type="button"

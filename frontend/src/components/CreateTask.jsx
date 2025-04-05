@@ -48,7 +48,7 @@ const CreateTask = () => {
     };
 
     return (
-        <div className="max-w-sm mx-auto mt-8">
+        <div className="max-w-sm mx-auto">
             <form onSubmit={handleTask} className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 dark:bg-gray-800">
                 {successMessage && (
                     <p className="text-green-500 mb-4">{successMessage}</p>
