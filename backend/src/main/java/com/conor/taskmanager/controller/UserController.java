@@ -29,7 +29,6 @@ public class UserController {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authManager;
     private final JwtService jwtService;
     private final UserService userService;
 
@@ -38,7 +37,6 @@ public class UserController {
             AuthenticationManager authenticationManager, JwtService jwtService, UserService userService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
-        this.authManager = authenticationManager;
         this.jwtService = jwtService;
         this.userService = userService;
     }

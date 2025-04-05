@@ -15,7 +15,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
 
-
 //JwtService is responsible for handling JWT (JSON Web Token) operations
 // such as token generation, extraction of claims, and token validation.
 
@@ -26,22 +25,21 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secret; // Injected secret key
 
-
     public String generateToken(String userName) {
         Map<String, Object> claims = new HashMap<>();
 
-        // Build JWT token with claims, subject, issued time, expiration time, and signing algorithm
+        // Build JWT token with claims, subject, issued time, expiration time, and
+        // signing algorithm
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(userName)
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-               .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 5000)) // set lower and refresh
+                .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
                 .signWith(getSignKey(), SignatureAlgorithm.HS256).compact();
     }
 
-
     // Creates a signing key from the base64 encoded secret.
-    //returns a Key object for signing the JWT.
+    // returns a Key object for signing the JWT.
     private Key getSignKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
@@ -55,7 +53,6 @@ public class JwtService {
         return extractClaim(token, Claims::getExpiration);
     }
 
-
     // Extracts a specific claim from the JWT token.
     // claimResolver A function to extract the claim.
     // return-> The value of the specified claim.
@@ -65,8 +62,8 @@ public class JwtService {
         return claimResolver.apply(claims);
     }
 
-    //Extracts all claims from the JWT token.
-    //return-> Claims object containing all claims.
+    // Extracts all claims from the JWT token.
+    // return-> Claims object containing all claims.
     private Claims extractAllClaims(String token) {
         // Parse and return all claims from the token
         return Jwts.parserBuilder()

@@ -4,15 +4,17 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App.jsx';
 import reportWebVitals from './reportWebVitals';
-import { AuthProvider } from './hooks/AuthContext'; // Import AuthProvider
-
-const root = ReactDOM.createRoot(document.getElementById('app')); // Changed from 'root' to 'app'
+import { AuthProvider } from './hooks/AuthContext';
+import { BrowserRouter } from 'react-router-dom';
+const root = ReactDOM.createRoot(document.getElementById('app'));
 
 root.render(
   <React.StrictMode>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );
 
