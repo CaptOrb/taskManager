@@ -36,7 +36,6 @@ public class UserService {
     authManager.authenticate(authInputToken);
 
     String accessToken = jwtService.generateAccessToken(body.getUserName());
-    String refreshToken = jwtService.generateRefreshToken(body.getUserName());
 
     User user = userRepository.findByUserName(body.getUserName());
     if (user == null) {

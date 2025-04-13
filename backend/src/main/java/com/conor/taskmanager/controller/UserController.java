@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,6 +18,7 @@ import com.conor.taskmanager.model.LoginResponse;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.security.JwtService;
+import com.conor.taskmanager.security.UserDetailsService;
 import com.conor.taskmanager.service.UserService;
 
 import jakarta.servlet.http.Cookie;
@@ -40,13 +40,15 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final UserService userService;
+    private final UserDetailsService userDetailsService;
 
     public UserController(UserRepository userRepository, PasswordEncoder passwordEncoder,
-            AuthenticationManager authenticationManager, JwtService jwtService, UserService userService) {
+            AuthenticationManager authenticationManager, JwtService jwtService, UserService userService, UserDetailsService userDetailsService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.userService = userService;
+        this.userDetailsService = userDetailsService;
     }
 
     @PostMapping("/register")
@@ -136,26 +138,35 @@ public class UserController {
     public ResponseEntity<?> refreshToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         String refreshToken = null;
-
-        for (Cookie cookie : cookies) {
-            if ("refreshToken".equals(cookie.getName())) {
-                refreshToken = cookie.getValue();
-                break;
+    
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("refreshToken".equals(cookie.getName())) {
+                    refreshToken = cookie.getValue();
+                    break;
+                }
             }
         }
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-
-        if (refreshToken == null || !jwtService.validateToken(refreshToken, userDetails)) {
+    
+        if (refreshToken == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing refresh token");
+        }
+    
+        String username;
+        try {
+            username = jwtService.extractUserName(refreshToken);
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
         }
-
-        String username = jwtService.extractUserName(refreshToken);
+    
+        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+    
+        if (!jwtService.validateToken(refreshToken, userDetails)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
+        }
+    
         String newAccessToken = jwtService.generateAccessToken(username);
-
-        LoginResponse response = new LoginResponse(username, newAccessToken);
-
-        return ResponseEntity.ok(response);
+    
+        return ResponseEntity.ok(new LoginResponse(username, newAccessToken));
     }
 }
