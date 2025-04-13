@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
             });
 
             if (response.status !== 200) throw new Error('Token refresh failed');
-            
+
             const newAccessToken = response.data.accessToken;
             localStorage.setItem('accessToken', newAccessToken);
             setAccessToken(newAccessToken);
@@ -97,11 +97,17 @@ export const AuthProvider = ({ children }) => {
         scheduleTokenRefresh(newAccessToken);
     };
 
-    const logout = () => {
-        localStorage.removeItem('accessToken');
-        setAccessToken(null);
-        setLoggedInUser(null);
-        if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
+    const logout = async () => {
+        try {
+            await axios.post('/api/auth/logout', null, { withCredentials: true });
+
+            localStorage.removeItem('accessToken');
+            setAccessToken(null);
+            setLoggedInUser(null);
+            if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
     };
 
     return (

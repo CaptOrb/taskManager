@@ -30,25 +30,21 @@ public class UserService {
 
   }
 
-  public LoginResponse login(@RequestBody Login body) {
-    UsernamePasswordAuthenticationToken authInputToken = new UsernamePasswordAuthenticationToken(body.getUserName(),
-        body.getPassword());
+  public LoginResponse login(Login loginRequest) {
+    UsernamePasswordAuthenticationToken authInputToken =
+            new UsernamePasswordAuthenticationToken(loginRequest.getUserName(), loginRequest.getPassword());
     authManager.authenticate(authInputToken);
 
-    String accessToken = jwtService.generateAccessToken(body.getUserName());
-
-    User user = userRepository.findByUserName(body.getUserName());
+    User user = userRepository.findByUserName(loginRequest.getUserName());
     if (user == null) {
-      throw new UsernameNotFoundException("User not found");
+        throw new UsernameNotFoundException("User not found");
     }
 
-    user.setJwtToken(accessToken);
+    String accessToken = jwtService.generateAccessToken(user.getUserName());
+    String refreshToken = jwtService.generateRefreshToken(user.getUserName());
 
-    userRepository.save(user);
-
-    return new LoginResponse(user.getUserName(), accessToken);
-  }
-
+    return new LoginResponse(user.getUserName(), accessToken, refreshToken);
+}
   public User findByEmail(String email) {
     return userRepository.findByEmail(email);
 

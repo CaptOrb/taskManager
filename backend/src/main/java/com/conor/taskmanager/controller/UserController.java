@@ -27,9 +27,9 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 @RestController
@@ -43,7 +43,8 @@ public class UserController {
     private final UserDetailsService userDetailsService;
 
     public UserController(UserRepository userRepository, PasswordEncoder passwordEncoder,
-            AuthenticationManager authenticationManager, JwtService jwtService, UserService userService, UserDetailsService userDetailsService) {
+            AuthenticationManager authenticationManager, JwtService jwtService, UserService userService,
+            UserDetailsService userDetailsService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
@@ -79,41 +80,45 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Login body, HttpServletResponse httpResponse) {
+    public ResponseEntity<?> login(@RequestBody Login loginRequest, HttpServletResponse response) {
         try {
-            // Authenticate user (this part could use AuthenticationManager to verify
-            // credentials)
-            LoginResponse response = userService.login(body);
+            LoginResponse loginResponse = userService.login(loginRequest);
 
-            // Generate access and refresh tokens
-            String accessToken = jwtService.generateAccessToken(response.getUserName());
-            String refreshToken = jwtService.generateRefreshToken(response.getUserName());
-
-            ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+            ResponseCookie refreshCookie = ResponseCookie.from("refreshToken", loginResponse.getRefreshToken())
                     .httpOnly(true)
-                    .secure(false) // set true in PROD
+                    .secure(false) // true in PROD
                     .path("/api/auth/refresh-token")
                     .maxAge(Duration.ofDays(7))
-                    .sameSite("Strict")
+                    .sameSite("Lax")
                     .build();
 
-            // Add the cookie to the response header
-            httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-            LoginResponse loginResponse = new LoginResponse(response.getUserName(), accessToken);
+            response.addHeader(HttpHeaders.SET_COOKIE, refreshCookie.toString());
 
-            return ResponseEntity.ok(loginResponse);
+            return ResponseEntity.ok(new LoginResponse(loginResponse.getUserName(), loginResponse.getAccessToken()));
 
-        } catch (UsernameNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Collections.singletonMap("error", "Invalid username or password"));
-        } catch (org.springframework.security.core.AuthenticationException e) {
+        } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Collections.singletonMap("error", "Invalid username or password"));
         } catch (Exception e) {
-            System.out.println(e);
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("error", "An unexpected error occurred"));
         }
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletResponse response) {
+        ResponseCookie cookie = ResponseCookie.from("refreshToken", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/api/auth/refresh-token")
+                .maxAge(Duration.ofSeconds(0))
+                .sameSite("LAX")
+                .build();
+
+        response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+        return ResponseEntity.ok().body("Successfully logged out");
     }
 
     @GetMapping("/user")
@@ -138,7 +143,7 @@ public class UserController {
     public ResponseEntity<?> refreshToken(HttpServletRequest request) {
         Cookie[] cookies = request.getCookies();
         String refreshToken = null;
-    
+
         if (cookies != null) {
             for (Cookie cookie : cookies) {
                 if ("refreshToken".equals(cookie.getName())) {
@@ -147,26 +152,26 @@ public class UserController {
                 }
             }
         }
-    
+
         if (refreshToken == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing refresh token");
         }
-    
+
         String username;
         try {
             username = jwtService.extractUserName(refreshToken);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
         }
-    
+
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-    
+
         if (!jwtService.validateToken(refreshToken, userDetails)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
         }
-    
+
         String newAccessToken = jwtService.generateAccessToken(username);
-    
+
         return ResponseEntity.ok(new LoginResponse(username, newAccessToken));
     }
 }
