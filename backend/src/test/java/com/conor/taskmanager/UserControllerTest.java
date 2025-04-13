@@ -91,7 +91,7 @@ public class UserControllerTest {
         when(userRepository.findByUserName(newUser.getUserName())).thenReturn(null);
         when(userRepository.findByEmail(newUser.getEmail())).thenReturn(null);
         when(passwordEncoder.encode(newUser.getPassword())).thenReturn("encodedPassword");
-        when(jwtService.generateToken(newUser.getUserName())).thenReturn("mockedToken");
+        when(jwtService.generateAccessToken(newUser.getUserName())).thenReturn("mockedToken");
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -189,7 +189,7 @@ public class UserControllerTest {
         loginRequest.setPassword("password123");
 
         LoginResponse loginResponse = new LoginResponse();
-        loginResponse.setJwtToken("mockedJwtToken");
+        loginResponse.setAccessToken("mockedJwtToken");
 
         when(userService.login(loginRequest)).thenReturn(loginResponse);
 

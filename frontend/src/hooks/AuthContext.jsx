@@ -1,55 +1,98 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [loggedInUser, setLoggedInUser] = useState(null);
     const [loading, setLoading] = useState(true);
-    const navigate = useNavigate();
+    const [accessToken, setAccessToken] = useState(null);
+    const [refreshToken, setRefreshToken] = useState(null);
+
+    const refreshJwtToken = async (oldRefreshToken) => {
+        try {
+            const response = await fetch('/api/auth/refresh-token', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${oldRefreshToken}`,
+                },
+            });
+
+            if (!response.ok) throw new Error('Token refresh failed');
+
+            const data = await response.json();
+            return { accessToken: data.accessToken, refreshToken: data.refreshToken };
+        } catch (error) {
+            console.error('Token refresh failed:', error);
+            return null;
+        }
+    };
+
+    const checkAndRefreshToken = async () => {
+        const storedAccessToken = localStorage.getItem('accessToken');
+        const storedRefreshToken = localStorage.getItem('refreshToken');
+
+        if (!storedAccessToken || !storedRefreshToken) {
+            logout();
+            setLoading(false);
+            return;
+        }
+
+        // If accessToken is available, check if it's still valid
+        try {
+            const decodedToken = JSON.parse(atob(storedAccessToken.split('.')[1]));
+            const expiration = decodedToken.exp * 1000;
+            const timeLeft = expiration - Date.now();
+
+            if (timeLeft <= 0) {
+                // Access token has expired, try refreshing it with refresh token
+                const newTokens = await refreshJwtToken(storedRefreshToken);
+                if (newTokens) {
+                    setAccessToken(newTokens.accessToken);
+                    setRefreshToken(newTokens.refreshToken);
+                    localStorage.setItem('accessToken', newTokens.accessToken);
+                    localStorage.setItem('refreshToken', newTokens.refreshToken);
+                    const newDecoded = JSON.parse(atob(newTokens.accessToken.split('.')[1]));
+                    setLoggedInUser(newDecoded.sub);
+                } else {
+                    logout();
+                }
+            } else {
+                // Access token is still valid, just update user state
+                setLoggedInUser(decodedToken.sub);
+            }
+        } catch (err) {
+            console.error('Error checking token:', err);
+            logout();
+        }
+
+        setLoading(false);
+    };
 
     useEffect(() => {
-        const checkToken = () => {
-            const token = localStorage.getItem('token');
-            if (token) {
-                try {
-                    const decodedToken = JSON.parse(atob(token.split('.')[1]));
-                    if (decodedToken && decodedToken.exp) {
-                        const expiration = decodedToken.exp * 1000;
-                        if (expiration < Date.now()) {
-                            logout();
-                            navigate('/login');
-                            return;
-                        }
-                        setLoggedInUser(decodedToken.sub);
-                    } else {
-                        logout();
-                        navigate('/login');
-                    }
-                } catch (error) {
-                    console.error('Error decoding token:', error);
-                    logout();
-                    navigate('/login');
-                }
-            }
-            setLoading(false);
-        };
+        checkAndRefreshToken();
+        const interval = setInterval(checkAndRefreshToken, 5 * 60 * 1000); // Check every 5 minutes
+        return () => clearInterval(interval);
+    }, []); 
+    const login = (accessToken, refreshToken) => {
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
 
-        checkToken();
-        const intervalId = setInterval(checkToken, 60000);
+        setAccessToken(accessToken);
+        setRefreshToken(refreshToken);
 
-        return () => clearInterval(intervalId);
-    }, [navigate]);
+        const decoded = JSON.parse(atob(accessToken.split('.')[1]));
+        setLoggedInUser(decoded.sub);
 
-    const login = (token) => {
-        localStorage.setItem('token', token);
-        const decodedToken = JSON.parse(atob(token.split('.')[1]));
-        setLoggedInUser(decodedToken.sub);
+        checkAndRefreshToken();
     };
 
     const logout = () => {
-        localStorage.removeItem('token');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
         setLoggedInUser(null);
+        setAccessToken(null);
+        setRefreshToken(null);
     };
 
     return (
@@ -59,6 +102,4 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
-export const useAuth = () => {
-    return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);

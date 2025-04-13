@@ -14,7 +14,7 @@ const MyAccount = () => {
                 const response = await fetch('/api/auth/current-user', 
                     {
                         headers: {
-                          Authorization: `Bearer ${localStorage.getItem('token')}` // Add JWT token to the request
+                          Authorization: `Bearer ${localStorage.getItem('accessToken')}`
                         }
                 });
 

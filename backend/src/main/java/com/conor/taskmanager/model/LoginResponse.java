@@ -10,5 +10,6 @@ import lombok.NoArgsConstructor;
 public class LoginResponse {
 
     private String userName;
-    private String jwtToken;
+    private String accessToken;
+    private String refreshToken;
 }

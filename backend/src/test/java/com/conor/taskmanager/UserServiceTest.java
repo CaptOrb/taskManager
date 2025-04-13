@@ -66,15 +66,15 @@ class UserServiceTest {
         user.setUserName("username");
 
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
-        when(jwtService.generateToken("username")).thenReturn("mockJwtToken");
+        when(jwtService.generateAccessToken("username")).thenReturn("mockJwtToken");
         when(userRepository.findByUserName("username")).thenReturn(user);
 
         LoginResponse response = userService.login(loginRequest);
 
         assertEquals("username", response.getUserName());
-        assertEquals("mockJwtToken", response.getJwtToken());
+        assertEquals("mockJwtToken", response.getAccessToken());
         verify(authManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(jwtService, times(1)).generateToken("username");
+        verify(jwtService, times(1)).generateAccessToken("username");
     }
 
     @Test

@@ -6,7 +6,7 @@ const CreateTask = () => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [dueDate, setDueDate] = useState('');
-    const [priority, setPriority] = useState('LOW'); // Default priority
+    const [priority, setPriority] = useState('LOW');
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
     const navigate = useNavigate();
@@ -25,13 +25,13 @@ const CreateTask = () => {
                 },
                 {
                   headers: {
-                    Authorization: `Bearer ${localStorage.getItem('token')}` // Add JWT token to the request
+                    Authorization: `Bearer ${localStorage.getItem('accessToken')}`
                   }
                 }
             );
 
             setSuccessMessage('Task created successfully.');
-            navigate('/?success=true'); // Redirect after success
+            navigate('/?success=true');
         } catch (error) {
             setSuccessMessage('');
             if (error.response) {

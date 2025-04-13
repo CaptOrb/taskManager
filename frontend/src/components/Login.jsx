@@ -4,7 +4,6 @@ import { useAuth } from '../hooks/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
-
 function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -24,30 +23,40 @@ function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
-
+  
     try {
       const response = await axios.post('/api/auth/login', {
         userName: username,
         password: password
       });
-
-      const { jwtToken } = response.data;
-      login(jwtToken);
+  
+      console.log('Login response:', response.data);
+  
+      const { accessToken, refreshToken } = response.data;
+  
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+  
+      login(accessToken, refreshToken);
+  
       setErrorMessage('');
       navigate('/');
     } catch (error) {
-      console.error("Login failed", error);
-      setErrorMessage("Login failed. Check your credentials.");
+      console.error('Login failed', error.response ? error.response.data : error);
+  
+      if (error.response && error.response.status === 401) {
+        setErrorMessage('Invalid username or password');
+      } else {
+        setErrorMessage('An unexpected error occurred. Please try again.');
+      }
     }
   };
 
   return (
-
     <div>
-
-
       <form onSubmit={handleLogin} className="max-w-sm mx-auto">
         {successMessage && <p style={{ color: 'green' }}>Registration complete! You can now log in.</p>}
+        
         <div className="mb-5">
           <label
             htmlFor="username"
@@ -65,6 +74,7 @@ function Login() {
             required
           />
         </div>
+        
         <div className="mb-5">
           <label
             htmlFor="password"
@@ -88,10 +98,12 @@ function Login() {
         >
           Login
         </button>
+        
         {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}
 
         <p className="text-sm font-light text-gray-500 dark:text-gray-400">
-          Don’t have an account yet?    <Link
+          Don’t have an account yet?    
+          <Link
             to="/register"
             className="font-medium text-primary-600 hover:underline dark:text-primary-500"
           >
@@ -99,11 +111,8 @@ function Login() {
           </Link>
         </p>
       </form>
-
-
-
     </div>
-  )
+  );
 }
 
 export default Login;

@@ -26,7 +26,7 @@ const TaskDetail = () => {
           setLoading(true);
           const response = await axios.get(`/api/tasks/${id}`, {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem('token')}`,
+              Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
             },
           });
           const fetchedTask = response.data;
@@ -65,7 +65,7 @@ const TaskDetail = () => {
     try {
       const response = await axios.put(`/api/tasks/${id}`, updatedTask, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
         },
       });
 
@@ -88,7 +88,7 @@ const TaskDetail = () => {
       try {
         await axios.delete(`/api/tasks/delete/${id}`, {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem('token')}`,
+            Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
           },
         });
         navigate('/');
