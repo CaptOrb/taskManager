@@ -31,23 +31,24 @@ public class UserService {
   }
 
   public LoginResponse login(@RequestBody Login body) {
-    UsernamePasswordAuthenticationToken authInputToken = new UsernamePasswordAuthenticationToken(body.getUserName(), body.getPassword());
+    UsernamePasswordAuthenticationToken authInputToken = new UsernamePasswordAuthenticationToken(body.getUserName(),
+        body.getPassword());
     authManager.authenticate(authInputToken);
-    
+
     String accessToken = jwtService.generateAccessToken(body.getUserName());
     String refreshToken = jwtService.generateRefreshToken(body.getUserName());
-    
+
     User user = userRepository.findByUserName(body.getUserName());
     if (user == null) {
-        throw new UsernameNotFoundException("User not found");
+      throw new UsernameNotFoundException("User not found");
     }
 
     user.setJwtToken(accessToken);
-    
+
     userRepository.save(user);
 
-    return new LoginResponse(user.getUserName(), accessToken, refreshToken);
-}
+    return new LoginResponse(user.getUserName(), accessToken);
+  }
 
   public User findByEmail(String email) {
     return userRepository.findByEmail(email);

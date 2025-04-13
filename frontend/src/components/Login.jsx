@@ -8,6 +8,8 @@ function Login() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [isLoading, setIsLoading] = useState(false);  // Add loading state
+
   const { login, loggedInUser } = useAuth();
   const navigate = useNavigate();
 
@@ -25,32 +27,29 @@ function Login() {
     e.preventDefault();
   
     try {
-      const response = await axios.post('/api/auth/login', {
-        userName: username,
-        password: password
-      });
+        const response = await axios.post('/api/auth/login', {
+            userName: username,
+            password: password
+        }, { withCredentials: true });  // Include credentials to store the HTTP-only cookie
   
-      console.log('Login response:', response.data);
+        const { accessToken } = response.data;
+
+        // Store accessToken in localStorage or in-memory for client-side use
+        localStorage.setItem('accessToken', accessToken);
+        login(accessToken);
   
-      const { accessToken, refreshToken } = response.data;
-  
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-  
-      login(accessToken, refreshToken);
-  
-      setErrorMessage('');
-      navigate('/');
+        setErrorMessage('');
+        navigate('/');
     } catch (error) {
-      console.error('Login failed', error.response ? error.response.data : error);
-  
-      if (error.response && error.response.status === 401) {
-        setErrorMessage('Invalid username or password');
-      } else {
-        setErrorMessage('An unexpected error occurred. Please try again.');
-      }
+        console.error('Login failed', error.response ? error.response.data : error);
+    
+        if (error.response && error.response.status === 401) {
+            setErrorMessage('Invalid username or password');
+        } else {
+            setErrorMessage('An unexpected error occurred. Please try again.');
+        }
     }
-  };
+};
 
   return (
     <div>
@@ -95,8 +94,9 @@ function Login() {
         <button
           type="submit"
           className="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm w-full sm:w-auto px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+          disabled={isLoading} // Disable the button when loading
         >
-          Login
+          {isLoading ? 'Logging in...' : 'Login'}
         </button>
         
         {errorMessage && <p style={{ color: 'red' }}>{errorMessage}</p>}

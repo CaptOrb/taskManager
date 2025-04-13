@@ -6,63 +6,54 @@ export const AuthProvider = ({ children }) => {
     const [loggedInUser, setLoggedInUser] = useState(null);
     const [loading, setLoading] = useState(true);
     const [accessToken, setAccessToken] = useState(null);
-    const [refreshToken, setRefreshToken] = useState(null);
 
-    const refreshJwtToken = async (oldRefreshToken) => {
+    const refreshJwtToken = async () => {
         try {
-            const response = await fetch('/api/auth/refresh-token', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: `Bearer ${oldRefreshToken}`,
-                },
+            const response = await axios.post('/api/auth/refresh-token', null, {
+                withCredentials: true,  // Send the refresh token stored in the HTTP-only cookie
             });
-
-            if (!response.ok) throw new Error('Token refresh failed');
-
-            const data = await response.json();
-            return { accessToken: data.accessToken, refreshToken: data.refreshToken };
+    
+            if (response.status !== 200) {
+                throw new Error('Token refresh failed');
+            }
+    
+            return response.data.accessToken;
         } catch (error) {
             console.error('Token refresh failed:', error);
             return null;
         }
     };
-
+    
     const checkAndRefreshToken = async () => {
         const storedAccessToken = localStorage.getItem('accessToken');
-        const storedRefreshToken = localStorage.getItem('refreshToken');
 
-        if (!storedAccessToken || !storedRefreshToken) {
+        if (!storedAccessToken) {
             logout();
             setLoading(false);
             return;
         }
 
-        // If accessToken is available, check if it's still valid
         try {
-            const decodedToken = JSON.parse(atob(storedAccessToken.split('.')[1]));
-            const expiration = decodedToken.exp * 1000;
+            const decoded = JSON.parse(atob(storedAccessToken.split('.')[1]));
+            const expiration = decoded.exp * 1000;
             const timeLeft = expiration - Date.now();
 
             if (timeLeft <= 0) {
-                // Access token has expired, try refreshing it with refresh token
-                const newTokens = await refreshJwtToken(storedRefreshToken);
-                if (newTokens) {
-                    setAccessToken(newTokens.accessToken);
-                    setRefreshToken(newTokens.refreshToken);
-                    localStorage.setItem('accessToken', newTokens.accessToken);
-                    localStorage.setItem('refreshToken', newTokens.refreshToken);
-                    const newDecoded = JSON.parse(atob(newTokens.accessToken.split('.')[1]));
+                const newAccessToken = await refreshJwtToken();
+                if (newAccessToken) {
+                    localStorage.setItem('accessToken', newAccessToken);
+                    setAccessToken(newAccessToken);
+                    const newDecoded = JSON.parse(atob(newAccessToken.split('.')[1]));
                     setLoggedInUser(newDecoded.sub);
                 } else {
                     logout();
                 }
             } else {
-                // Access token is still valid, just update user state
-                setLoggedInUser(decodedToken.sub);
+                setAccessToken(storedAccessToken);
+                setLoggedInUser(decoded.sub);
             }
         } catch (err) {
-            console.error('Error checking token:', err);
+            console.error('Token parsing failed:', err);
             logout();
         }
 
@@ -71,15 +62,13 @@ export const AuthProvider = ({ children }) => {
 
     useEffect(() => {
         checkAndRefreshToken();
-        const interval = setInterval(checkAndRefreshToken, 5 * 60 * 1000); // Check every 5 minutes
+        const interval = setInterval(checkAndRefreshToken, 5 * 60 * 1000);
         return () => clearInterval(interval);
-    }, []); 
-    const login = (accessToken, refreshToken) => {
-        localStorage.setItem('accessToken', accessToken);
-        localStorage.setItem('refreshToken', refreshToken);
+    }, []);
 
+    const login = (accessToken) => {
+        localStorage.setItem('accessToken', accessToken);
         setAccessToken(accessToken);
-        setRefreshToken(refreshToken);
 
         const decoded = JSON.parse(atob(accessToken.split('.')[1]));
         setLoggedInUser(decoded.sub);
@@ -89,10 +78,8 @@ export const AuthProvider = ({ children }) => {
 
     const logout = () => {
         localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        setLoggedInUser(null);
         setAccessToken(null);
-        setRefreshToken(null);
+        setLoggedInUser(null);
     };
 
     return (

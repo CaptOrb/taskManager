@@ -1,8 +1,11 @@
 package com.conor.taskmanager.controller;
 
+import java.time.Duration;
 import java.util.Collections;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -18,9 +21,12 @@ import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.security.JwtService;
 import com.conor.taskmanager.service.UserService;
 
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -65,20 +71,13 @@ public class UserController {
         String encodedPassword = passwordEncoder.encode(user.getPassword());
         user.setPassword(encodedPassword);
 
-        // Generate Access and Refresh Tokens
-        String accessToken = jwtService.generateAccessToken(user.getUserName());
-        String refreshToken = jwtService.generateRefreshToken(user.getUserName());
-
-        // Store the tokens in the user object or database
-        user.setJwtToken(accessToken);
-
         // Save user to the repository
         userRepository.save(user);
         return ResponseEntity.ok("User registered successfully");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Login body) {
+    public ResponseEntity<?> login(@RequestBody Login body, HttpServletResponse httpResponse) {
         try {
             // Authenticate user (this part could use AuthenticationManager to verify
             // credentials)
@@ -88,8 +87,17 @@ public class UserController {
             String accessToken = jwtService.generateAccessToken(response.getUserName());
             String refreshToken = jwtService.generateRefreshToken(response.getUserName());
 
-            // Prepare the response with both tokens
-            LoginResponse loginResponse = new LoginResponse(response.getUserName(), accessToken, refreshToken);
+            ResponseCookie cookie = ResponseCookie.from("refreshToken", refreshToken)
+                    .httpOnly(true)
+                    .secure(false) // set true in PROD
+                    .path("/api/auth/refresh-token")
+                    .maxAge(Duration.ofDays(7))
+                    .sameSite("Strict")
+                    .build();
+
+            // Add the cookie to the response header
+            httpResponse.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+            LoginResponse loginResponse = new LoginResponse(response.getUserName(), accessToken);
 
             return ResponseEntity.ok(loginResponse);
 
@@ -125,35 +133,29 @@ public class UserController {
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<?> refreshJwtToken(@RequestHeader("Authorization") String authHeader,
-            @AuthenticationPrincipal UserDetails userDetails) {
+    public ResponseEntity<?> refreshToken(HttpServletRequest request) {
+        Cookie[] cookies = request.getCookies();
+        String refreshToken = null;
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            return ResponseEntity.badRequest().body("Missing or invalid Authorization header");
+        for (Cookie cookie : cookies) {
+            if ("refreshToken".equals(cookie.getName())) {
+                refreshToken = cookie.getValue();
+                break;
+            }
         }
 
-        String oldToken = authHeader.substring(7);
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 
-        try {
-            String tokenUserName = jwtService.extractUserName(oldToken);
-
-            if (userDetails == null || !userDetails.getUsername().equals(tokenUserName)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body("Token does not belong to the authenticated user");
-            }
-
-            String refreshedToken = jwtService.refreshToken(oldToken, userDetails);
-
-            if (refreshedToken == null) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Token refresh failed");
-            }
-
-            LoginResponse response = new LoginResponse(tokenUserName, refreshedToken, null);
-            return ResponseEntity.ok(response);
-
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Token refresh failed: " + e.getMessage());
+        if (refreshToken == null || !jwtService.validateToken(refreshToken, userDetails)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid refresh token");
         }
+
+        String username = jwtService.extractUserName(refreshToken);
+        String newAccessToken = jwtService.generateAccessToken(username);
+
+        LoginResponse response = new LoginResponse(username, newAccessToken);
+
+        return ResponseEntity.ok(response);
     }
 }
