@@ -15,6 +15,9 @@ public class TaskService {
     public Task updateTask(int id, Task updatedTask) {
         Task existingTask = taskRepository.findTaskByID(id);
 
+        if (existingTask == null) {
+            return null;
+        }
         existingTask.setTitle(updatedTask.getTitle());
         existingTask.setDescription(updatedTask.getDescription());
         existingTask.setStatus(updatedTask.getStatus());
@@ -23,4 +26,5 @@ public class TaskService {
 
         return taskRepository.save(existingTask);
     }
+
 }

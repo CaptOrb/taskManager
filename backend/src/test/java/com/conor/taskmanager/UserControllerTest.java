@@ -30,10 +30,10 @@ import com.conor.taskmanager.security.UserDetailsService;
 import com.conor.taskmanager.service.UserService;
 
 @WebMvcTest(controllers = UserController.class)
-@Import(SecurityConfig.class) 
+@Import(SecurityConfig.class)
 public class UserControllerTest {
     @MockBean
-    private UserDetailsService userDetailsService; 
+    private UserDetailsService userDetailsService;
 
     @Autowired
     private MockMvc mockMvc;
@@ -42,16 +42,16 @@ public class UserControllerTest {
     private UserRepository userRepository;
 
     @MockBean
-    private PasswordEncoder passwordEncoder; 
+    private PasswordEncoder passwordEncoder;
 
     @MockBean
     private AuthenticationManager authenticationManager;
 
     @MockBean
-    private UserService userService; 
+    private UserService userService;
 
     @MockBean
-    private JwtService jwtService; 
+    private JwtService jwtService;
 
     @BeforeEach
     void setUp() {
@@ -68,19 +68,57 @@ public class UserControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "1@1.com", password = "password", roles = {"user"}) // Simulate logged-in user
+    @WithMockUser(username = "1@1.com", password = "password", roles = { "user" }) // Simulate logged-in user
     public void getCurrentUser_whenUserExists_returnsUser() throws Exception {
- 
+
         mockMvc.perform(get("/api/auth/current-user")
                 .contentType(MediaType.APPLICATION_JSON))
-                .andDo(print()) 
+                .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.userName").value("1@1.com"))
                 .andExpect(jsonPath("$.email").value("1@1.com"))
                 .andExpect(jsonPath("$.userRole").value("user"));
     }
 
-     @Test
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void getCurrentUserName_returnsAuthenticatedUsername() throws Exception {
+        mockMvc.perform(get("/api/auth/user"))
+                .andExpect(status().isOk())
+                .andExpect(content().string("test@example.com"));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com", roles = { "USER" })
+    public void getCurrentUser_whenUserExists_returnsUserObject() throws Exception {
+        User mockUser = new User();
+        mockUser.setUserName("test@example.com");
+        mockUser.setEmail("test@example.com");
+        mockUser.setUserRole("User");
+
+        when(userRepository.findByUserName("test@example.com")).thenReturn(mockUser);
+
+        when(jwtService.generateToken(mockUser.getUserName())).thenReturn("mockedToken");
+
+        mockMvc.perform(get("/api/auth/current-user")
+                .header("Authorization", "Bearer mocked.jwt.token")
+                .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.userName").value("test@example.com"))
+                .andExpect(jsonPath("$.email").value("test@example.com"));
+    }
+
+    @Test
+    @WithMockUser(username = "nonexistent@example.com")
+    public void getCurrentUser_whenAuthenticatedButUserNotFound_returnsUnauthorized() throws Exception {
+        when(userRepository.findByUserName("nonexistent@example.com")).thenReturn(null);
+
+        mockMvc.perform(get("/api/auth/current-user"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
     public void register_whenUserIsValid_returnsSuccessMessage() throws Exception {
         User newUser = new User();
         newUser.setUserName("testUser");
@@ -129,7 +167,8 @@ public class UserControllerTest {
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"userName\":\"existingUser\",\"email\":\"newUser@example.com\",\"password\":\"password123\"}"))
+                .content(
+                        "{\"userName\":\"existingUser\",\"email\":\"newUser@example.com\",\"password\":\"password123\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Username is already taken."));
@@ -146,7 +185,8 @@ public class UserControllerTest {
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"userName\":\"newUser\",\"email\":\"existingUser@example.com\",\"password\":\"password123\"}"))
+                .content(
+                        "{\"userName\":\"newUser\",\"email\":\"existingUser@example.com\",\"password\":\"password123\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
                 .andExpect(content().string("Email is already taken."));
@@ -155,7 +195,7 @@ public class UserControllerTest {
     @Test
     public void register_whenUsernameIsTooShort_returnsBadRequest() throws Exception {
         User newUser = new User();
-        newUser.setUserName("ab"); 
+        newUser.setUserName("ab");
         newUser.setEmail("testUser@example.com");
         newUser.setPassword("password123");
 
@@ -182,7 +222,7 @@ public class UserControllerTest {
                 .andExpect(content().string("Password must be atleast 7 characters long."));
     }
 
-        @Test
+    @Test
     public void login_whenCredentialsAreValid_returnsLoginResponse() throws Exception {
         Login loginRequest = new Login();
         loginRequest.setUserName("testUser");
@@ -220,9 +260,9 @@ public class UserControllerTest {
     @Test
     public void login_withInvalidCredentials_returnsUnauthorized() throws Exception {
         String invalidCredentials = "{\"userName\":\"invalidUser\",\"password\":\"wrongPassword\"}";
-    
+
         when(userService.login(any())).thenThrow(new UsernameNotFoundException("User not found"));
-    
+
         mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(invalidCredentials))
