@@ -22,6 +22,8 @@ jobs:
           java-version: '17'
 
       - name: Clean and Build Backend with Maven
+        env:
+          JWT_SECRET: ${{ secrets.SECRET }}
         run: |
           cd backend
           mvn clean install -DskipTests
