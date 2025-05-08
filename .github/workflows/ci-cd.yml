@@ -22,12 +22,6 @@ jobs:
           java-version: '17'
 
       - name: Clean and Build Backend with Maven
-        env:
-          JWT_SECRET: ${{ secrets.SECRET }}
-          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
-          DB_USERNAME: ${{ secrets.TEST_DB_USERNAME }}
-          MYSQL_ROOT_PASSWORD: ${{ secrets.TEST_MYSQL_ROOT_PASSWORD }}
-          SPRING_PROFILES_ACTIVE: test  
         run: |
           cd backend
           mvn clean install -DskipTests
