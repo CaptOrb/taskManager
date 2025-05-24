@@ -3,6 +3,24 @@ import axios from 'axios';
 
 const AuthContext = createContext();
 
+function parseJwt(token) {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = base64.padEnd(base64.length + (4 - base64.length % 4) % 4, '=');
+        const jsonPayload = decodeURIComponent(
+            atob(padded)
+                .split('')
+                .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+                .join('')
+        );
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        //console.error('[Auth] Failed to parse JWT:', e);
+        return null;
+    }
+}
+
 export const AuthProvider = ({ children }) => {
     const [loggedInUser, setLoggedInUser] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -17,14 +35,16 @@ export const AuthProvider = ({ children }) => {
 
             if (response.status !== 200) throw new Error('Token refresh failed');
 
-            const newAccessToken = response.data.accessToken;
+            const newAccessToken = response.data.jwtToken;
             localStorage.setItem('accessToken', newAccessToken);
             setAccessToken(newAccessToken);
-            const decoded = JSON.parse(atob(newAccessToken.split('.')[1]));
+
+            const decoded = parseJwt(newAccessToken);
+            if (!decoded || !decoded.sub) throw new Error('Invalid token');
             setLoggedInUser(decoded.sub);
             scheduleTokenRefresh(newAccessToken);
         } catch (error) {
-            console.error('Token refresh failed:', error);
+            //console.error('[Auth] Token refresh failed:', error);
             logout();
         }
     };
@@ -33,7 +53,8 @@ export const AuthProvider = ({ children }) => {
         if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
 
         try {
-            const decoded = JSON.parse(atob(token.split('.')[1]));
+            const decoded = parseJwt(token);
+            if (!decoded || !decoded.exp) throw new Error('Invalid token');
             const expiration = decoded.exp * 1000;
             const timeUntilRefresh = expiration - Date.now() - 60 * 1000;
             if (timeUntilRefresh > 0) {
@@ -41,10 +62,10 @@ export const AuthProvider = ({ children }) => {
                     refreshJwtToken();
                 }, timeUntilRefresh);
             } else {
-                refreshJwtToken(); // token is already close to being expired
+                refreshJwtToken();
             }
         } catch (err) {
-            console.error('Failed to decode token:', err);
+            //console.error('[Auth] Failed to decode token in scheduler:', err);
             logout();
         }
     };
@@ -59,7 +80,8 @@ export const AuthProvider = ({ children }) => {
         }
 
         try {
-            const decoded = JSON.parse(atob(storedAccessToken.split('.')[1]));
+            const decoded = parseJwt(storedAccessToken);
+            if (!decoded || !decoded.exp || !decoded.sub) throw new Error('Invalid token');
             const expiration = decoded.exp * 1000;
             const timeLeft = expiration - Date.now();
 
@@ -71,7 +93,7 @@ export const AuthProvider = ({ children }) => {
                 scheduleTokenRefresh(storedAccessToken);
             }
         } catch (err) {
-            console.error('Token parsing failed:', err);
+            //console.error('[Auth] Token parsing failed during check:', err);
             logout();
         }
 
@@ -91,22 +113,29 @@ export const AuthProvider = ({ children }) => {
         localStorage.setItem('accessToken', newAccessToken);
         setAccessToken(newAccessToken);
 
-        const decoded = JSON.parse(atob(newAccessToken.split('.')[1]));
-        setLoggedInUser(decoded.sub);
+        const decoded = parseJwt(newAccessToken);
+        if (!decoded || !decoded.sub) {
+            //console.error('[Auth] Login failed due to invalid token.');
+            logout();
+            return;
+        }
 
+        //console.log('[Auth] Login successful for user:', decoded.sub);
+        setLoggedInUser(decoded.sub);
         scheduleTokenRefresh(newAccessToken);
     };
 
     const logout = async () => {
         try {
             await axios.post('/api/auth/logout', null, { withCredentials: true });
-
+            //console.log('[Auth] Server logout successful');
+        } catch (error) {
+            //console.error('[Auth] Server logout failed:', error);
+        } finally {
             localStorage.removeItem('accessToken');
             setAccessToken(null);
             setLoggedInUser(null);
             if (refreshTimeoutRef.current) clearTimeout(refreshTimeoutRef.current);
-        } catch (error) {
-            console.error('Logout failed:', error);
         }
     };
 
