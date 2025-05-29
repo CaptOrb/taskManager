@@ -205,22 +205,41 @@ Resources:
           FromPort: 3306
           ToPort: 3306
           DestinationSecurityGroupId: !GetAtt RDSSecurityGroup.GroupId
-        - IpProtocol: -1
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
           CidrIp: 0.0.0.0/0
-          Description: Allow outbound to NAT Instance and internet
-
+        - Description: Allow outbound for DNS resolution
+          IpProtocol: tcp
+          FromPort: 53
+          ToPort: 53
+          CidrIp: 0.0.0.0/0
+        - Description: Allow outbound for DNS resolution (UDP)
+          IpProtocol: udp
+          FromPort: 53
+          ToPort: 53
+          CidrIp: 0.0.0.0/0
   ECSSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Security Group for ECS host - only allows SSM access via outbound connection
+      GroupDescription: Security Group for ECS host - allows essential outbound access for SSM, ECR, CloudWatch, and DNS
       VpcId: !Ref VPC
       # No inbound rules are strictly necessary for Session Manager, as it uses outbound connections.
-      # could add egress rules here if the ECS host needed specific outbound access not covered by NAT.
-      # For now, default egress is allowed to 0.0.0.0/0, which is sufficient for SSM.
       SecurityGroupEgress:
-        - IpProtocol: -1
-          FromPort: -1
-          ToPort: -1
+        - Description: Allow outbound HTTPS to AWS services (SSM, ECR, CloudWatch)
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - Description: Allow outbound for DNS resolution (TCP)
+          IpProtocol: tcp
+          FromPort: 53
+          ToPort: 53
+          CidrIp: 0.0.0.0/0
+        - Description: Allow outbound for DNS resolution (UDP)
+          IpProtocol: udp
+          FromPort: 53
+          ToPort: 53
           CidrIp: 0.0.0.0/0
 
   ALBSecurityGroup:
@@ -552,10 +571,8 @@ Resources:
           TargetOriginId: S3Origin
           ViewerProtocolPolicy: redirect-to-https
           AllowedMethods: [GET, HEAD]
-          ForwardedValues:
-            QueryString: false
-            Headers:
-              - Origin
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6  # CachingOptimized
+          ResponseHeadersPolicyId: 67f7725c-6f97-4210-82d7-5512b31e9d03 # Managed-SecurityHeadersPolicy 
         CacheBehaviors:
           - PathPattern: /api/*
             TargetOriginId: ALBOrigin
@@ -574,6 +591,7 @@ Resources:
             ErrorCode: 404
             ResponseCode: 200
             ResponsePagePath: /index.html
+        HttpVersion : http2
 
         ViewerCertificate:
           AcmCertificateArn: "arn:aws:acm:us-east-1:971422677915:certificate/971d66b8-bcab-4c82-9409-56ed95dc3d0c"
