@@ -1,3 +1,4 @@
+name: Deploy TaskApp to AWS
 on:
   workflow_dispatch:
 
@@ -10,7 +11,7 @@ jobs:
       contents: read
     steps:
       - name: Ensure workflow runs only on aws_deploy
-        if: github.event.ref != 'refs/heads/aws_deploy'
+        if: github.ref != 'refs/heads/aws_deploy'
         run: |
           echo "This workflow is restricted to the aws_deploy branch."
           exit 1
