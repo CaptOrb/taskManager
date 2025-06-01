@@ -384,12 +384,17 @@ Resources:
                   - cloudfront:CreateInvalidation
                 Resource:
                   - !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
-              - Sid: AllowECSAndECRDeployments
+              - Sid: AllowEcrLogin
+                Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                Resource: "*"
+
+              - Sid: AllowEcsAndEcrDeployments
                 Effect: Allow
                 Action:
                   - ecs:UpdateService
                   - ecs:DescribeServices
-                  - ecr:GetAuthorizationToken
                   - ecr:BatchCheckLayerAvailability
                   - ecr:InitiateLayerUpload
                   - ecr:UploadLayerPart

@@ -106,7 +106,7 @@ jobs:
 
       - name: Tag and Push the Docker Image to ECR
         run: |
-          docker tag task-backend:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com/taskapp:latest
+          docker tag taskapp:latest ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com/taskapp:latest
           docker push ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com/taskapp:latest
 
       - name: Update ECS Service
