@@ -403,7 +403,7 @@ Resources:
                 Resource:
                   - !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:cluster/${ECSCluster}"
                   - !Sub "arn:aws:ecs:${AWS::Region}:${AWS::AccountId}:service/${ECSCluster}/*"
-                  - !Sub "arn:aws:ecr:eu-west-1:${AWS::AccountId}:repository/taskapp"
+                  - !Sub "arn:aws:ecr:${AWS::Region}:${AWS::AccountId}:repository/taskapp"
 
   GitHubActionsOidcProvider:
     Type: AWS::IAM::OIDCProvider
@@ -492,7 +492,9 @@ Resources:
             - Name: SERVER_ADDRESS
               Value: "0.0.0.0"
             - Name: LAST_UPDATE_TRIGGER
-              Value: "20250531-003"
+              Value: "2025-06-01-003"
+            - Name: SPRING_JPA_OPEN_IN_VIEW
+              Value: "false"
 
   ECSService:
     Type: AWS::ECS::Service
@@ -618,6 +620,9 @@ Resources:
               Service: cloudfront.amazonaws.com
             Action: s3:GetObject
             Resource: !Sub 'arn:aws:s3:::${FrontendBucket}/*'
+            Condition:
+              StringEquals:
+                AWS:SourceArn: !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
 
   CloudFrontOAC:
     Type: AWS::CloudFront::OriginAccessControl
