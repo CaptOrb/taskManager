@@ -1,6 +1,8 @@
 name: Deploy TaskApp to AWS
 on:
-  workflow_dispatch:
+  push:
+    branches:
+      - aws_deploy 
 
 jobs:
   get_caller_identity:
@@ -10,11 +12,6 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: Ensure workflow runs only on aws_deploy
-        if: github.ref != 'refs/heads/aws_deploy'
-        run: |
-          echo "This workflow is restricted to the aws_deploy branch."
-          exit 1
       - name: Checkout
         uses: actions/checkout@v4.1.1
             
