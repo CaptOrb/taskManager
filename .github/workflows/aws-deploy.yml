@@ -5,27 +5,62 @@ on:
       - aws_deploy 
 
 jobs:
-  get_caller_identity:
-    name: Deploy Site
+  build-backend:
+    name: Build & Test Backend
     runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4.1.1
-            
-      - name: Configure AWS credentials from Test account
-        uses: aws-actions/configure-aws-credentials@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_Actions_Role
-          aws-region: eu-west-1
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Clean and Build Backend with Maven
+        run: |
+          cd backend
+          mvn clean install -DskipTests
+
+      - name: Run Tests with Maven
+        run: |
+          cd backend
+          mvn test
+
+      - name: Build Docker image
+        run: |
+          docker build -t task-backend ./backend
+
+  build-frontend:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Install frontend dependencies and build
         working-directory: frontend
         run: |
           npm ci
           npm run build
+
+  deploy-frontend:
+    name: Deploy Frontend to AWS
+    runs-on: ubuntu-latest
+    needs: build-frontend
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_Actions_Role
+          aws-region: eu-west-1
 
       - name: Upload build to S3
         run: |
