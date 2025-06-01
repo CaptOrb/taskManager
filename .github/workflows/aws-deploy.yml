@@ -1,0 +1,40 @@
+on:
+  workflow_dispatch:
+
+jobs:
+  get_caller_identity:
+    name: Deploy Site
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Ensure workflow runs only on aws_deploy
+        if: github.event.ref != 'refs/heads/aws_deploy'
+        run: |
+          echo "This workflow is restricted to the aws_deploy branch."
+          exit 1
+      - name: Checkout
+        uses: actions/checkout@v4.1.1
+            
+      - name: Configure AWS credentials from Test account
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_Actions_Role
+          aws-region: eu-west-1
+
+      - name: Install frontend dependencies and build
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Upload build to S3
+        run: |
+          aws s3 cp frontend/dist s3://${{ secrets.AWS_S3_BUCKET }}/ --recursive
+
+      - name: Invalidate CloudFront cache
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DIST_ID }} \
+            --paths "/*"
