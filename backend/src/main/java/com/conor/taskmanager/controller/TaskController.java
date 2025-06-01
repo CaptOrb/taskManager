@@ -58,7 +58,7 @@ public class TaskController {
         User currentUser = userRepo.findByUserName(username);
 
         if (currentUser == null) {
-            Map<String, String> error = Map.of("error", "Unauthorized");
+            Map<String, String> error = Map.of("error", "Unauthorised");
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .contentType(MediaType.APPLICATION_JSON)
                     .body(error);
