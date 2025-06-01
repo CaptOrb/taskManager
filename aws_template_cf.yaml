@@ -351,7 +351,7 @@ Resources:
             Action: sts:AssumeRoleWithWebIdentity
             Condition:
               StringLike:
-                'token.actions.githubusercontent.com:sub': [!Ref GitHubRepoSubClaim] 
+                'token.actions.githubusercontent.com:sub': [!Ref GitHubRepoSubClaim]
               StringEqualsIgnoreCase:
                 'token.actions.githubusercontent.com:aud': sts.amazonaws.com
 
@@ -369,7 +369,7 @@ Resources:
         - PolicyName: GitHubActionsDeployPolicy
           PolicyDocument:
             Version: '2012-10-17'
-            Statement:        
+            Statement:
               - Sid: AllowS3Actions
                 Effect: Allow
                 Action:
@@ -384,6 +384,21 @@ Resources:
                   - cloudfront:CreateInvalidation
                 Resource:
                   - !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
+              - Sid: AllowECSAndECRDeployments
+                Effect: Allow
+                Action:
+                  - ecs:UpdateService
+                  - ecs:DescribeServices
+                  - ecr:GetAuthorizationToken
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:InitiateLayerUpload
+                  - ecr:UploadLayerPart
+                  - ecr:CompleteLayerUpload
+                  - ecr:PutImage
+                Resource:
+                  - !Sub "arn:aws:ecs:eu-west-1:${AWS::AccountId}:service/${ECSCluster}/${ECSService}"
+                  - !Sub "arn:aws:ecs:eu-west-1:${AWS::AccountId}:cluster/${ECSCluster}"
+                  - !Sub "arn:aws:ecr:eu-west-1:${AWS::AccountId}:repository/taskapp"
 
   GitHubActionsOidcProvider:
     Type: AWS::IAM::OIDCProvider
