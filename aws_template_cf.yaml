@@ -4,7 +4,7 @@ Parameters:
   GitHubRepoSubClaim:
     Type: String
     Description: The 'sub' claim for the GitHub OIDC token
-    Default: 'repo:captorb/taskManager/*'
+    Default: 'repo:CaptOrb/taskManager/*'
 Resources:
   ##################
   ## Networking
@@ -384,7 +384,7 @@ Resources:
                   - cloudfront:CreateInvalidation
                 Resource:
                   - !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
-                  
+
   GitHubActionsOidcProvider:
     Type: AWS::IAM::OIDCProvider
     Properties:
