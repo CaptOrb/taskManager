@@ -7,7 +7,7 @@ on:
 jobs:
   build-backend:
     name: Build & Test Backend
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -81,7 +81,7 @@ jobs:
 
   build-deploy-backend:
     name: Build & Deploy Backend to ECS
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04-arm
     needs: build-backend
     permissions:
       id-token: write
@@ -96,16 +96,9 @@ jobs:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/GitHub_Actions_Role
           aws-region: eu-west-1
  
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image for ARM64
+      - name: Build Docker image (native ARM64)
         run: |
-            docker buildx build \
-            --platform linux/arm64 \
-            -t taskapp:latest \
-            ./backend \
-            --load
+          docker build -t taskapp:latest ./backend
       - name: Login to Amazon ECR
         run: |
           aws ecr get-login-password --region eu-west-1 | docker login --username AWS --password-stdin ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com
