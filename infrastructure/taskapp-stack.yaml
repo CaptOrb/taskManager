@@ -492,7 +492,7 @@ Resources:
             - Name: SERVER_ADDRESS
               Value: "0.0.0.0"
             - Name: LAST_UPDATE_TRIGGER
-              Value: "2025-06-01-003"
+              Value: "2025-06-02-001"
             - Name: SPRING_JPA_OPEN_IN_VIEW
               Value: "false"
 
@@ -548,10 +548,10 @@ Resources:
       VpcId: !Ref VPC
       TargetType: ip
       HealthCheckPath: /health
-      HealthCheckIntervalSeconds: 30
+      HealthCheckIntervalSeconds: 60
       HealthCheckTimeoutSeconds: 5
-      HealthyThresholdCount: 3
-      UnhealthyThresholdCount: 2
+      HealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
 
   ALBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
