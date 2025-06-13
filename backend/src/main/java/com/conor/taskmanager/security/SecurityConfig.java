@@ -53,12 +53,11 @@ public class SecurityConfig {
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost",
-            "http://localhost:3000",
-            "https://qube.app.librepush.net",
-            "https://taskapp.librepush.net",
-            "https://taskapp.conordev.com"
-        ));
+                "http://localhost",
+                "http://localhost:3000",
+                "https://qube.app.librepush.net",
+                "https://taskapp.librepush.net",
+                "https://taskapp.conordev.com"));
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);

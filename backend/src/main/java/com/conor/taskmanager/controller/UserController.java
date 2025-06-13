@@ -32,7 +32,6 @@ public class UserController {
     private final JwtService jwtService;
     private final UserService userService;
 
-
     public UserController(UserRepository userRepository, PasswordEncoder passwordEncoder,
             AuthenticationManager authenticationManager, JwtService jwtService, UserService userService) {
         this.userRepository = userRepository;
@@ -52,11 +51,11 @@ public class UserController {
         if (userRepository.findByEmail(user.getEmail()) != null) {
             return ResponseEntity.badRequest().body("Email is already taken.");
         }
-        if (user.getUserName() !=null && user.getUserName().length() < 3) {
+        if (user.getUserName() != null && user.getUserName().length() < 3) {
             return ResponseEntity.badRequest().body("Username must be atleast 3 characters long.");
         }
 
-        if (user.getPassword() !=null && user.getPassword().length() < 7) {
+        if (user.getPassword() != null && user.getPassword().length() < 7) {
             return ResponseEntity.badRequest().body("Password must be atleast 7 characters long.");
         }
 
@@ -76,14 +75,14 @@ public class UserController {
             return ResponseEntity.ok(response);
         } catch (UsernameNotFoundException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                 .body(Collections.singletonMap("error", "Invalid username or password"));
+                    .body(Collections.singletonMap("error", "Invalid username or password"));
         } catch (org.springframework.security.core.AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                                 .body(Collections.singletonMap("error", "Invalid username or password"));
+                    .body(Collections.singletonMap("error", "Invalid username or password"));
         } catch (Exception e) {
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                 .body(Collections.singletonMap("error", "An unexpected error occurred"));
+                    .body(Collections.singletonMap("error", "An unexpected error occurred"));
         }
     }
 
