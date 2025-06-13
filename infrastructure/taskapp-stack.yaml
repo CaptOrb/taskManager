@@ -172,6 +172,9 @@ Resources:
       # The ECSInstanceRole (attached via InstanceProfile) provides `AmazonSSMManagedInstanceCore`
       # which gives necessary permissions for SSM Agent. We'll use the same role for NAT instance.
       IamInstanceProfile: !Ref InstanceProfile
+      MetadataOptions:
+        HttpTokens: required
+        HttpEndpoint: enabled
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
