@@ -9,7 +9,7 @@ import com.conor.taskmanager.model.Task;
 import com.conor.taskmanager.model.User;
 
 @Repository
-public interface TaskRepository extends JpaRepository<Task, String> {
+public interface TaskRepository extends JpaRepository<Task, Integer> {
 
 	@Query("select t FROM Task t WHERE t.id = ?1")
 	public Task findTaskByID(int id);

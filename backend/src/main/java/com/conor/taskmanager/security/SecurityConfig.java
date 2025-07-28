@@ -37,7 +37,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
-
+                        .requestMatchers("/", "/health").permitAll()
 
                         .anyRequest().authenticated() // Protect all other API endpoints
                 )
@@ -53,11 +53,11 @@ public class SecurityConfig {
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(
-            "http://localhost",
-            "http://localhost:3000",
-            "https://qube.app.librepush.net",
-            "https://taskapp.librepush.net"
-        ));
+                "http://localhost",
+                "http://localhost:3000",
+                "https://qube.app.librepush.net",
+                "https://taskapp.librepush.net",
+                "https://taskapp.conordev.com"));
         configuration.addAllowedMethod("*");
         configuration.addAllowedHeader("*");
         configuration.setAllowCredentials(true);

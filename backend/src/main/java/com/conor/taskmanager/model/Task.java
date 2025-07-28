@@ -123,6 +123,6 @@ public class Task {
     public enum Status {
         PENDING,
         IN_PROGRESS,
-        COMPLETED,   
-     }
+        COMPLETED,
+    }
 }

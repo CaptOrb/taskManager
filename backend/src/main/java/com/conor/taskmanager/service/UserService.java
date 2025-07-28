@@ -30,8 +30,8 @@ public class UserService {
 
   }
 
-    public LoginResponse login(@RequestBody Login body) {
-          UsernamePasswordAuthenticationToken authInputToken = new UsernamePasswordAuthenticationToken(body.getUserName(),
+  public LoginResponse login(@RequestBody Login body) {
+    UsernamePasswordAuthenticationToken authInputToken = new UsernamePasswordAuthenticationToken(body.getUserName(),
         body.getPassword());
     authManager.authenticate(authInputToken);
     String token = jwtService.generateToken(body.getUserName());
@@ -40,7 +40,7 @@ public class UserService {
       throw new UsernameNotFoundException("User not found");
     }
     user.setJwtToken(token);
-    return new LoginResponse(user.getUserName(), token);  
+    return new LoginResponse(user.getUserName(), token);
   }
 
   public User findByEmail(String email) {
