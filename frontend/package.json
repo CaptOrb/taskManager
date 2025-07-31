@@ -9,10 +9,10 @@
     "serve": "vite preview"
   },
   "dependencies": {
-    "@testing-library/user-event": "^14.5.2",
-    "axios": "^1.8.2",
-    "flowbite": "^3.1.1",
-    "flowbite-react": "^0.10.2",
+    "@testing-library/user-event": "^14.6.1",
+    "axios": "^1.11.0",
+    "flowbite": "^3.1.2",
+    "flowbite-react": "^0.12.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-markdown": "^9.0.1",
