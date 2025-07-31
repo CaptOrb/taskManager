@@ -1,9 +1,9 @@
-FROM maven:eclipse-temurin AS build  
+FROM maven:eclipse-temurin AS build
 COPY pom.xml .
 
 RUN mvn dependency:go-offline
 
-COPY . . 
+COPY . .
 RUN mvn package -DskipTests
 
 FROM eclipse-temurin:22

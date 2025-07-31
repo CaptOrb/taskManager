@@ -23,7 +23,7 @@ public class JwtService {
 
     // Secret Key for signing the JWT. It should be kept private.
     @Value("${jwt.secret}")
-    private String secret; // Injected secret key
+    private String secret; 
 
     public String generateToken(String userName) {
         Map<String, Object> claims = new HashMap<>();
