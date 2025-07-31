@@ -29,14 +29,14 @@ public class JwtService {
     public String generateToken(String userName) {
         Map<String, Object> claims = new HashMap<>();
 
-        // Build JWT token with claims, subject, issued time, expiration time, and
-        // signing algorithm
-        return Jwts.builder()
-                .claims(claims)
+        return Jwts
+                .builder()
+                .claims().add(claims).and()
                 .subject(userName)
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
-                .signWith(getSignKey()).compact();
+                .signWith(getSignKey(), Jwts.SIG.HS256)
+                .compact();
     }
 
     // Creates a signing key from the base64 encoded secret.
