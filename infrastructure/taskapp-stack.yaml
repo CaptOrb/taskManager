@@ -159,7 +159,7 @@ Resources:
     Type: AWS::EC2::Instance
     DependsOn: AttachGateway
     Properties:
-      ImageId: ami-013f87f9dab480555 # Amazon Linux 2 ECS Optimized ARM64 (eu-west-1)
+      ImageId: ami-03d2fcd553ebee199
       InstanceType: t4g.micro
       SourceDestCheck: false
       SubnetId: !Ref PublicSubnet
@@ -339,8 +339,8 @@ Resources:
                 Action:
                   - secretsmanager:GetSecretValue
                   - secretsmanager:DescribeSecret
-                Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:/taskapp/db-credentials"
-
+                Resource: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:/taskapp/db-credentials-zY5O7P"
+            
   GitHubActionsRole:
     Type: AWS::IAM::Role
     Properties:
@@ -486,12 +486,6 @@ Resources:
           Environment:
             - Name: SPRING_DATASOURCE_URL
               Value: !Sub "jdbc:mysql://${RDSInstance.Endpoint.Address}:3306/tasks?allowPublicKeyRetrieval=true&useSSL=false"
-            - Name: SPRING_DATASOURCE_USERNAME
-              Value: !Sub "{{resolve:secretsmanager:/taskapp/db-credentials:SecretString:username}}"
-            - Name: SPRING_DATASOURCE_PASSWORD
-              Value: !Sub "{{resolve:secretsmanager:/taskapp/db-credentials:SecretString:password}}"
-            - Name: JWT_SECRET
-              Value: !Sub "{{resolve:secretsmanager:/taskapp/db-credentials:SecretString:jwt}}"
             - Name: SERVER_ADDRESS
               Value: "0.0.0.0"
             - Name: LAST_UPDATE_TRIGGER
@@ -501,6 +495,14 @@ Resources:
             - Name: SPRING_JPA_HIBERNATE_DDL_AUTO
               Value: update
 
+          Secrets:
+            - Name: SPRING_DATASOURCE_USERNAME
+              ValueFrom: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:/taskapp/db-credentials:username::"
+            - Name: SPRING_DATASOURCE_PASSWORD
+              ValueFrom: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:/taskapp/db-credentials:password::"
+            - Name: JWT_SECRET
+
+              ValueFrom: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:/taskapp/db-credentials:jwt::"
   ECSService:
     Type: AWS::ECS::Service
     DependsOn:
