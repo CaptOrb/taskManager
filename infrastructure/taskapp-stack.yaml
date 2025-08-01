@@ -4,7 +4,7 @@ Parameters:
   GitHubRepoSubClaim:
     Type: String
     Description: The 'sub' claim for the GitHub OIDC token
-    Default: 'repo:CaptOrb/taskManager/*'
+    Default: 'repo:CaptOrb/taskManager:*'
 Resources:
   ##################
   ## Networking
@@ -498,6 +498,8 @@ Resources:
               Value: "2025-06-02-001"
             - Name: SPRING_JPA_OPEN_IN_VIEW
               Value: "false"
+            - Name: SPRING_JPA_HIBERNATE_DDL_AUTO
+              Value: update
 
   ECSService:
     Type: AWS::ECS::Service
@@ -577,7 +579,7 @@ Resources:
       AllocatedStorage: 20
       DBInstanceClass: db.t3.micro
       Engine: mysql
-      EngineVersion: 8.0
+      EngineVersion: 8.4.4
       MasterUsername: !Sub "{{resolve:secretsmanager:/taskapp/db-credentials:SecretString:username}}"
       MasterUserPassword: !Sub "{{resolve:secretsmanager:/taskapp/db-credentials:SecretString:password}}"
       VPCSecurityGroups: [!Ref RDSSecurityGroup]
