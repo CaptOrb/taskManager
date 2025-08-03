@@ -118,7 +118,7 @@ Resources:
     Properties:
       RouteTableId: !Ref PrivateRouteTable
       DestinationCidrBlock: 0.0.0.0/0
-      InstanceId: !Ref NATInstance
+      InstanceId: !Ref FckNatInstance
 
   PrivateSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -133,64 +133,59 @@ Resources:
       RouteTableId: !Ref PrivateRouteTable
 
   ##################
-  ## NAT Instance (Replaces NAT Gateway)
+  ## Fck-Nat Instance
   ##################
-  NATSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Enable NAT instance traffic and allow SSM access
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: -1 # All protocols
-          FromPort: -1
-          ToPort: -1
-          CidrIp: 10.0.2.0/24 # Your PrivateSubnet CIDR
-        - IpProtocol: -1
-          FromPort: -1
-          ToPort: -1
-          CidrIp: 10.0.3.0/24 # Your PrivateSubnet2 CIDR
-      SecurityGroupEgress:
-        - IpProtocol: -1
-          FromPort: -1
-          ToPort: -1
-          CidrIp: 0.0.0.0/0
-
-  NATInstance:
+  FckNatInstance:
     Type: AWS::EC2::Instance
-    DependsOn: AttachGateway
     Properties:
-      ImageId: ami-03d2fcd553ebee199
       InstanceType: t4g.micro
-      SourceDestCheck: false
+      SourceDestCheck: 'false'
+      ImageId: ami-0f9f15428c9ec17db
       SubnetId: !Ref PublicSubnet
-      SecurityGroupIds:
-        - !Ref NATSecurityGroup
       Tags:
         - Key: Name
-          Value: taskapp-NATInstance
-      # Ensure the NAT instance can communicate with SSM.
-      # The ECSInstanceRole (attached via InstanceProfile) provides `AmazonSSMManagedInstanceCore`
-      # which gives necessary permissions for SSM Agent. We'll use the same role for NAT instance.
-      IamInstanceProfile: !Ref InstanceProfile
-      MetadataOptions:
-        HttpTokens: required
-        HttpEndpoint: enabled
-      UserData:
-        Fn::Base64: !Sub |
-          #!/bin/bash
-          echo 1 > /proc/sys/net/ipv4/ip_forward
-          /sbin/iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
-          /sbin/iptables -A FORWARD -i eth0 -o eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT
-          /sbin/iptables -A FORWARD -i eth0 -o eth0 -j ACCEPT
-          /sbin/iptables -A FORWARD -i eth0 -o eth0 -m state --state RELATED,ESTABLISHED -j ACCEPT
-          /sbin/iptables -A FORWARD -i eth0 -o eth0 -j ACCEPT
-          # Persist iptables rules on reboot for Amazon Linux 2
-          yum install -y iptables-services
-          systemctl enable iptables
-          systemctl start iptables
-          iptables-save > /etc/sysconfig/iptables
-          # Enable automatic updates (optional, for maintenance)
-          yum update -y
+          Value: !Sub "${AWS::StackName}-FckNatInstance"
+      SecurityGroupIds:
+        - !Ref FckNatSecurityGroup
+      IamInstanceProfile: !Ref FckNatInstanceProfile
+
+  FckNatSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        VpcId: !Ref VPC
+        GroupDescription: "Allow traffic from private subnets to FckNat instance"
+        SecurityGroupIngress:
+          - IpProtocol: -1
+            FromPort: -1
+            ToPort: -1
+            SourceSecurityGroupId: !Ref ECSSecurityGroup
+        SecurityGroupEgress:
+          - IpProtocol: -1
+            FromPort: -1
+            ToPort: -1
+            CidrIp: 0.0.0.0/0
+
+  FckNatRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+
+  FckNatInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Roles:
+        - !Ref FckNatRole
+
 
 
   ##################
@@ -451,7 +446,7 @@ Resources:
       LaunchTemplate:
         LaunchTemplateId: !Ref ECSLaunchTemplate
         Version: !GetAtt ECSLaunchTemplate.LatestVersionNumber
-      VPCZoneIdentifier: [!Ref PublicSubnet, !Ref PublicSubnet2]
+      VPCZoneIdentifier: [!Ref PrivateSubnet, !Ref PrivateSubnet2]
       MinSize: 1
       MaxSize: 1
       DesiredCapacity: 1
@@ -489,7 +484,7 @@ Resources:
             - Name: SERVER_ADDRESS
               Value: "0.0.0.0"
             - Name: LAST_UPDATE_TRIGGER
-              Value: "2025-06-02-001"
+              Value: "2025-06-03-001"
             - Name: SPRING_JPA_OPEN_IN_VIEW
               Value: "false"
             - Name: SPRING_JPA_HIBERNATE_DDL_AUTO
