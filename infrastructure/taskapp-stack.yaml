@@ -427,7 +427,7 @@ Resources:
       LaunchTemplateName: !Sub '${AWS::StackName}-ecs-lt'
       LaunchTemplateData:
         InstanceType: t4g.small
-        ImageId: ami-013f87f9dab480555 # Amazon Linux 2 ECS Optimized ARM64 (eu-west-1)
+        ImageId: ami-03d80fd8048bc58b6 # Amazon Linux 2 ECS Optimized ARM64 (eu-west-1)
         IamInstanceProfile:
           Name: !Ref InstanceProfile
         SecurityGroupIds:
@@ -442,13 +442,18 @@ Resources:
 
   ECSAutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
+    UpdatePolicy:
+      AutoScalingRollingUpdate:
+        MinInstancesInService: 1
+        MaxBatchSize: 1
+        PauseTime: PT2M
     Properties:
       LaunchTemplate:
         LaunchTemplateId: !Ref ECSLaunchTemplate
         Version: !GetAtt ECSLaunchTemplate.LatestVersionNumber
       VPCZoneIdentifier: [!Ref PrivateSubnet, !Ref PrivateSubnet2]
       MinSize: 1
-      MaxSize: 1
+      MaxSize: 2
       DesiredCapacity: 1
 
   ECSLogGroup:
