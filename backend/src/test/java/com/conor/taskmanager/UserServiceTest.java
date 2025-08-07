@@ -50,14 +50,20 @@ class UserServiceTest {
     @Test
     void testRegisterUser() {
         User user = new User();
+        user.setUserName("testUser");
+        user.setEmail("test@example.com");
         user.setPassword("plainPassword");
 
+        when(userRepository.findByUserName("testUser")).thenReturn(null);
+        when(userRepository.findByEmail("test@example.com")).thenReturn(null);
         when(passwordEncoder.encode("plainPassword")).thenReturn("encodedPassword");
+        when(jwtService.generateToken("testUser")).thenReturn("mockedToken");
         when(userRepository.save(any(User.class))).thenReturn(user);
 
         User registeredUser = userService.registerUser(user);
 
         assertEquals("encodedPassword", registeredUser.getPassword());
+        assertEquals("mockedToken", registeredUser.getJwtToken());
         verify(userRepository, times(1)).save(user);
     }
 
