@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.conor.taskmanager.model.Login;
 import com.conor.taskmanager.model.LoginResponse;
+import com.conor.taskmanager.model.PasswordChangeRequest;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.security.JwtService;
@@ -81,6 +82,24 @@ public class UserController {
                     .body(Collections.singletonMap("error", "Invalid username or password"));
         } catch (Exception e) {
             System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "An unexpected error occurred"));
+        }
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody PasswordChangeRequest request) {
+        try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            userService.changePassword(username, request);
+            return ResponseEntity.ok(Collections.singletonMap("message", "Password changed successfully"));
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("error", "User not found"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("error", e.getMessage()));
+        } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Collections.singletonMap("error", "An unexpected error occurred"));
         }

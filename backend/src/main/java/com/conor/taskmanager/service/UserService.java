@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 import com.conor.taskmanager.model.Login;
 import com.conor.taskmanager.model.LoginResponse;
+import com.conor.taskmanager.model.PasswordChangeRequest;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.security.JwtService;
@@ -46,6 +47,30 @@ public class UserService {
   public User findByEmail(String email) {
     return userRepository.findByEmail(email);
 
+  }
+
+  public boolean changePassword(String username, PasswordChangeRequest request) {
+    User user = userRepository.findByUserName(username);
+    if (user == null) {
+      throw new UsernameNotFoundException("User not found");
+    }
+
+    if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+      throw new IllegalArgumentException("Current password is incorrect");
+    }
+
+    if (request.getNewPassword() == null || request.getNewPassword().length() < 7) {
+      throw new IllegalArgumentException("New password must be at least 7 characters long");
+    }
+
+    if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+      throw new IllegalArgumentException("New password and confirmation password do not match");
+    }
+
+    user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+    userRepository.save(user);
+    
+    return true;
   }
 
 }

@@ -1,6 +1,7 @@
 package com.conor.taskmanager;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -22,6 +23,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import com.conor.taskmanager.controller.UserController;
 import com.conor.taskmanager.model.Login;
 import com.conor.taskmanager.model.LoginResponse;
+import com.conor.taskmanager.model.PasswordChangeRequest;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.security.JwtService;
@@ -285,5 +287,76 @@ public class UserControllerTest {
                 .andDo(print())
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.error").value("An unexpected error occurred"));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void changePassword_whenValidRequest_returnsSuccess() throws Exception {
+        when(userService.changePassword(eq("test@example.com"), any(PasswordChangeRequest.class))).thenReturn(true);
+
+        mockMvc.perform(post("/api/auth/change-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"oldPassword\",\"newPassword\":\"newPassword123\",\"confirmPassword\":\"newPassword123\"}"))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.message").value("Password changed successfully"));
+
+        verify(userService).changePassword(eq("test@example.com"), any(PasswordChangeRequest.class));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void changePassword_whenCurrentPasswordIncorrect_returnsBadRequest() throws Exception {
+        when(userService.changePassword(eq("test@example.com"), any(PasswordChangeRequest.class)))
+                .thenThrow(new IllegalArgumentException("Current password is incorrect"));
+
+        mockMvc.perform(post("/api/auth/change-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"wrongPassword\",\"newPassword\":\"newPassword123\",\"confirmPassword\":\"newPassword123\"}"))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Current password is incorrect"));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void changePassword_whenNewPasswordTooShort_returnsBadRequest() throws Exception {
+        when(userService.changePassword(eq("test@example.com"), any(PasswordChangeRequest.class)))
+                .thenThrow(new IllegalArgumentException("New password must be at least 7 characters long"));
+
+        mockMvc.perform(post("/api/auth/change-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"oldPassword\",\"newPassword\":\"123\",\"confirmPassword\":\"123\"}"))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("New password must be at least 7 characters long"));
+    }
+
+    @Test
+    @WithMockUser(username = "test@example.com")
+    public void changePassword_whenPasswordsDontMatch_returnsBadRequest() throws Exception {
+        when(userService.changePassword(eq("test@example.com"), any(PasswordChangeRequest.class)))
+                .thenThrow(new IllegalArgumentException("New password and confirmation password do not match"));
+
+        mockMvc.perform(post("/api/auth/change-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"oldPassword\",\"newPassword\":\"newPassword123\",\"confirmPassword\":\"differentPassword\"}"))
+                .andDo(print())
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("New password and confirmation password do not match"));
+    }
+
+    @Test
+    @WithMockUser(username = "nonexistent@example.com")
+    public void changePassword_whenUserNotFound_returnsNotFound() throws Exception {
+        when(userService.changePassword(eq("nonexistent@example.com"), any(PasswordChangeRequest.class)))
+                .thenThrow(new UsernameNotFoundException("User not found"));
+
+        mockMvc.perform(post("/api/auth/change-password")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"currentPassword\":\"oldPassword\",\"newPassword\":\"newPassword123\",\"confirmPassword\":\"newPassword123\"}"))
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("User not found"));
     }
 }
