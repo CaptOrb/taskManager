@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import axios from 'axios';
+import { useState, FormEvent } from 'react';
+import axios, { AxiosError } from 'axios';
 import { useNavigate} from 'react-router-dom';
 
 const Register = () => {
@@ -11,7 +11,7 @@ const Register = () => {
     const [successMessage, setSuccessMessage] = useState('');
     const navigate = useNavigate(); 
 
-    const handleRegister = async (e) => {
+    const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
 
@@ -26,16 +26,16 @@ const Register = () => {
             navigate('/login?success=true');
             setSuccessMessage('Registration successful! Please login.');
         } catch (error) {
-            setSuccessMessage(null);
-            if (error.response) {
-                setError(`Registration failed: ${error.response.data || error.response.statusText}`);
-                console.error('Registration failed with response:', error.response);
-            } else if (error.request) {
-                setError('Registration failed: No response received from server');
-                console.error('Registration failed without response:', error.request);
-            } else {
+            setSuccessMessage('');
+            if (error instanceof AxiosError) {
+                setError(`Registration failed: ${error.response?.data || error.message}`);
+                console.error('Registration failed:', error);
+            } else if (error instanceof Error) {
                 setError(`Registration failed: ${error.message}`);
-                console.error('Registration error message:', error.message);
+                console.error('Registration error:', error);
+            } else {
+                setError('Registration failed: Unknown error occurred');
+                console.error('Unknown error:', error);
             }
         }
     };

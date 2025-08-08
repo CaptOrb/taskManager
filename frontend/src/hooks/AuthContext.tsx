@@ -1,11 +1,27 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const AuthContext = createContext();
+interface AuthContextType {
+    loggedInUser: string | null;
+    login: (token: string) => void;
+    logout: () => void;
+    loading: boolean;
+}
 
-export const AuthProvider = ({ children }) => {
-    const [loggedInUser, setLoggedInUser] = useState(null);
-    const [loading, setLoading] = useState(true);
+interface AuthProviderProps {
+    children: ReactNode;
+}
+
+interface DecodedToken {
+    sub: string;
+    exp: number;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+    const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
+    const [loading, setLoading] = useState<boolean>(true);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -13,7 +29,7 @@ export const AuthProvider = ({ children }) => {
             const token = localStorage.getItem('token');
             if (token) {
                 try {
-                    const decodedToken = JSON.parse(atob(token.split('.')[1]));
+                    const decodedToken: DecodedToken = JSON.parse(atob(token.split('.')[1]));
                     if (decodedToken && decodedToken.exp) {
                         const expiration = decodedToken.exp * 1000;
                         if (expiration < Date.now()) {
@@ -41,13 +57,13 @@ export const AuthProvider = ({ children }) => {
         return () => clearInterval(intervalId);
     }, [navigate]);
 
-    const login = (token) => {
+    const login = (token: string): void => {
         localStorage.setItem('token', token);
-        const decodedToken = JSON.parse(atob(token.split('.')[1]));
+        const decodedToken: DecodedToken = JSON.parse(atob(token.split('.')[1]));
         setLoggedInUser(decodedToken.sub);
     };
 
-    const logout = () => {
+    const logout = (): void => {
         localStorage.removeItem('token');
         setLoggedInUser(null);
     };
@@ -59,6 +75,10 @@ export const AuthProvider = ({ children }) => {
     );
 };
 
-export const useAuth = () => {
-    return useContext(AuthContext);
+export const useAuth = (): AuthContextType => {
+    const context = useContext(AuthContext);
+    if (context === undefined) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
 };

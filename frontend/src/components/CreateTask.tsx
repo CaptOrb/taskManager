@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, FormEvent } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
@@ -11,7 +11,7 @@ const CreateTask = () => {
     const [successMessage, setSuccessMessage] = useState('');
     const navigate = useNavigate();
 
-    const handleTask = async (e) => {
+    const handleTask = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
 
         try {
@@ -34,15 +34,12 @@ const CreateTask = () => {
             navigate('/?success=true'); // Redirect after success
         } catch (error) {
             setSuccessMessage('');
-            if (error.response) {
-                setError(`Task failed: ${error.response.data || error.response.statusText}`);
-                console.error('Task failed with response:', error.response);
-            } else if (error.request) {
-                setError('Task failed: No response received from server');
-                console.error('Task failed without response:', error.request);
-            } else {
+            if (error instanceof Error) {
                 setError(`Task failed: ${error.message}`);
-                console.error('Task error message:', error.message);
+                console.error('Task error:', error);
+            } else {
+                setError('Task failed: Unknown error occurred');
+                console.error('Unknown error:', error);
             }
         }
     };
@@ -74,7 +71,7 @@ const CreateTask = () => {
             <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-white">Description</label>
             <textarea
                 id="description"
-                rows="4"
+                rows={4}
                 placeholder="Enter description (supports Markdown)"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}

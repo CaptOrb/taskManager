@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const MyAccount = () => {
     const [userName, setUserName] = useState('');
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [showPasswordChange, setShowPasswordChange] = useState(false);
-    const [passwordChangeLoading, setPasswordChangeLoading] = useState(false);
-    const [passwordChangeError, setPasswordChangeError] = useState(null);
-    const [passwordChangeSuccess, setPasswordChangeSuccess] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+    const [showPasswordChange, setShowPasswordChange] = useState<boolean>(false);
+    const [passwordChangeLoading, setPasswordChangeLoading] = useState<boolean>(false);
+    const [passwordChangeError, setPasswordChangeError] = useState<string | null>(null);
+    const [passwordChangeSuccess, setPasswordChangeSuccess] = useState<boolean>(false);
     const [passwordForm, setPasswordForm] = useState({
         currentPassword: '',
         newPassword: '',
@@ -36,7 +36,7 @@ const MyAccount = () => {
                 setEmail(data.email);
                 setLoading(false);
             } catch (error) {
-                setError(error.message);
+                setError(error instanceof Error ? error.message : 'Unknown error occurred');
                 setLoading(false);
             }
         };
@@ -44,7 +44,7 @@ const MyAccount = () => {
         fetchCurrentUser();
     }, []);  
 
-    const handlePasswordChange = async (e) => {
+    const handlePasswordChange = async (e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setPasswordChangeLoading(true);
         setPasswordChangeError(null);
@@ -90,13 +90,13 @@ const MyAccount = () => {
             }, 3000);
 
         } catch (error) {
-            setPasswordChangeError(error.message);
+            setPasswordChangeError(error instanceof Error ? error.message : 'Unknown error occurred');
         } finally {
             setPasswordChangeLoading(false);
         }
     };
 
-    const handleInputChange = (e) => {
+    const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
         setPasswordForm(prev => ({
             ...prev,

@@ -1,8 +1,6 @@
-import logo from './logo.svg';
 import './App.css';
 import './index.css';
-import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './hooks/AuthContext';
 import Login from './components/Login';
 import Register from './components/Register';
@@ -15,7 +13,7 @@ import TaskDetail from './components/TaskDetail';
 import ProtectedRoute from './hooks/ProtectedRoute';
 import MyAccount from './components/MyAccount';
 
-function App() {
+function App(): JSX.Element {
     return (
         <AuthProvider>
             <div className="flex flex-col min-h-screen">

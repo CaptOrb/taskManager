@@ -1,14 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, FormEvent } from 'react';
 import axios from 'axios';
 import { useAuth } from '../hooks/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Link } from 'react-router-dom';
 
+interface LoginResponse {
+  jwtToken: string;
+}
 
-function Login() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+function Login(): JSX.Element {
+  const [username, setUsername] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+  const [errorMessage, setErrorMessage] = useState<string>('');
   const { login, loggedInUser } = useAuth();
   const navigate = useNavigate();
 
@@ -22,11 +25,11 @@ function Login() {
   const query = new URLSearchParams(location.search);
   const successMessage = query.get('success');
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
 
     try {
-      const response = await axios.post('/api/auth/login', {
+      const response = await axios.post<LoginResponse>('/api/auth/login', {
         userName: username,
         password: password
       });

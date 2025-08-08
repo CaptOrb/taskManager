@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import { useState, useEffect } from 'react';
+import axios, { AxiosError } from 'axios';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/AuthContext';
 import ReactMarkdown from 'react-markdown';
+import { Task } from '../types';
 
 const TaskDetail = () => {
   const { id } = useParams();
-  const [task, setTask] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [task, setTask] = useState<Task | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
   const [isEditing, setIsEditing] = useState(false);
   const { loggedInUser } = useAuth();
   const navigate = useNavigate();
@@ -37,10 +38,10 @@ const TaskDetail = () => {
           setTaskPriority(fetchedTask.priority);
           setTaskDueDate(new Date(fetchedTask.dueDate).toISOString().slice(0, 16));
         } catch (error) {
-          if (error.response?.status === 404  || error.response?.status === 403) {
+          if (error instanceof AxiosError && (error.response?.status === 404 || error.response?.status === 403)) {
             navigate('/');
           } else {
-          setError('Error fetching task: ' + (error.response?.data || error.message));
+            setError('Error fetching task: ' + (error instanceof AxiosError ? (error.response?.data || error.message) : 'Unknown error'));
           }
         } finally {
           setLoading(false);
@@ -78,7 +79,7 @@ const TaskDetail = () => {
         setIsEditing(false);
       }
     } catch (error) {
-      setError('Error updating task: ' + (error.response?.data || error.message));
+      setError('Error updating task: ' + (error instanceof AxiosError ? (error.response?.data || error.message) : 'Unknown error'));
     }
   };
 
@@ -93,7 +94,7 @@ const TaskDetail = () => {
         });
         navigate('/');
       } catch (error) {
-        setError('Error deleting task: ' + (error.response?.data || error.message));
+        setError('Error deleting task: ' + (error instanceof AxiosError ? (error.response?.data || error.message) : 'Unknown error'));
       }
     }
   };

@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useAuth } from '../hooks/AuthContext';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
+import { Task } from '../types';
 
 const TaskList = () => {
-  const [tasks, setTasks] = useState([]); 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+    const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string>('');
   const { loggedInUser } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const tasksPerPage = 5;
@@ -82,11 +83,11 @@ const TaskList = () => {
     // Sorting logic
     if (Array.isArray(filteredTasks)) {
       if (sortOrder === 'dueDateAsc') {
-        return filteredTasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+        return filteredTasks.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
       } else if (sortOrder === 'createdDate') {
-        return filteredTasks.sort((a, b) => new Date(b.createdDate) - new Date(a.createdDate));
+        return filteredTasks.sort((a, b) => new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime());
       } else if (sortOrder === 'dueDateDesc') {
-        return filteredTasks.sort((a, b) => new Date(b.dueDate) - new Date(a.dueDate));
+        return filteredTasks.sort((a, b) => new Date(b.dueDate).getTime() - new Date(a.dueDate).getTime());
       }
     }
 
