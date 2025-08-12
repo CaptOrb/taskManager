@@ -2,3 +2,16 @@ frontend/node_modules
 frontend/dist
 frontend/npm-debug.log
 frontend/Dockerfile
+
+# Backend artifacts when building from repo root
+backend/target/
+
+# VCS and IDE
+.git
+.mvn/
+.idea/
+.vscode/
+
+# Misc
+**/*.log
+**/.DS_Store
