@@ -78,7 +78,13 @@ const TaskDetail = () => {
         setIsEditing(false);
       }
     } catch (error) {
-      setError('Error updating task: ' + (error.response?.data || error.message));
+      const data = error.response?.data;
+      const msg =
+        (typeof data === 'string' && data) ||
+        data?.error ||
+        (data?.errors && Object.values(data.errors).join(', ')) ||
+        error.message;
+      setError('Error updating task: ' + msg);
     }
   };
 
@@ -197,7 +203,10 @@ const TaskDetail = () => {
           </button>
 
           <button
-            onClick={() => setIsEditing(false)}
+            onClick={() => {
+              setError('');
+              setIsEditing(false);
+            }}
             className="text-white bg-red-700 hover:bg-red-800 font-medium rounded-lg text-sm px-5 py-2.5 mb-2"
           >
             Cancel

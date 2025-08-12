@@ -186,54 +186,64 @@ public class TaskControllerTest {
 
         @Test
         @WithMockUser(username = "1@1.com", password = "password", roles = { "user" })
-        public void createTask_whenTitleIsTooLong() throws Exception {
-
-                Task newTask = new Task(1, "New Task That is exceeds the character limit for the task title",
-                                "Task description", Status.COMPLETED, Priority.MEDIUM, LocalDateTime.now().plusDays(1));
-
-                User mockUser = new User();
-                mockUser.setUserName("1@1.com");
-                mockUser.setId(1L);
-
-                when(userRepo.findByUserName("1@1.com")).thenReturn(mockUser);
-                when(taskRepo.save(any(Task.class))).thenReturn(newTask);
+        public void createTask_whenTitleIsEmpty_returnsBadRequest() throws Exception {
+                Task newTask = new Task(1, "", "Task description", Status.COMPLETED, Priority.MEDIUM,
+                                LocalDateTime.now().plusDays(1));
 
                 mockMvc.perform(post("/api/create/task")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(taskToJson(newTask)))
                                 .andExpect(status().isBadRequest())
-                                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(content().string("Title can only be 50 words."));
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors.title").value("Title cannot be empty"));
         }
 
         @Test
         @WithMockUser(username = "1@1.com", password = "password", roles = { "user" })
-        public void createTask_whenMessageIsTooLong() throws Exception {
-
-                String longDescription = "This description is intentionally too long and exceeds the 500 word limit. " +
-                                "This is just for testing purposes, to ensure that the system handles large descriptions correctly. "
-                                +
-                                "It should trigger a validation error because the length exceeds the 500 word limit, which is the constraint placed on this field. "
-                                +
-                                "The description must be truncated, and this should fail validation, throwing an error message. "
-                                +
-                                "This text is repeated to simulate a long description. ".repeat(10);
-                Task newTask = new Task(1, "New Task", longDescription, Status.COMPLETED, Priority.MEDIUM,
+        public void createTask_whenTitleIsTooLong_returnsBadRequest() throws Exception {
+                String longTitle = "This is a very long title that exceeds the 50 character limit for task titles";
+                Task newTask = new Task(1, longTitle, "Task description", Status.COMPLETED, Priority.MEDIUM,
                                 LocalDateTime.now().plusDays(1));
-
-                User mockUser = new User();
-                mockUser.setUserName("1@1.com");
-                mockUser.setId(1L);
-
-                when(userRepo.findByUserName("1@1.com")).thenReturn(mockUser);
-                when(taskRepo.save(any(Task.class))).thenReturn(newTask);
 
                 mockMvc.perform(post("/api/create/task")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(taskToJson(newTask)))
                                 .andExpect(status().isBadRequest())
-                                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(content().string("Description can only be 500 words."));
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors.title").value("Title cannot exceed 50 characters"));
+        }
+
+        @Test
+        @WithMockUser(username = "1@1.com", password = "password", roles = { "user" })
+        public void createTask_whenDescriptionIsEmpty_returnsBadRequest() throws Exception {
+                Task newTask = new Task(1, "New Task", "", Status.COMPLETED, Priority.MEDIUM,
+                                LocalDateTime.now().plusDays(1));
+
+                mockMvc.perform(post("/api/create/task")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(taskToJson(newTask)))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors.description").value("Description cannot be empty"));
+        }
+
+        @Test
+        @WithMockUser(username = "1@1.com", password = "password", roles = { "user" })
+        public void createTask_whenDescriptionIsTooLong_returnsBadRequest() throws Exception {
+                String longDescription = "This description is intentionally too long and exceeds the 500 character limit. " +
+                                "This is just for testing purposes, to ensure that the system handles large descriptions correctly. " +
+                                "It should trigger a validation error because the length exceeds the 500 character limit, which is the constraint placed on this field. " +
+                                "The description must be truncated, and this should fail validation, throwing an error message. " +
+                                "This text is repeated to simulate a long description. ".repeat(10);
+                Task newTask = new Task(1, "New Task", longDescription, Status.COMPLETED, Priority.MEDIUM,
+                                LocalDateTime.now().plusDays(1));
+
+                mockMvc.perform(post("/api/create/task")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(taskToJson(newTask)))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors.description").value("Description cannot exceed 500 characters"));
         }
 
         @Test
@@ -295,6 +305,69 @@ public class TaskControllerTest {
                 verify(taskService, times(1)).updateTask(eq(taskId), any(Task.class));
         }
 
+        // Test Bean Validation for task updates
+        @Test
+        @WithMockUser(username = "testUser", roles = { "USER" })
+        public void updateExistingTask_whenTitleIsEmpty_returnsBadRequest() throws Exception {
+                int taskId = 1;
+                User currentUser = new User();
+                currentUser.setId(1L);
+                currentUser.setUserName("testUser");
+
+                Task existingTask = new Task();
+                existingTask.setTitle("Old Title");
+                existingTask.setDescription("Old Description");
+                existingTask.setUser(currentUser);
+
+                Task updatedTask = new Task();
+                updatedTask.setTitle(""); // Empty title should fail validation
+                updatedTask.setDescription("New Description");
+                updatedTask.setStatus(Task.Status.IN_PROGRESS);
+                updatedTask.setPriority(Task.Priority.HIGH);
+                updatedTask.setDueDate(LocalDateTime.now().plusDays(2));
+
+                when(userRepo.findByUserName("testUser")).thenReturn(currentUser);
+                when(taskRepo.findTaskByID(taskId)).thenReturn(existingTask);
+
+                mockMvc.perform(put("/api/tasks/" + taskId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updatedTask)))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors.title").value("Title cannot be empty"));
+        }
+
+        @Test
+        @WithMockUser(username = "testUser", roles = { "USER" })
+        public void updateExistingTask_whenDescriptionIsEmpty_returnsBadRequest() throws Exception {
+                int taskId = 1;
+                User currentUser = new User();
+                currentUser.setId(1L);
+                currentUser.setUserName("testUser");
+
+                Task existingTask = new Task();
+                existingTask.setTitle("Old Title");
+                existingTask.setDescription("Old Description");
+                existingTask.setUser(currentUser);
+
+                Task updatedTask = new Task();
+                updatedTask.setTitle("New Title");
+                updatedTask.setDescription(""); // Empty description should fail validation
+                updatedTask.setStatus(Task.Status.IN_PROGRESS);
+                updatedTask.setPriority(Task.Priority.HIGH);
+                updatedTask.setDueDate(LocalDateTime.now().plusDays(2));
+
+                when(userRepo.findByUserName("testUser")).thenReturn(currentUser);
+                when(taskRepo.findTaskByID(taskId)).thenReturn(existingTask);
+
+                mockMvc.perform(put("/api/tasks/" + taskId)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(updatedTask)))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors.description").value("Description cannot be empty"));
+        }
+
         @Test
         @WithMockUser(username = "1@1.com", password = "password", roles = { "user" })
         public void updateExistingTask_whenTaskNotFound_returnsNotFound() throws Exception {
@@ -305,7 +378,7 @@ public class TaskControllerTest {
 
                 when(taskRepo.findTaskByID(taskId)).thenReturn(null);
 
-                mockMvc.perform(put("/api/tasks/update/" + taskId)
+                mockMvc.perform(put("/api/tasks/" + taskId)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(taskToJson(updatedTask)))
                                 .andExpect(status().isNotFound());

@@ -26,17 +26,22 @@ public class UserService {
 
   public User registerUser(User user) {
     validateUserRegistration(user);
-    
+
     if (userRepository.findByUserName(user.getUserName()) != null) {
       throw new IllegalArgumentException("Username is already taken.");
     }
-    
+
     if (userRepository.findByEmail(user.getEmail()) != null) {
       throw new IllegalArgumentException("Email is already taken.");
     }
 
+    if (user.getPasswordConfirm() == null || !user.getPassword().equals(user.getPasswordConfirm())) {
+      throw new IllegalArgumentException("Passwords do not match");
+    }
+
     String encodedPassword = passwordEncoder.encode(user.getPassword());
     user.setPassword(encodedPassword);
+
     String token = jwtService.generateToken(user.getUserName());
     user.setJwtToken(token);
 
@@ -47,15 +52,14 @@ public class UserService {
     UsernamePasswordAuthenticationToken authInputToken = new UsernamePasswordAuthenticationToken(
         loginRequest.getUserName(), loginRequest.getPassword());
     authManager.authenticate(authInputToken);
-    
+
     String token = jwtService.generateToken(loginRequest.getUserName());
     User user = userRepository.findByUserName(loginRequest.getUserName());
-    
+
     if (user == null) {
       throw new UsernameNotFoundException("User not found");
     }
-    
-    user.setJwtToken(token);
+
     return new LoginResponse(user.getUserName(), token);
   }
 
@@ -95,7 +99,7 @@ public class UserService {
 
     user.setPassword(passwordEncoder.encode(request.getNewPassword()));
     userRepository.save(user);
-    
+
     return true;
   }
 

@@ -20,6 +20,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 
+import jakarta.validation.Valid;
+
 @RestController
 @RequestMapping("/api/auth")
 public class UserController {
@@ -31,7 +33,7 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
+    public ResponseEntity<?> register(@Valid @RequestBody User user) {
         try {
             User registeredUser = userService.registerUser(user);
             return ResponseEntity.ok("User registered successfully");
@@ -44,7 +46,7 @@ public class UserController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Login body) {
+    public ResponseEntity<?> login(@Valid @RequestBody Login body) {
         try {
             LoginResponse response = userService.login(body);
             return ResponseEntity.ok(response);
@@ -62,7 +64,7 @@ public class UserController {
     }
 
     @PostMapping("/change-password")
-    public ResponseEntity<?> changePassword(@RequestBody PasswordChangeRequest request) {
+    public ResponseEntity<?> changePassword(@Valid @RequestBody PasswordChangeRequest request) {
         try {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             userService.changePassword(username, request);

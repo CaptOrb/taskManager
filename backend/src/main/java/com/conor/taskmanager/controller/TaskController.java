@@ -23,8 +23,9 @@ import com.conor.taskmanager.repository.TaskRepository;
 import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.service.TaskService;
 
+import jakarta.validation.Valid;
+
 @RestController
-@CrossOrigin(origins = "http://localhost:3000")
 public class TaskController {
 
     public TaskController() {
@@ -84,17 +85,12 @@ public class TaskController {
     }
 
     @PostMapping(value = "/api/create/task", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<?> createTask(@RequestBody Task task) {
+    public ResponseEntity<?> createTask(@Valid @RequestBody Task task) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         User currentUser = userRepo.findByUserName(username);
 
         if (currentUser == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorised: Please log in.");
-        }
-
-        ResponseEntity<?> validationResponse = validateTaskFields(task);
-        if (validationResponse != null) {
-            return validationResponse;
         }
 
         task.setUser(currentUser);
@@ -128,7 +124,7 @@ public class TaskController {
     }
 
     @PutMapping("/api/tasks/{id}")
-    public ResponseEntity<?> updateTask(@PathVariable int id, @RequestBody Task updatedTask) {
+    public ResponseEntity<?> updateTask(@PathVariable int id, @Valid @RequestBody Task updatedTask) {
         try {
             String username = SecurityContextHolder.getContext().getAuthentication().getName();
             User currentUser = userRepo.findByUserName(username);
@@ -139,13 +135,12 @@ public class TaskController {
 
             Task task = taskRepo.findTaskByID(id);
 
-            if (!currentUser.getId().equals(task.getUser().getId())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not authorised to update this task.");
+            if (task == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task not found.");
             }
 
-            ResponseEntity<?> validationResponse = validateTaskFields(updatedTask);
-            if (validationResponse != null) {
-                return validationResponse;
+            if (!currentUser.getId().equals(task.getUser().getId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You are not authorised to update this task.");
             }
 
             Task existingTask = taskService.updateTask(id, updatedTask);
@@ -156,25 +151,6 @@ public class TaskController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
         }
-    }
-
-    private ResponseEntity<?> validateTaskFields(Task task) {
-        if (task.getTitle() == null || task.getTitle().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Title cannot be empty.");
-        }
-
-        if (task.getTitle().length() > 50) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Title can only be 50 words.");
-        }
-
-        if (task.getDescription() == null || task.getDescription().strip().isEmpty()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Description cannot be empty.");
-        }
-
-        if (task.getDescription().length() > 500) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Description can only be 500 words.");
-        }
-        return null;
     }
 
 }

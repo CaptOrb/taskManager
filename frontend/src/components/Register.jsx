@@ -22,13 +22,21 @@ const Register = () => {
         try {
             setError('');
 
-            await axios.post('/api/auth/register', { userName, email, password });
+            await axios.post('/api/auth/register', { userName, email, password, confirmPassword });
             navigate('/login?success=true');
             setSuccessMessage('Registration successful! Please login.');
         } catch (error) {
             setSuccessMessage(null);
             if (error.response) {
-                setError(`Registration failed: ${error.response.data || error.response.statusText}`);
+                const data = error.response.data;
+                if (data && data.errors) {
+                    const messages = Object.values(data.errors).join(', ');
+                    setError(`Registration failed: ${messages}`);
+                } else if (typeof data === 'string') {
+                    setError(`Registration failed: ${data}`);
+                } else {
+                    setError(`Registration failed: ${error.response.statusText}`);
+                }
                 console.error('Registration failed with response:', error.response);
             } else if (error.request) {
                 setError('Registration failed: No response received from server');
