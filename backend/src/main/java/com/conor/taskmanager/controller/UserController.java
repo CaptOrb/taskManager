@@ -12,60 +12,35 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.conor.taskmanager.model.Login;
 import com.conor.taskmanager.model.LoginResponse;
+import com.conor.taskmanager.model.PasswordChangeRequest;
 import com.conor.taskmanager.model.User;
-import com.conor.taskmanager.repository.UserRepository;
-import com.conor.taskmanager.security.JwtService;
 import com.conor.taskmanager.service.UserService;
 
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @RestController
 @RequestMapping("/api/auth")
 public class UserController {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
     private final UserService userService;
 
-    public UserController(UserRepository userRepository, PasswordEncoder passwordEncoder,
-            AuthenticationManager authenticationManager, JwtService jwtService, UserService userService) {
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtService = jwtService;
+    public UserController(UserService userService) {
         this.userService = userService;
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody User user) {
-        if (user.getUserName() == null || user.getUserName().isEmpty()) {
-            return ResponseEntity.badRequest().body("Username cannot be empty.");
+    public ResponseEntity<?> register(@RequestBody User user) {
+        try {
+            User registeredUser = userService.registerUser(user);
+            return ResponseEntity.ok("User registered successfully");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "An unexpected error occurred"));
         }
-        if (userRepository.findByUserName(user.getUserName()) != null) {
-            return ResponseEntity.badRequest().body("Username is already taken.");
-        }
-        if (userRepository.findByEmail(user.getEmail()) != null) {
-            return ResponseEntity.badRequest().body("Email is already taken.");
-        }
-        if (user.getUserName() != null && user.getUserName().length() < 3) {
-            return ResponseEntity.badRequest().body("Username must be atleast 3 characters long.");
-        }
-
-        if (user.getPassword() != null && user.getPassword().length() < 7) {
-            return ResponseEntity.badRequest().body("Password must be atleast 7 characters long.");
-        }
-
-        String encodedPassword = passwordEncoder.encode(user.getPassword());
-        user.setPassword(encodedPassword);
-        String token = jwtService.generateToken(user.getUserName());
-        user.setJwtToken(token);
-
-        userRepository.save(user);
-        return ResponseEntity.ok("User registered successfully");
     }
 
     @PostMapping("/login")
@@ -86,6 +61,24 @@ public class UserController {
         }
     }
 
+    @PostMapping("/change-password")
+    public ResponseEntity<?> changePassword(@RequestBody PasswordChangeRequest request) {
+        try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            userService.changePassword(username, request);
+            return ResponseEntity.ok(Collections.singletonMap("message", "Password changed successfully"));
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Collections.singletonMap("error", "User not found"));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("error", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "An unexpected error occurred"));
+        }
+    }
+
     @GetMapping("/user")
     public String getCurrentUserName() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -93,15 +86,16 @@ public class UserController {
     }
 
     @GetMapping("/current-user")
-    public ResponseEntity<User> getCurrentUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userRepository.findByUserName(username);
-
-        if (currentUser == null) {
+    public ResponseEntity<?> getCurrentUser() {
+        try {
+            String username = SecurityContextHolder.getContext().getAuthentication().getName();
+            User currentUser = userService.getCurrentUser(username);
+            return ResponseEntity.ok(currentUser);
+        } catch (UsernameNotFoundException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Collections.singletonMap("error", "An unexpected error occurred"));
         }
-
-        return ResponseEntity.ok(currentUser);
     }
-
 }
