@@ -121,7 +121,7 @@ const TaskList = () => {
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="block w-auto appearance-none border rounded p-2 bg-white text-gray-800 pl-3 pr-6">
+          className="block w-auto appearance-none border rounded p-2 bg-white text-gray-800 pl-3 pr-10">
           <option value="ALL">All Statuses</option>
           <option value="PENDING">Pending</option>
           <option value="IN_PROGRESS">In Progress</option>
@@ -131,7 +131,7 @@ const TaskList = () => {
         <select
           value={urgencyFilter}
           onChange={(e) => setUrgencyFilter(e.target.value)}
-          className="block w-auto appearance-none border rounded p-2 bg-white text-gray-800 pl-3 pr-6">
+          className="block w-auto appearance-none border rounded p-2 bg-white text-gray-800 pl-3 pr-10">
           <option value="ANY">Any Priority</option>
           <option value="LOW">Low</option>
           <option value="MEDIUM">Medium</option>
@@ -141,7 +141,7 @@ const TaskList = () => {
         <select
           value={sortOrder}
           onChange={(e) => setSortOrder(e.target.value)}
-          className="block w-auto appearance-none border rounded p-2 bg-white text-gray-800 pl-3 pr-6">
+          className="block w-auto appearance-none border rounded p-2 bg-white text-gray-800 pl-3 pr-10">
           <option value="createdDate">Recently Created</option>
           <option value="dueDateAsc">Due Date: Ascending</option>
           <option value="dueDateDesc">Due Date: Descending</option>
