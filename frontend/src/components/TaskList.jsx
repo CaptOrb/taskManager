@@ -117,11 +117,11 @@ const TaskList = () => {
       <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Task List</h2>
 
       <div className="flex flex-col mt-4 mb-4">
-      <div className="flex flex-col sm:flex-row gap-4 sm:gap-4">
+      <div className="flex flex-col sm:flex-row sm:flex-nowrap gap-4">
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="block w-auto appearance-none border rounded p-2 bg-white text-gray-800 pl-3 pr-10">
+          className="block w-full sm:w-auto sm:flex-none min-w-0 border border-gray-300 rounded p-2 text-base bg-white text-gray-800 pl-3 pr-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600">
           <option value="ALL">All Statuses</option>
           <option value="PENDING">Pending</option>
           <option value="IN_PROGRESS">In Progress</option>
@@ -131,7 +131,7 @@ const TaskList = () => {
         <select
           value={urgencyFilter}
           onChange={(e) => setUrgencyFilter(e.target.value)}
-          className="block w-auto appearance-none border rounded p-2 bg-white text-gray-800 pl-3 pr-10">
+          className="block w-full sm:w-auto sm:flex-none min-w-0 border border-gray-300 rounded p-2 text-base bg-white text-gray-800 pl-3 pr-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600">
           <option value="ANY">Any Priority</option>
           <option value="LOW">Low</option>
           <option value="MEDIUM">Medium</option>
@@ -141,7 +141,7 @@ const TaskList = () => {
         <select
           value={sortOrder}
           onChange={(e) => setSortOrder(e.target.value)}
-          className="block w-auto appearance-none border rounded p-2 bg-white text-gray-800 pl-3 pr-10">
+          className="block w-full sm:w-auto sm:flex-none min-w-0 border border-gray-300 rounded p-2 text-base bg-white text-gray-800 pl-3 pr-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-800 dark:text-gray-200 dark:border-gray-600">
           <option value="createdDate">Recently Created</option>
           <option value="dueDateAsc">Due Date: Ascending</option>
           <option value="dueDateDesc">Due Date: Descending</option>

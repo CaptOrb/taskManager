@@ -1,11 +1,9 @@
 /* Tailwind base styles - includes reset and base styles */
-@tailwind base;
+@import 'tailwindcss';
 
 /* Tailwind component classes */
-@tailwind components;
 
 /* Tailwind utility classes */
-@tailwind utilities;
 .App {
   text-align: center;
 }
