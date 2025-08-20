@@ -1,4 +1,4 @@
-FROM node:20.18.0-bullseye-slim AS build
+FROM node:22.18-bookworm-slim AS build
 
 WORKDIR /app
 
@@ -10,7 +10,7 @@ COPY . ./
 
 RUN npm run build
 
-FROM node:20.18.0-bullseye-slim AS development
+FROM node:22.18-bookworm-slim AS development
 
 WORKDIR /app
 
@@ -24,7 +24,7 @@ EXPOSE 3000
 CMD ["npm", "run", "dev"]
 
 
-FROM nginx:1.25.1-alpine AS prod
+FROM nginx:1.29.0-alpine AS prod
 
 COPY --from=build /app/dist /usr/share/nginx/html
 COPY nginx-default.conf /etc/nginx/conf.d/default.conf

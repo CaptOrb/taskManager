@@ -40,7 +40,9 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22.18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
       - name: Install and Build Frontend
         run: |
@@ -60,12 +62,12 @@ jobs:
 
       - name: Build Docker Image with Docker Compose
         env:
-          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}                
+          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
           MYSQL_ROOT_PASSWORD: ${{ secrets.TEST_MYSQL_ROOT_PASSWORD }} # password just for test purposes. not used in production.
-          MYSQLDB_DATABASE: "tasks"                     
-          MYSQLDB_LOCAL_PORT: "3306"                 
-          MYSQLDB_DOCKER_PORT: "3306"                  
-          DB_USERNAME: ${{ secrets.TEST_DB_USERNAME }}                      
+          MYSQLDB_DATABASE: "tasks"
+          MYSQLDB_LOCAL_PORT: "3306"
+          MYSQLDB_DOCKER_PORT: "3306"
+          DB_USERNAME: ${{ secrets.TEST_DB_USERNAME }}
         run: |
           docker compose build
 

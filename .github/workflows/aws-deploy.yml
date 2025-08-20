@@ -2,7 +2,7 @@ name: Deploy TaskApp to AWS
 on:
   push:
     branches:
-      - aws_deploy 
+      - aws_deploy
 
 jobs:
   build-backend:
@@ -35,16 +35,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.18
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
       - name: Install frontend dependencies and build
         working-directory: frontend
         run: |
           npm ci
           npm run build
+
       - name: Upload frontend build
         uses: actions/upload-artifact@v4
         with:
-            name: frontend-dist
-            path: frontend/dist
+          name: frontend-dist
+          path: frontend/dist
 
   deploy-frontend:
     name: Deploy Frontend to AWS

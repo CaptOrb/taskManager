@@ -1,6 +1,6 @@
 services:
   mysqldb:
-    image: mysql:8.3
+    image: mysql:8.4
     restart: unless-stopped
     env_file: ./.env
     environment:
@@ -31,8 +31,8 @@ services:
       - my_network
       
   backend:
-    build: 
-      context: ./backend       
+    build:
+      context: ./backend
       dockerfile: Dockerfile
     env_file: .env
     depends_on:
@@ -49,19 +49,19 @@ services:
     networks:
       - my_network
     ports:
-      - "8080:8080"        
+      - "8080:8080"
 
   frontend:
     build:
-      context: ./frontend  
+      context: ./frontend
       target: development
     environment:
-      - NODE_ENV=development 
+      - NODE_ENV=development
     container_name: task-frontend
     networks:
       - my_network
     ports:
-      - "3000:3000"          
+      - "3000:3000"
     depends_on:
       - backend
 

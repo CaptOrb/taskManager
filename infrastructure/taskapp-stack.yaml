@@ -427,7 +427,7 @@ Resources:
       LaunchTemplateName: !Sub '${AWS::StackName}-ecs-lt'
       LaunchTemplateData:
         InstanceType: t4g.small
-        ImageId: ami-03d80fd8048bc58b6 # Amazon Linux 2 ECS Optimized ARM64 (eu-west-1)
+        ImageId: !Sub "{{resolve:ssm:/aws/service/ecs/optimized-ami/amazon-linux-2023/arm64/recommended/image_id}}" # Amazon Linux 2023 ECS Optimized ARM64 (region-scoped)
         IamInstanceProfile:
           Name: !Ref InstanceProfile
         SecurityGroupIds:
