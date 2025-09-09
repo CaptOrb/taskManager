@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useAuth } from '../hooks/AuthContext';
 import { Link } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
-import { Task } from '../types';
+import type { Task } from '../types';
 
 const TaskList = () => {
     const [tasks, setTasks] = useState<Task[]>([]);

@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import axios from 'axios';
 import { useAuth } from '../hooks/AuthContext';
 import { useNavigate, useLocation } from 'react-router-dom';

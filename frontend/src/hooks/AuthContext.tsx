@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import type React from 'react';
+import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
@@ -30,7 +31,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             if (token) {
                 try {
                     const decodedToken: DecodedToken = JSON.parse(atob(token.split('.')[1]));
-                    if (decodedToken && decodedToken.exp) {
+                    if (decodedToken?.exp) {
                         const expiration = decodedToken.exp * 1000;
                         if (expiration < Date.now()) {
                             logout();

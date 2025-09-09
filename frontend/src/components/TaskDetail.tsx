@@ -3,7 +3,7 @@ import axios, { AxiosError } from 'axios';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/AuthContext';
 import ReactMarkdown from 'react-markdown';
-import { Task } from '../types';
+import type { Task } from '../types';
 
 const TaskDetail = () => {
   const { id } = useParams();
