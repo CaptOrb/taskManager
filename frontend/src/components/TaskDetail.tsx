@@ -1,9 +1,9 @@
-import { useState, useEffect } from "react";
 import axios, { AxiosError } from "axios";
-import { useParams, Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/AuthContext";
+import { useEffect, useId, useState } from "react";
 import ReactMarkdown from "react-markdown";
-import type { Task } from "../types";
+import { Link, useNavigate, useParams } from "react-router-dom";
+import type { Task } from "@/types/task";
+import { useAuth } from "../hooks/AuthContext";
 
 const TaskDetail = () => {
 	const { id } = useParams();
@@ -19,6 +19,12 @@ const TaskDetail = () => {
 	const [taskStatus, setTaskStatus] = useState("");
 	const [taskPriority, setTaskPriority] = useState("");
 	const [taskDueDate, setTaskDueDate] = useState("");
+
+	const taskTitleId = useId();
+	const taskDescriptionId = useId();
+	const taskStatusId = useId();
+	const taskPriorityId = useId();
+	const taskDueDateId = useId();
 
 	useEffect(() => {
 		const fetchTask = async () => {
@@ -47,7 +53,7 @@ const TaskDetail = () => {
 						navigate("/");
 					} else {
 						setError(
-							`Error fetching task:·${error instanceof AxiosError ? error.response?.data || error.message : "Unknown·error"}`,
+							`Error fetching task: ${error instanceof AxiosError ? error.response?.data || error.message : "Unknown error"}`,
 						);
 					}
 				} finally {
@@ -106,23 +112,15 @@ const TaskDetail = () => {
 				navigate("/");
 			} catch (error) {
 				setError(
-					`Error deleting task:·${error instanceof AxiosError ? error.response?.data || error.message : "Unknown·error"}`,
+					`Error deleting task: ${error instanceof AxiosError ? error.response?.data || error.message : "Unknown error"}`,
 				);
 			}
 		}
 	};
 
-	if (loading) {
-		return <div>Loading task...</div>;
-	}
-
-	if (error && !isEditing) {
-		return <div style={{ color: "red" }}>{error}</div>;
-	}
-
-	if (!task) {
-		return <div>No task found.</div>;
-	}
+	if (loading) return <div>Loading task...</div>;
+	if (error && !isEditing) return <div style={{ color: "red" }}>{error}</div>;
+	if (!task) return <div>No task found.</div>;
 
 	return (
 		<div className="max-w-xl mx-auto p-6 bg-white shadow-lg rounded-lg dark:bg-gray-800">
@@ -145,28 +143,29 @@ const TaskDetail = () => {
 
 					<div className="mb-4">
 						<label
-							htmlFor="taskTitle"
+							htmlFor={taskTitleId}
 							className="block text-sm font-medium text-gray-700 dark:text-white"
 						>
 							Title
 						</label>
 						<input
-							id="taskTitle"
+							id={taskTitleId}
 							type="text"
 							value={taskTitle}
 							onChange={(e) => setTaskTitle(e.target.value)}
 							className="bg-gray-50 border border-gray-300 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
 						/>
 					</div>
+
 					<div className="mb-4">
 						<label
-							htmlFor="taskDescription"
+							htmlFor={taskDescriptionId}
 							className="block text-sm font-medium text-gray-700 dark:text-white"
 						>
 							Description
 						</label>
 						<textarea
-							id="taskDescription"
+							id={taskDescriptionId}
 							value={taskDescription}
 							onChange={(e) => setTaskDescription(e.target.value)}
 							className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -185,13 +184,13 @@ const TaskDetail = () => {
 
 					<div className="mb-4">
 						<label
-							htmlFor="taskStatus"
+							htmlFor={taskStatusId}
 							className="block text-sm font-medium text-gray-700 dark:text-white"
 						>
 							Status
 						</label>
 						<select
-							id="taskStatus"
+							id={taskStatusId}
 							value={taskStatus}
 							onChange={(e) => setTaskStatus(e.target.value)}
 							className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -204,13 +203,13 @@ const TaskDetail = () => {
 
 					<div className="mb-4">
 						<label
-							htmlFor="taskPriority"
+							htmlFor={taskPriorityId}
 							className="block text-sm font-medium text-gray-700 dark:text-white"
 						>
 							Priority
 						</label>
 						<select
-							id="taskPriority"
+							id={taskPriorityId}
 							value={taskPriority}
 							onChange={(e) => setTaskPriority(e.target.value)}
 							className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
@@ -223,13 +222,13 @@ const TaskDetail = () => {
 
 					<div className="mb-4">
 						<label
-							htmlFor="taskDueDate"
+							htmlFor={taskDueDateId}
 							className="block text-sm font-medium text-gray-700 dark:text-white"
 						>
 							Due Date
 						</label>
 						<input
-							id="taskDueDate"
+							id={taskDueDateId}
 							type="datetime-local"
 							value={taskDueDate}
 							onChange={(e) => setTaskDueDate(e.target.value)}
@@ -238,7 +237,7 @@ const TaskDetail = () => {
 					</div>
 
 					<button
-						type="submit"
+						type="button"
 						onClick={handleUpdate}
 						className="text-white bg-green-700 hover:bg-green-800 font-medium rounded-lg text-sm px-5 py-2.5 mr-2 mb-2"
 					>
@@ -246,7 +245,7 @@ const TaskDetail = () => {
 					</button>
 
 					<button
-						type="reset"
+						type="button"
 						onClick={() => setIsEditing(false)}
 						className="text-white bg-red-700 hover:bg-red-800 font-medium rounded-lg text-sm px-5 py-2.5 mb-2"
 					>

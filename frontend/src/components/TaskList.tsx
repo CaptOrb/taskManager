@@ -1,8 +1,8 @@
-import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
-import { useAuth } from "../hooks/AuthContext";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import type { Task } from "../types";
+import { useAuth } from "../hooks/AuthContext";
+import type { Task } from "../types/task";
 
 const TaskList = () => {
 	const { loggedInUser } = useAuth();

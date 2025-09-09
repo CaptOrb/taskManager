@@ -1,29 +1,17 @@
 import type React from "react";
 import {
 	createContext,
-	useContext,
-	useState,
-	useEffect,
 	useCallback,
-	type ReactNode,
+	useContext,
+	useEffect,
+	useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
-
-interface AuthContextType {
-	loggedInUser: string | null;
-	login: (token: string) => void;
-	logout: () => void;
-	loading: boolean;
-}
-
-interface AuthProviderProps {
-	children: ReactNode;
-}
-
-interface DecodedToken {
-	sub: string;
-	exp: number;
-}
+import type {
+	AuthContextType,
+	AuthProviderProps,
+	DecodedToken,
+} from "../types/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
