@@ -14,6 +14,8 @@
 	},
 	"linter": {
 		"enabled": true,
+		"includes": ["src/**", "!src/App.css"],
+
 		"rules": {
 			"recommended": true
 		}
