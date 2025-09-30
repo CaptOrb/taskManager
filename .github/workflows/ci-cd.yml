@@ -1,5 +1,4 @@
 name: CI/CD Pipeline
-
 on:
   push:
     branches:
@@ -14,22 +13,24 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
-
-      - name: Clean and Build Backend with Maven
+      
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      
+      - name: Build and Test Backend
         run: |
           cd backend
-          mvn clean install -DskipTests
-        
-      - name: Run Tests with Maven
-        run: |
-          cd backend
-          mvn test
+          mvn clean install
 
   build-frontend:
     runs-on: ubuntu-24.04-arm
@@ -47,48 +48,64 @@ jobs:
       - name: Install and Build Frontend
         run: |
           cd frontend
-          npm install
-          CI=false npm run build
+          npm ci
+          npm run build
 
-  docker-build:
-    name: Build & Test Backend
-    needs: [build-backend, build-frontend]
-
+  docker-test-build:
     runs-on: ubuntu-24.04-arm
+    needs: [build-backend, build-frontend]
+    if: github.event_name == 'pull_request'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Build Docker Image with Docker Compose
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build Docker Images (No Push)
+        run: |
+          docker compose build
         env:
           DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
-          MYSQL_ROOT_PASSWORD: ${{ secrets.TEST_MYSQL_ROOT_PASSWORD }} # password just for test purposes. not used in production.
+          MYSQL_ROOT_PASSWORD: ${{ secrets.TEST_MYSQL_ROOT_PASSWORD }}
           MYSQLDB_DATABASE: "tasks"
           MYSQLDB_LOCAL_PORT: "3306"
           MYSQLDB_DOCKER_PORT: "3306"
           DB_USERNAME: ${{ secrets.TEST_DB_USERNAME }}
-        run: |
-          docker compose build
 
-  docker-push:
+  docker-build-and-push:
     runs-on: ubuntu-24.04-arm
-    needs: [docker-build]
+    needs: [build-backend, build-frontend]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-     
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      
+      - name: Build and Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          target: prod
+          push: true
+          tags: conorb1/task-frontend:vite,conorb1/task-frontend:latest
+          cache-from: type=registry,ref=conorb1/task-frontend:buildcache
+          cache-to: type=registry,ref=conorb1/task-frontend:buildcache,mode=max
+      
+      - name: Build and Push Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          push: true
+          tags: conorb1/task-backend:latest
+          cache-from: type=registry,ref=conorb1/task-backend:buildcache
+          cache-to: type=registry,ref=conorb1/task-backend:buildcache,mode=max
 
-      - name: Build and Push Docker Images
-        run: |
-
-          docker build --target prod -t conorb1/task-frontend:vite frontend/
-          docker push conorb1/task-frontend:vite
-          
-          docker build -t conorb1/task-backend backend/
-          docker push conorb1/task-backend
