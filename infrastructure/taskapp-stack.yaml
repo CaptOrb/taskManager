@@ -554,7 +554,7 @@ Resources:
       Protocol: HTTP
       VpcId: !Ref VPC
       TargetType: ip
-      HealthCheckPath: /health
+      HealthCheckPath: /actuator/health
       HealthCheckIntervalSeconds: 60
       HealthCheckTimeoutSeconds: 5
       HealthyThresholdCount: 2

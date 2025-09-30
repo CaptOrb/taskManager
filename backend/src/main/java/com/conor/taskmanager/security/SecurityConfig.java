@@ -37,7 +37,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
-                        .requestMatchers("/", "/health").permitAll()
+                        .requestMatchers("/", "/actuator/health").permitAll()
 
                         .anyRequest().authenticated() // Protect all other API endpoints
                 )
