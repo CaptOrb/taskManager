@@ -555,8 +555,8 @@ Resources:
       VpcId: !Ref VPC
       TargetType: ip
       HealthCheckPath: /actuator/health
-      HealthCheckIntervalSeconds: 60
-      HealthCheckTimeoutSeconds: 5
+      HealthCheckIntervalSeconds: 45
+      HealthCheckTimeoutSeconds: 15
       HealthyThresholdCount: 2
       UnhealthyThresholdCount: 3
 
