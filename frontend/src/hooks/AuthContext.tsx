@@ -28,7 +28,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
 	const login = (token: string): void => {
 		localStorage.setItem("token", token);
-		const decodedToken: DecodedToken = JSON.parse(atob(token.split(".")[1]));
+		const decodedToken = decodeToken(token);
 		setLoggedInUser(decodedToken.sub);
 	};
 
@@ -37,9 +37,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 			const token = localStorage.getItem("token");
 			if (token) {
 				try {
-					const decodedToken: DecodedToken = JSON.parse(
-						atob(token.split(".")[1]),
-					);
+					const decodedToken = decodeToken(token);
 					if (decodedToken?.exp) {
 						const expiration = decodedToken.exp * 1000;
 						if (expiration < Date.now()) {
@@ -79,4 +77,13 @@ export const useAuth = (): AuthContextType => {
 		throw new Error("useAuth must be used within an AuthProvider");
 	}
 	return context;
+};
+
+const decodeToken = (token: string) => {
+	const payload = token.split(".")[1];
+	if (!payload) {
+		throw new Error("Invalid JWT");
+	}
+
+	return JSON.parse(atob(payload)) satisfies DecodedToken;
 };
