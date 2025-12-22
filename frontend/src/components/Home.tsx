@@ -1,7 +1,6 @@
-import type React from "react";
 import TaskList from "./TaskList";
 
-const Home: React.FC = () => {
+const Home = () => {
 	return (
 		<div className="App">
 			<TaskList />

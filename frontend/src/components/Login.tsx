@@ -4,9 +4,9 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { LoginResponse } from "@/types/auth";
 import { useAuth } from "../hooks/AuthContext";
 
-function Login(): JSX.Element {
-	const [username, setUsername] = useState<string>("");
-	const [password, setPassword] = useState<string>("");
+function Login() {
+	const [username, setUsername] = useState("");
+	const [password, setPassword] = useState("");
 	const usernameId = useId();
 	const passwordId = useId();
 	const [errorMessage, setErrorMessage] = useState<string>("");
@@ -23,7 +23,7 @@ function Login(): JSX.Element {
 	const query = new URLSearchParams(location.search);
 	const successMessage = query.get("success");
 
-	const handleLogin = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
+	const handleLogin = async (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
 		try {

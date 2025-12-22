@@ -13,7 +13,7 @@ import TaskDetail from "./components/TaskDetail";
 import { AuthProvider } from "./hooks/AuthContext";
 import ProtectedRoute from "./hooks/ProtectedRoute";
 
-function App(): JSX.Element {
+function App() {
 	return (
 		<AuthProvider>
 			<div className="flex flex-col min-h-screen">

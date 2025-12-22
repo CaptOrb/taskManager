@@ -1,4 +1,3 @@
-import type React from "react";
 import {
 	createContext,
 	useCallback,
@@ -15,9 +14,9 @@ import type {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider = ({ children }: AuthProviderProps) => {
 	const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
-	const [loading, setLoading] = useState<boolean>(true);
+	const [loading, setLoading] = useState(true);
 	const navigate = useNavigate();
 
 	// Memoized logout so it can safely be used in useEffect
@@ -26,7 +25,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 		setLoggedInUser(null);
 	}, []);
 
-	const login = (token: string): void => {
+	const login = (token: string) => {
 		localStorage.setItem("token", token);
 		const decodedToken = decodeToken(token);
 		setLoggedInUser(decodedToken.sub);
