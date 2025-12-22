@@ -29,10 +29,15 @@ jobs:
           key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
           restore-keys: ${{ runner.os }}-m2
       
-      - name: Build and Test Backend
+      - name: Build Backend
         run: |
           cd backend
-          mvn clean install
+          mvn clean install -DskipTests
+
+      - name: Run Tests with Maven
+        run: |
+          cd backend
+          mvn test
 
   build-frontend:
     runs-on: ubuntu-24.04-arm
@@ -52,22 +57,6 @@ jobs:
           cd frontend
           npm ci
           npm run build
-
-  docker-test-build:
-    runs-on: ubuntu-24.04-arm
-    needs: [build-backend, build-frontend]
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-      
-      - name: Build Docker Images
-        run: |
-          docker build -t task-frontend:test ./frontend
-          docker build -t task-backend:test ./backend
 
   docker-build-and-push:
     runs-on: ubuntu-24.04-arm
