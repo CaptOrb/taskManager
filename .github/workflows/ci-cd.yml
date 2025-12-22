@@ -3,9 +3,11 @@ on:
   push:
     branches:
       - main
+      - dev
   pull_request:
     branches:
       - main
+      - dev
 
 jobs:
   build-backend:
@@ -62,16 +64,10 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
       
-      - name: Build Docker Images (No Push)
+      - name: Build Docker Images
         run: |
-          docker compose build
-        env:
-          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD }}
-          MYSQL_ROOT_PASSWORD: ${{ secrets.TEST_MYSQL_ROOT_PASSWORD }}
-          MYSQLDB_DATABASE: "tasks"
-          MYSQLDB_LOCAL_PORT: "3306"
-          MYSQLDB_DOCKER_PORT: "3306"
-          DB_USERNAME: ${{ secrets.TEST_DB_USERNAME }}
+          docker build -t task-frontend:test ./frontend
+          docker build -t task-backend:test ./backend
 
   docker-build-and-push:
     runs-on: ubuntu-24.04-arm
