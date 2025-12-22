@@ -1,20 +1,10 @@
-import {
-	createContext,
-	useCallback,
-	useContext,
-	useEffect,
-	useState,
-} from "react";
+import type { ReactElement } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type {
-	AuthContextType,
-	AuthProviderProps,
-	DecodedToken,
-} from "../types/auth";
+import type { AuthProviderProps, DecodedToken } from "../types/auth";
+import { AuthContext } from "./auth-context";
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const AuthProvider = ({ children }: AuthProviderProps) => {
+export const AuthProvider = ({ children }: AuthProviderProps): ReactElement => {
 	const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
 	const navigate = useNavigate();
@@ -25,14 +15,14 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 		setLoggedInUser(null);
 	}, []);
 
-	const login = (token: string) => {
+	const login = (token: string): void => {
 		localStorage.setItem("token", token);
 		const decodedToken = decodeToken(token);
 		setLoggedInUser(decodedToken.sub);
 	};
 
 	useEffect(() => {
-		const checkToken = () => {
+		const checkToken = (): void => {
 			const token = localStorage.getItem("token");
 			if (token) {
 				try {
@@ -60,7 +50,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
 		checkToken();
 		const intervalId = setInterval(checkToken, 60000);
-		return () => clearInterval(intervalId);
+		return (): void => clearInterval(intervalId);
 	}, [navigate, logout]);
 
 	return (
@@ -70,15 +60,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 	);
 };
 
-export const useAuth = (): AuthContextType => {
-	const context = useContext(AuthContext);
-	if (context === undefined) {
-		throw new Error("useAuth must be used within an AuthProvider");
-	}
-	return context;
-};
-
-const decodeToken = (token: string) => {
+const decodeToken = (token: string): DecodedToken => {
 	const payload = token.split(".")[1];
 	if (!payload) {
 		throw new Error("Invalid JWT");

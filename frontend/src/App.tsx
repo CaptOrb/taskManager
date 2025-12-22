@@ -1,5 +1,6 @@
 import "./App.css";
 import "./index.css";
+import type { ReactElement } from "react";
 import { Route, Routes } from "react-router-dom";
 import CreateTask from "./components/CreateTask";
 import Footer from "./components/Footer";
@@ -10,10 +11,10 @@ import MyAccount from "./components/MyAccount";
 import NotFound from "./components/NotFound";
 import Register from "./components/Register";
 import TaskDetail from "./components/TaskDetail";
-import { AuthProvider } from "./hooks/AuthContext";
+import { AuthProvider } from "./hooks/AuthProvider";
 import ProtectedRoute from "./hooks/ProtectedRoute";
 
-function App() {
+function App(): ReactElement {
 	return (
 		<AuthProvider>
 			<div className="flex flex-col min-h-screen">

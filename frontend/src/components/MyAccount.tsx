@@ -1,13 +1,14 @@
 import {
 	type ChangeEvent,
 	type FormEvent,
+	type ReactElement,
 	useEffect,
 	useId,
 	useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
 
-const MyAccount = () => {
+const MyAccount = (): ReactElement => {
 	const [userName, setUserName] = useState("");
 	const [email, setEmail] = useState("");
 	const [loading, setLoading] = useState(true);
@@ -34,7 +35,7 @@ const MyAccount = () => {
 	const confirmPasswordId = useId();
 
 	useEffect(() => {
-		const fetchCurrentUser = async () => {
+		const fetchCurrentUser = async (): Promise<void> => {
 			try {
 				const response = await fetch("/api/auth/current-user", {
 					headers: {
@@ -61,7 +62,9 @@ const MyAccount = () => {
 		fetchCurrentUser();
 	}, []);
 
-	const handlePasswordChange = async (e: FormEvent<HTMLFormElement>) => {
+	const handlePasswordChange = async (
+		e: FormEvent<HTMLFormElement>,
+	): Promise<void> => {
 		e.preventDefault();
 		setPasswordChangeLoading(true);
 		setPasswordChangeError(null);
@@ -118,7 +121,7 @@ const MyAccount = () => {
 		}
 	};
 
-	const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+	const handleInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
 		const { name, value } = e.target;
 		setPasswordForm((prev) => ({
 			...prev,
