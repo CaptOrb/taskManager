@@ -1,10 +1,11 @@
 import axios from "axios";
+import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../hooks/AuthContext";
+import { useAuth } from "../hooks/auth-context";
 import type { Task } from "../types/task";
 
-const TaskList = () => {
+const TaskList = (): ReactElement => {
 	const { loggedInUser } = useAuth();
 	const navigate = useNavigate();
 
@@ -20,7 +21,7 @@ const TaskList = () => {
 	const [sortOrder, setSortOrder] = useState("createdDate");
 
 	useEffect(() => {
-		const fetchTasks = async () => {
+		const fetchTasks = async (): Promise<void> => {
 			if (!loggedInUser) {
 				setLoading(false);
 				return;
@@ -69,10 +70,11 @@ const TaskList = () => {
 	const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
 
 	//  Handlers
-	const handleNavigate = (id: number) => navigate(`/tasks/${id}`);
-	const handleNextPage = () =>
+	const handleNavigate = (id: number): void => navigate(`/tasks/${id}`);
+	const handleNextPage = (): void =>
 		setCurrentPage((p) => Math.min(p + 1, totalPages));
-	const handlePreviousPage = () => setCurrentPage((p) => Math.max(p - 1, 1));
+	const handlePreviousPage = (): void =>
+		setCurrentPage((p) => Math.max(p - 1, 1));
 
 	if (!loggedInUser)
 		return (

@@ -1,4 +1,5 @@
 {
+    "extends": "@tsconfig/strictest/tsconfig.json",
 	"compilerOptions": {
 		"target": "ES2020",
 		"useDefineForClassFields": true,
@@ -29,5 +30,8 @@
 			"@/*": ["src/*"]
 		}
 	},
-	"include": ["src"]
+	"include": ["src"],
+	"$schema": "https://json.schemastore.org/tsconfig",
+	"_version": "2.0.0"
+
 }

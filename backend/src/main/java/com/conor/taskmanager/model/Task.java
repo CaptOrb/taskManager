@@ -21,7 +21,7 @@ public class Task {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
+    private Integer id;
 
     @Column(length = 50, nullable = false)
     private String title;
@@ -47,7 +47,7 @@ public class Task {
         this.status = Status.PENDING;
     }
 
-    public Task(int id, String title, String description, Status status, Priority priority, LocalDateTime dueDate) {
+    public Task(Integer id, String title, String description, Status status, Priority priority, LocalDateTime dueDate) {
         this.id = id;
         this.title = title;
         this.description = description;
@@ -61,7 +61,7 @@ public class Task {
         return description;
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 

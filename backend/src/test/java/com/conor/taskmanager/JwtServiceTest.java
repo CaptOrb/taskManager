@@ -2,11 +2,8 @@ package com.conor.taskmanager;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.boot.autoconfigure.web.servlet.ServletWebServerFactoryAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import com.conor.taskmanager.security.JwtService;
 
@@ -16,14 +13,10 @@ import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@SpringBootTest(classes = {
-        ServletWebServerFactoryAutoConfiguration.class }, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties = {
-                "spring.cloud.config.enabled=false" })
 @ExtendWith(MockitoExtension.class)
-@AutoConfigureMockMvc
 public class JwtServiceTest {
 
-    @MockitoBean
+    @Mock
     private JwtService jwtService;
 
     @Test

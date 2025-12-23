@@ -1,23 +1,12 @@
-import type React from "react";
-import {
-	createContext,
-	useCallback,
-	useContext,
-	useEffect,
-	useState,
-} from "react";
+import type { ReactElement } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import type {
-	AuthContextType,
-	AuthProviderProps,
-	DecodedToken,
-} from "../types/auth";
+import type { AuthProviderProps, DecodedToken } from "../types/auth";
+import { AuthContext } from "./auth-context";
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
+export const AuthProvider = ({ children }: AuthProviderProps): ReactElement => {
 	const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
-	const [loading, setLoading] = useState<boolean>(true);
+	const [loading, setLoading] = useState(true);
 	const navigate = useNavigate();
 
 	// Memoized logout so it can safely be used in useEffect
@@ -28,18 +17,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
 	const login = (token: string): void => {
 		localStorage.setItem("token", token);
-		const decodedToken: DecodedToken = JSON.parse(atob(token.split(".")[1]));
+		const decodedToken = decodeToken(token);
 		setLoggedInUser(decodedToken.sub);
 	};
 
 	useEffect(() => {
-		const checkToken = () => {
+		const checkToken = (): void => {
 			const token = localStorage.getItem("token");
 			if (token) {
 				try {
-					const decodedToken: DecodedToken = JSON.parse(
-						atob(token.split(".")[1]),
-					);
+					const decodedToken = decodeToken(token);
 					if (decodedToken?.exp) {
 						const expiration = decodedToken.exp * 1000;
 						if (expiration < Date.now()) {
@@ -63,7 +50,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
 		checkToken();
 		const intervalId = setInterval(checkToken, 60000);
-		return () => clearInterval(intervalId);
+		return (): void => clearInterval(intervalId);
 	}, [navigate, logout]);
 
 	return (
@@ -73,10 +60,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 	);
 };
 
-export const useAuth = (): AuthContextType => {
-	const context = useContext(AuthContext);
-	if (context === undefined) {
-		throw new Error("useAuth must be used within an AuthProvider");
+const decodeToken = (token: string): DecodedToken => {
+	const payload = token.split(".")[1];
+	if (!payload) {
+		throw new Error("Invalid JWT");
 	}
-	return context;
+
+	return JSON.parse(atob(payload)) satisfies DecodedToken;
 };
