@@ -1,11 +1,12 @@
 import axios, { AxiosError } from "axios";
+import type { ReactElement } from "react";
 import { useEffect, useId, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import type { Task } from "@/types/task";
-import { useAuth } from "../hooks/AuthContext";
+import { useAuth } from "../hooks/auth-context";
 
-const TaskDetail = () => {
+const TaskDetail = (): ReactElement => {
 	const { id } = useParams();
 	const [task, setTask] = useState<Task | null>(null);
 	const [loading, setLoading] = useState<boolean>(true);
@@ -27,7 +28,7 @@ const TaskDetail = () => {
 	const taskDueDateId = useId();
 
 	useEffect(() => {
-		const fetchTask = async () => {
+		const fetchTask = async (): Promise<void> => {
 			if (loggedInUser) {
 				try {
 					setLoading(true);
@@ -67,7 +68,7 @@ const TaskDetail = () => {
 		fetchTask();
 	}, [loggedInUser, id, navigate]);
 
-	const handleUpdate = async () => {
+	const handleUpdate = async (): Promise<void> => {
 		const updatedTask = {
 			title: taskTitle,
 			description: taskDescription,
@@ -98,7 +99,7 @@ const TaskDetail = () => {
 		}
 	};
 
-	const handleDelete = async () => {
+	const handleDelete = async (): Promise<void> => {
 		const confirmDelete = window.confirm(
 			"Are you sure you want to delete this task?",
 		);

@@ -1,19 +1,20 @@
+import type { ReactElement } from "react";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { useAuth } from "../hooks/AuthContext";
+import { useAuth } from "../hooks/auth-context";
 
-const Header = () => {
+const Header = (): ReactElement => {
 	const { loggedInUser, logout } = useAuth();
 	const [dropdownOpen, setDropdownOpen] = useState(false);
 	const dropdownRef = useRef<HTMLDivElement>(null);
 
-	const toggleDropdown = () => {
+	const toggleDropdown = (): void => {
 		setDropdownOpen((prevState) => !prevState);
 	};
 
 	// Close dropdown when clicking outside
 	useEffect(() => {
-		const handleClickOutside = (event: MouseEvent) => {
+		const handleClickOutside = (event: MouseEvent): void => {
 			if (
 				dropdownRef.current &&
 				!dropdownRef.current.contains(event.target as Node)
@@ -26,7 +27,7 @@ const Header = () => {
 			document.addEventListener("mousedown", handleClickOutside);
 		}
 
-		return () => {
+		return (): void => {
 			document.removeEventListener("mousedown", handleClickOutside);
 		};
 	}, [dropdownOpen]);

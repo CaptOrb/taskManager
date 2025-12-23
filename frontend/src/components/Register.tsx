@@ -1,8 +1,8 @@
 import axios, { AxiosError } from "axios";
-import { type FormEvent, useState } from "react";
+import { type FormEvent, type ReactElement, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const Register = () => {
+const Register = (): ReactElement => {
 	const [userName, setUsername] = useState("");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -11,7 +11,9 @@ const Register = () => {
 	const [successMessage, setSuccessMessage] = useState("");
 	const navigate = useNavigate();
 
-	const handleRegister = async (e: FormEvent<HTMLFormElement>) => {
+	const handleRegister = async (
+		e: FormEvent<HTMLFormElement>,
+	): Promise<void> => {
 		e.preventDefault();
 
 		if (password !== confirmPassword) {

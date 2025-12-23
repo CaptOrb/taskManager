@@ -1,9 +1,9 @@
 import axios from "axios";
-import { type FormEvent, useId, useState } from "react";
+import { type FormEvent, type ReactElement, useId, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
 
-const CreateTask = () => {
+const CreateTask = (): ReactElement => {
 	const [title, setTitle] = useState("");
 	const [description, setDescription] = useState("");
 	const [dueDate, setDueDate] = useState("");
@@ -17,7 +17,7 @@ const CreateTask = () => {
 	const dueDateId = useId();
 	const priorityId = useId();
 
-	const handleTask = async (e: FormEvent<HTMLFormElement>) => {
+	const handleTask = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
 		e.preventDefault();
 
 		try {

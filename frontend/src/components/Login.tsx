@@ -1,12 +1,18 @@
 import axios from "axios";
-import { type FormEvent, useEffect, useId, useState } from "react";
+import {
+	type FormEvent,
+	type ReactElement,
+	useEffect,
+	useId,
+	useState,
+} from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { LoginResponse } from "@/types/auth";
-import { useAuth } from "../hooks/AuthContext";
+import { useAuth } from "../hooks/auth-context";
 
-function Login(): JSX.Element {
-	const [username, setUsername] = useState<string>("");
-	const [password, setPassword] = useState<string>("");
+function Login(): ReactElement {
+	const [username, setUsername] = useState("");
+	const [password, setPassword] = useState("");
 	const usernameId = useId();
 	const passwordId = useId();
 	const [errorMessage, setErrorMessage] = useState<string>("");
