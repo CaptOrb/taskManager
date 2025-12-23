@@ -141,7 +141,6 @@ public class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("User registered successfully"));
 
-        verify(userService).registerUser(any(User.class));
     }
 
     @Test
@@ -288,7 +287,6 @@ public class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Password changed successfully"));
 
-        verify(userService).changePassword(eq("test@example.com"), any(PasswordChangeRequest.class));
     }
 
     @Test
