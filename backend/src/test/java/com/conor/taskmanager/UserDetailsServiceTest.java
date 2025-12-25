@@ -32,8 +32,9 @@ public class UserDetailsServiceTest {
         User user = new User();
         user.setUserName(username);
         user.setPassword(password);
+        user.setUserRole("user");
 
-        when(userRepository.findByUserName(username)).thenReturn(user);
+        when(userRepository.findByUserNameOrEmail(username)).thenReturn(user);
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
@@ -45,7 +46,7 @@ public class UserDetailsServiceTest {
     @Test
     void loadUserByUsername_userNotFound() {
         String username = "nonexistentuser";
-        when(userRepository.findByUserName(username)).thenReturn(null);
+        when(userRepository.findByUserNameOrEmail(username)).thenReturn(null);
 
         assertThrows(UsernameNotFoundException.class, () -> userDetailsService.loadUserByUsername(username));
     }

@@ -29,6 +29,7 @@ public class Task {
     @Column(length = 500, nullable = false)
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Status status = Status.PENDING;
 

@@ -19,7 +19,7 @@ function App(): ReactElement {
 		<AuthProvider>
 			<div className="flex flex-col min-h-screen">
 				<Header />
-				<main className="flex-grow p-6">
+				<main className="flex-grow px-6 pt-2 pb-6">
 					<Routes>
 						<Route path="/" element={<Home />} />
 						<Route
