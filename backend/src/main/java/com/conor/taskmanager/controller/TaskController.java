@@ -98,6 +98,10 @@ public class TaskController {
         }
 
         task.setUser(currentUser);
+        task.setStatus(Task.Status.PENDING);
+
+        task.setPriority(Task.Priority.LOW);
+
         Task savedTask = taskRepo.save(task);
 
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTask);

@@ -2,6 +2,6 @@ target/
 
 .env
 
-resources/
+application.properties
 .vscode/
 .actrc
