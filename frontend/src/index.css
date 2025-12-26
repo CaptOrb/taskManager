@@ -11,3 +11,29 @@ code {
 	font-family:
 		source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
 }
+
+/* Restore default browser styles for markdown content */
+.markdown > * {
+	all: revert;
+}
+
+/* Style markdown links to be more obvious */
+.markdown a {
+	color: #2563eb; /* blue-600 */
+	text-decoration: underline;
+	cursor: pointer;
+}
+
+.markdown a:hover {
+	color: #1d4ed8; /* blue-700 */
+	text-decoration: underline;
+}
+
+/* Dark mode link colors */
+.dark .markdown a {
+	color: #60a5fa; /* blue-400 */
+}
+
+.dark .markdown a:hover {
+	color: #93c5fd; /* blue-300 */
+}
