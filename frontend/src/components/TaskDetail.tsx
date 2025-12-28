@@ -179,7 +179,9 @@ const TaskDetail = (): ReactElement => {
 							Description Preview
 						</p>
 						<div className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white break-words">
-							<ReactMarkdown>{taskDescription}</ReactMarkdown>
+							<div className="markdown">
+								<ReactMarkdown>{taskDescription}</ReactMarkdown>
+							</div>
 						</div>
 					</div>
 
@@ -266,7 +268,9 @@ const TaskDetail = (): ReactElement => {
 							</p>
 
 							<div className="bg-gray-50 border border-gray-300 p-4 rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white break-words">
-								<ReactMarkdown>{task.description}</ReactMarkdown>
+								<div className="markdown">
+									<ReactMarkdown>{task.description}</ReactMarkdown>
+								</div>
 							</div>
 						</div>
 
