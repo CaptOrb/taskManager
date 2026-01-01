@@ -1,9 +1,21 @@
 # Task Manager
 
+## Tech Stack
+- Backend: Java, Spring Boot
+
+- Frontend: React, TypeScript, TailwindCSS
+
+- Deployment: AWS (CloudFormation, S3, ECS); CI/CD via GitHub Actions (tests, ESLint, deployment)
+
+- Database: MySQL, Flyway (for DB migrations)
+
+- API documentation: Swagger
+
+- Testing tools: JUnit, Mockito
+
 ## About
 
-Task Manager which has a Spring Boot REST API back-end and React front-end. 
-Users can create, update, delete, and view their own tasks with task status tracking and filter by task status, due date and priority.
+Task Manager where users can create, update, delete, and view their own tasks. Features include Markdown support, task status tracking, and filtering by status, due date, and priority. Authentication is handled using JWT.
 
 App was previously deployed to AWS using CloudFormation and a CI/CD pipeline, now deployed to Oracle Cloud due to ending of AWS free tier.
 
@@ -12,7 +24,7 @@ See the deployed website at https://taskapp.conordev.com
 ## Prerequisites
 * Docker
 
-# Compiling and running code
+## Compiling and running code
 1. Clone the repository:
 
    ```sh
