@@ -5,6 +5,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.conor.taskmanager.model.Login;
 import com.conor.taskmanager.model.LoginResponse;
@@ -24,6 +25,7 @@ public class UserService {
   private final AuthenticationManager authManager;
   private final JwtService jwtService;
 
+  @Transactional
   public User registerUser(User user) {
     validateUserRegistration(user);
     
@@ -75,6 +77,7 @@ public class UserService {
     return user;
   }
 
+  @Transactional
   public boolean changePassword(String username, PasswordChangeRequest request) {
     User user = userRepository.findByUserName(username);
     if (user == null) {
