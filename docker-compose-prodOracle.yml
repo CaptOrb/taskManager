@@ -4,11 +4,10 @@ services:
     restart: unless-stopped
     env_file: ./.env
     environment:
-      - MYSQL_PASSWORD=$DB_PASSWORD
       - MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
       - MYSQL_DATABASE=$MYSQLDB_DATABASE
-    ports:
-      - "${MYSQLDB_LOCAL_PORT}:${MYSQLDB_DOCKER_PORT}"
+      - MYSQL_USER=$DB_USERNAME
+      - MYSQL_PASSWORD=$DB_PASSWORD
     volumes:
       - db:/var/lib/mysql
     networks:
@@ -29,12 +28,22 @@ services:
     restart: on-failure:5
     env_file: .env
     environment:
-      - JWT_SECRET=${JWT_SECRET}
-      - SPRING_APPLICATION_JSON={"spring.datasource.url":"jdbc:mysql://mysqldb:$MYSQLDB_DOCKER_PORT/$MYSQLDB_DATABASE?allowPublicKeyRetrieval=true&defaultAuthenticationPlugin=caching_sha2_password","spring.datasource.username":"$DB_USERNAME","spring.datasource.password":"$DB_PASSWORD","spring.jpa.hibernate.ddl-auto":"update"}
+      JWT_SECRET: ${JWT_SECRET}
+      SPRING_APPLICATION_JSON: > 
+        {
+          "spring.datasource.url": "jdbc:mysql://mysqldb:${MYSQLDB_DOCKER_PORT}/${MYSQLDB_DATABASE}?allowPublicKeyRetrieval=true&defaultAuthenticationPlugin=caching_sha2_password",
+          "spring.datasource.username": "${DB_USERNAME}",
+          "spring.datasource.password": "${DB_PASSWORD}",
+          "spring.jpa.hibernate.ddl-auto": "none",
+          "spring.flyway.enabled": "true",
+          "spring.flyway.locations": "classpath:db/migration",
+          "spring.flyway.baseline-on-migrate": "true",
+          "spring.flyway.baseline-version": "1",
+          "spring.jpa.open-in-view":"false"
+
+        }
     networks:
-      - my_network
-    ports:
-      - "8080:8080"         
+      - my_network      
 
   frontend:
     image: conorb1/task-frontend:vite
@@ -62,14 +71,11 @@ services:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     #  - ./frontend_html:/var/www/frontend
-    command: certonly --webroot -w /var/www/certbot --keep-until-expiring --email [emailhere] -d taskapp.conordev.com -d qube.app.librepush.net -d taskapp.librepush.net --agree-tos --expand
+    command: certonly --webroot -w /var/www/certbot --keep-until-expiring --email conorbarry890@gmail.com -d taskapp.conordev.com -d qube.app.librepush.net -d taskapp.librepush.net --agree-tos --expand
     networks:
      - my_network
     depends_on:
      - frontend
-
-
-
 
 volumes:
   db:

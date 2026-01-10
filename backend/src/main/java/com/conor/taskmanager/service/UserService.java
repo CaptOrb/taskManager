@@ -44,17 +44,17 @@ public class UserService {
   }
 
   public LoginResponse login(Login loginRequest) {
-    UsernamePasswordAuthenticationToken authInputToken = new UsernamePasswordAuthenticationToken(
-        loginRequest.getUserName(), loginRequest.getPassword());
-    authManager.authenticate(authInputToken);
-    
-    String token = jwtService.generateToken(loginRequest.getUserName());
-    User user = userRepository.findByUserName(loginRequest.getUserName());
+    User user = userRepository.findByUserNameOrEmail(loginRequest.getUserName());
     
     if (user == null) {
       throw new UsernameNotFoundException("User not found");
     }
     
+    UsernamePasswordAuthenticationToken authInputToken = new UsernamePasswordAuthenticationToken(
+        user.getUserName(), loginRequest.getPassword());
+    authManager.authenticate(authInputToken);
+    
+    String token = jwtService.generateToken(user.getUserName());
     user.setJwtToken(token);
     return new LoginResponse(user.getUserName(), token);
   }
