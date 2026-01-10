@@ -1,50 +1,136 @@
 package com.conor.taskmanager;
 
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.security.SignatureException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import com.conor.taskmanager.security.JwtService;
-
-import static org.mockito.Mockito.*;
 
 import java.util.Date;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@ExtendWith(MockitoExtension.class)
-public class JwtServiceTest {
+class JwtServiceTest {
 
-    @Mock
     private JwtService jwtService;
+    private final String testSecret = "404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970"; // Must be at
+                                                                                                          // least 256
+                                                                                                          // bits
 
-    @Test
-    public void testExtractUserName() {
-        String mockToken = "valid-jwt-token";
-        String expectedUserName = "1@1.com";
-
-        when(jwtService.extractUserName(mockToken)).thenReturn(expectedUserName);
-
-        String userName = jwtService.extractUserName(mockToken);
-
-        assertEquals(expectedUserName, userName);
-
-        verify(jwtService, times(1)).extractUserName(mockToken);
+    @BeforeEach
+    void setUp() {
+        jwtService = new JwtService();
+        ReflectionTestUtils.setField(jwtService, "secret", testSecret);
     }
 
     @Test
-    public void testExtractExpiration() {
-        String mockToken = "valid-jwt-token";
-        Date expectedExpiration = new Date(System.currentTimeMillis() + 1000 * 60 * 60);
+    void testGenerateToken_ShouldCreateValidToken() {
+        String username = "test@example.com";
 
-        when(jwtService.extractExpiration(mockToken)).thenReturn(expectedExpiration);
+        String token = jwtService.generateToken(username);
 
-        Date expiration = jwtService.extractExpiration(mockToken);
-
-        assertEquals(expectedExpiration, expiration);
-
-        verify(jwtService, times(1)).extractExpiration(mockToken);
+        assertNotNull(token);
+        assertFalse(token.isEmpty());
+        assertTrue(token.split("\\.").length == 3); // JWT has 3 parts: header.payload.signature
     }
 
+    @Test
+    void testExtractUserName_ShouldReturnCorrectUsername() {
+        String username = "test@example.com";
+        String token = jwtService.generateToken(username);
+
+        String extractedUsername = jwtService.extractUserName(token);
+
+        assertEquals(username, extractedUsername);
+    }
+
+    @Test
+    void testExtractExpiration_ShouldReturnFutureDate() {
+        String username = "test@example.com";
+        String token = jwtService.generateToken(username);
+
+        Date expiration = jwtService.extractExpiration(token);
+
+        assertNotNull(expiration);
+        assertTrue(expiration.after(new Date()), "Expiration should be in the future");
+    }
+
+    @Test
+    void testExtractExpiration_ShouldBeApproximatelyOneHour() {
+        String username = "test@example.com";
+        Date beforeGeneration = new Date();
+
+        String token = jwtService.generateToken(username);
+        Date expiration = jwtService.extractExpiration(token);
+
+        long expectedExpiration = beforeGeneration.getTime() + (1000 * 60 * 60); // 1 hour
+        long actualExpiration = expiration.getTime();
+        long tolerance = 5000; // 5 seconds tolerance
+
+        assertTrue(Math.abs(actualExpiration - expectedExpiration) < tolerance,
+                "Expiration should be approximately 1 hour from token generation");
+    }
+
+    @Test
+    void testIsTokenExpired_WithValidToken_ShouldReturnFalse() {
+        String username = "test@example.com";
+        String token = jwtService.generateToken(username);
+
+        Boolean isExpired = jwtService.isTokenExpired(token);
+
+        assertFalse(isExpired, "Newly generated token should not be expired");
+    }
+
+    @Test
+    void testValidateToken_WithValidTokenAndMatchingUser_ShouldReturnTrue() {
+        String username = "test@example.com";
+        String token = jwtService.generateToken(username);
+        UserDetails userDetails = User.builder()
+                .username(username)
+                .password("password")
+                .build();
+
+        Boolean isValid = jwtService.validateToken(token, userDetails);
+
+        assertTrue(isValid, "Token should be valid for matching user");
+    }
+
+    @Test
+    void testValidateToken_WithDifferentUsername_ShouldReturnFalse() {
+        String username = "test@example.com";
+        String token = jwtService.generateToken(username);
+        UserDetails userDetails = User.builder()
+                .username("different@example.com")
+                .password("password")
+                .build();
+
+        Boolean isValid = jwtService.validateToken(token, userDetails);
+
+        assertFalse(isValid, "Token should not be valid for different user");
+    }
+
+    @Test
+    void testExtractUserName_WithInvalidToken_ShouldThrowException() {
+        String invalidToken = "invalid.token.here";
+
+        assertThrows(MalformedJwtException.class, () -> {
+            jwtService.extractUserName(invalidToken);
+        });
+    }
+
+    @Test
+    void testExtractUserName_WithTamperedToken_ShouldThrowSignatureException() {
+        String username = "test@example.com";
+        String validToken = jwtService.generateToken(username);
+        // Tamper with the token by changing a character
+        String tamperedToken = validToken.substring(0, validToken.length() - 5) + "XXXXX";
+
+        assertThrows(SignatureException.class, () -> {
+            jwtService.extractUserName(tamperedToken);
+        });
+    }
 }

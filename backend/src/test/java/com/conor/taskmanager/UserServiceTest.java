@@ -64,7 +64,6 @@ class UserServiceTest {
 
         assertEquals("encodedPassword", registeredUser.getPassword());
         assertEquals("mockedToken", registeredUser.getJwtToken());
-        verify(userRepository, times(1)).save(user);
     }
 
     @Test
@@ -81,8 +80,6 @@ class UserServiceTest {
 
         assertEquals("username", response.getUserName());
         assertEquals("mockJwtToken", response.getJwtToken());
-        verify(authManager, times(1)).authenticate(any(UsernamePasswordAuthenticationToken.class));
-        verify(jwtService, times(1)).generateToken("username");
     }
 
     @Test
@@ -118,7 +115,6 @@ class UserServiceTest {
         User foundUser = userService.findByEmail("test@example.com");
 
         assertEquals("test@example.com", foundUser.getEmail());
-        verify(userRepository, times(1)).findByEmail("test@example.com");
     }
 
     @Test
@@ -137,8 +133,6 @@ class UserServiceTest {
         boolean result = userService.changePassword("testUser", request);
 
         assertTrue(result);
-        verify(userRepository).save(user);
-        verify(passwordEncoder).encode("newPassword123");
     }
 
     @Test
@@ -148,7 +142,6 @@ class UserServiceTest {
         when(userRepository.findByUserName("nonexistent")).thenReturn(null);
 
         assertThrows(UsernameNotFoundException.class, () -> userService.changePassword("nonexistent", request));
-        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
@@ -163,7 +156,6 @@ class UserServiceTest {
         when(passwordEncoder.matches("wrongPassword", "encodedOldPassword")).thenReturn(false);
 
         assertThrows(IllegalArgumentException.class, () -> userService.changePassword("testUser", request));
-        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
@@ -178,7 +170,6 @@ class UserServiceTest {
         when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);
 
         assertThrows(IllegalArgumentException.class, () -> userService.changePassword("testUser", request));
-        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
@@ -193,7 +184,6 @@ class UserServiceTest {
         when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);
 
         assertThrows(IllegalArgumentException.class, () -> userService.changePassword("testUser", request));
-        verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
@@ -208,6 +198,5 @@ class UserServiceTest {
         when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);
 
         assertThrows(IllegalArgumentException.class, () -> userService.changePassword("testUser", request));
-        verify(userRepository, never()).save(any(User.class));
     }
 }

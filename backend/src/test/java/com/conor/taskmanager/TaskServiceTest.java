@@ -4,7 +4,9 @@ package com.conor.taskmanager;
 import com.conor.taskmanager.model.Task;
 import com.conor.taskmanager.model.Task.Priority;
 import com.conor.taskmanager.model.Task.Status;
+import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.TaskRepository;
+import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.service.TaskService;
 
 import org.junit.jupiter.api.Test;
@@ -14,11 +16,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class TaskServiceTest {
@@ -26,43 +29,237 @@ public class TaskServiceTest {
     @Mock
     private TaskRepository taskRepository;
 
+    @Mock
+    private UserRepository userRepository;
+
     @InjectMocks
     private TaskService taskService;
 
     @Test
-    void updateTask_whenTaskExists_updatesAndReturnsUpdatedTask() {
-        int taskId = 1;
-        Task existingTask = new Task(taskId, "Old Title", "Old Description", Status.PENDING, Priority.LOW, LocalDateTime.now().plusDays(1));
-        Task updatedTaskDetails = new Task(taskId, "New Title", "New Description", Status.IN_PROGRESS, Priority.HIGH, LocalDateTime.now().plusDays(2));
+    void getTasksForUser_whenUserExists_returnsTaskList() {
+        
+        String username = "test@test.com";
+        User user = new User();
+        user.setId(1L);
+        user.setUserName(username);
 
-        when(taskRepository.findTaskByID(taskId)).thenReturn(existingTask);
-        when(taskRepository.save(existingTask)).thenReturn(updatedTaskDetails);
+        Task task1 = new Task(1, "Task 1", "Description 1", Status.PENDING, Priority.LOW, 
+                             LocalDateTime.now().plusDays(1));
+        Task task2 = new Task(2, "Task 2", "Description 2", Status.COMPLETED, Priority.HIGH,
+                             LocalDateTime.now().plusDays(2));
+        List<Task> tasks = Arrays.asList(task1, task2);
 
-        Task result = taskService.updateTask(taskId, updatedTaskDetails);
+        when(userRepository.findByUserName(username)).thenReturn(user);
+        when(taskRepository.findByUser(user)).thenReturn(tasks);
+        
+        List<Task> result = taskService.getTasksForUser(username);
 
         assertNotNull(result);
-        assertEquals(updatedTaskDetails.getTitle(), result.getTitle());
-        assertEquals(updatedTaskDetails.getDescription(), result.getDescription());
-        assertEquals(updatedTaskDetails.getStatus(), result.getStatus());
-        assertEquals(updatedTaskDetails.getPriority(), result.getPriority());
-        assertEquals(updatedTaskDetails.getDueDate(), result.getDueDate());
+        assertEquals(2, result.size());
+    }
 
-        verify(taskRepository).findTaskByID(taskId);
-        verify(taskRepository).save(existingTask);
+    @Test
+    void getTasksForUser_whenUserDoesNotExist_returnsNull() {
+        
+        String username = "nonexistent@test.com";
+        when(userRepository.findByUserName(username)).thenReturn(null);
+
+        List<Task> result = taskService.getTasksForUser(username);
+        
+        assertNull(result);
+    }
+
+    @Test
+    void getTaskById_whenTaskExistsAndUserOwnsIt_returnsTask() {
+        
+        String username = "test@test.com";
+        User user = new User();
+        user.setId(1L);
+        user.setUserName(username);
+
+        Task task = new Task(1, "Task 1", "Description", Status.PENDING, Priority.LOW,
+                            LocalDateTime.now().plusDays(1));
+        task.setUser(user);
+
+        when(userRepository.findByUserName(username)).thenReturn(user);
+        when(taskRepository.findTaskByID(1)).thenReturn(task);
+
+        Task result = taskService.getTaskById(1, username);
+        
+        assertNotNull(result);
+        assertEquals("Task 1", result.getTitle());
+    }
+
+    @Test
+    void getTaskById_whenUserDoesNotOwnTask_returnsNull() {
+        
+        String username = "test@test.com";
+        User user = new User();
+        user.setId(1L);
+        user.setUserName(username);
+
+        User otherUser = new User();
+        otherUser.setId(2L);
+        otherUser.setUserName("other@test.com");
+
+        Task task = new Task(1, "Task 1", "Description", Status.PENDING, Priority.LOW,
+                            LocalDateTime.now().plusDays(1));
+        task.setUser(otherUser); // Different user owns this task
+
+        when(userRepository.findByUserName(username)).thenReturn(user);
+        when(taskRepository.findTaskByID(1)).thenReturn(task);
+        
+        Task result = taskService.getTaskById(1, username);
+
+        assertNull(result);
+    }
+
+    @Test
+    void createTask_whenValidData_createsAndReturnsTask() {
+        
+        String username = "test@test.com";
+        User user = new User();
+        user.setId(1L);
+        user.setUserName(username);
+
+        Task newTask = new Task(null, "New Task", "Description", Status.PENDING, Priority.MEDIUM,
+                               LocalDateTime.now().plusDays(1));
+        Task savedTask = new Task(1, "New Task", "Description", Status.PENDING, Priority.MEDIUM,
+                                 LocalDateTime.now().plusDays(1));
+        savedTask.setUser(user);
+
+        when(userRepository.findByUserName(username)).thenReturn(user);
+        when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
+
+        Task result = taskService.createTask(newTask, username);
+        
+        assertNotNull(result);
+        assertEquals(1, result.getId());
+        assertEquals("New Task", result.getTitle());
+    }
+
+    @Test
+    void createTask_whenInvalidTitle_returnsNull() {
+        
+        String username = "test@test.com";
+        User user = new User();
+        user.setUserName(username);
+
+        Task invalidTask = new Task(null, "", "Description", Status.PENDING, Priority.MEDIUM,
+                                   LocalDateTime.now().plusDays(1));
+
+        when(userRepository.findByUserName(username)).thenReturn(user);
+        
+        Task result = taskService.createTask(invalidTask, username);
+        
+        assertNull(result);
+    }
+
+    @Test
+    void updateTask_whenTaskExistsAndUserOwnsIt_updatesAndReturnsTask() {
+        
+        String username = "test@test.com";
+        User user = new User();
+        user.setId(1L);
+        user.setUserName(username);
+
+        Task existingTask = new Task(1, "Old Title", "Old Description", Status.PENDING, Priority.LOW,
+                                     LocalDateTime.now().plusDays(1));
+        existingTask.setUser(user);
+
+        Task updatedTaskDetails = new Task(1, "New Title", "New Description", Status.IN_PROGRESS, Priority.HIGH,
+                                          LocalDateTime.now().plusDays(2));
+
+        when(userRepository.findByUserName(username)).thenReturn(user);
+        when(taskRepository.findTaskByID(1)).thenReturn(existingTask);
+        when(taskRepository.save(existingTask)).thenReturn(existingTask);
+
+        Task result = taskService.updateTask(1, updatedTaskDetails, username);
+        
+        assertNotNull(result);
+        assertEquals("New Title", result.getTitle());
+        assertEquals("New Description", result.getDescription());
+        assertEquals(Status.IN_PROGRESS, result.getStatus());
+        assertEquals(Priority.HIGH, result.getPriority());
     }
 
     @Test
     void updateTask_whenTaskDoesNotExist_returnsNull() {
-        int taskId = 1;
-        Task updatedTaskDetails = new Task(taskId, "New Title", "New Description", Status.IN_PROGRESS, Priority.HIGH, LocalDateTime.now().plusDays(2));
+        
+        String username = "test@test.com";
+        User user = new User();
+        user.setUserName(username);
 
-        when(taskRepository.findTaskByID(taskId)).thenReturn(null);
+        Task updatedTaskDetails = new Task(1, "New Title", "New Description", Status.IN_PROGRESS, Priority.HIGH,
+                                          LocalDateTime.now().plusDays(2));
 
-        Task result = taskService.updateTask(taskId, updatedTaskDetails);
+        when(userRepository.findByUserName(username)).thenReturn(user);
+        when(taskRepository.findTaskByID(1)).thenReturn(null);
 
-        assertEquals(null, result);
+        Task result = taskService.updateTask(1, updatedTaskDetails, username);
+        
+        assertNull(result);
+    }
 
-        verify(taskRepository).findTaskByID(taskId);
-        verify(taskRepository, org.mockito.Mockito.never()).save(org.mockito.Mockito.any(Task.class));
+    @Test
+    void updateTask_whenUserDoesNotOwnTask_returnsNull() {
+        
+        String username = "test@test.com";
+        User user = new User();
+        user.setId(1L);
+        user.setUserName(username);
+
+        User otherUser = new User();
+        otherUser.setId(2L);
+
+        Task existingTask = new Task(1, "Old Title", "Old Description", Status.PENDING, Priority.LOW,
+                                     LocalDateTime.now().plusDays(1));
+        existingTask.setUser(otherUser); // Different user owns this
+
+        Task updatedTaskDetails = new Task(1, "New Title", "New Description", Status.IN_PROGRESS, Priority.HIGH,
+                                          LocalDateTime.now().plusDays(2));
+
+        when(userRepository.findByUserName(username)).thenReturn(user);
+        when(taskRepository.findTaskByID(1)).thenReturn(existingTask);
+
+        Task result = taskService.updateTask(1, updatedTaskDetails, username);
+        
+        assertNull(result);
+    }
+
+    @Test
+    void deleteTask_whenTaskExistsAndUserOwnsIt_returnsTrue() {
+        
+        String username = "test@test.com";
+        User user = new User();
+        user.setId(1L);
+        user.setUserName(username);
+
+        Task task = new Task(1, "Task", "Description", Status.PENDING, Priority.LOW,
+                            LocalDateTime.now().plusDays(1));
+        task.setUser(user);
+
+        when(userRepository.findByUserName(username)).thenReturn(user);
+        when(taskRepository.findTaskByID(1)).thenReturn(task);
+        doNothing().when(taskRepository).delete(task);
+
+        boolean result = taskService.deleteTask(1, username);
+        
+        assertTrue(result);
+    }
+
+    @Test
+    void deleteTask_whenTaskDoesNotExist_returnsFalse() {
+        
+        String username = "test@test.com";
+        User user = new User();
+        user.setUserName(username);
+
+        when(userRepository.findByUserName(username)).thenReturn(user);
+        when(taskRepository.findTaskByID(1)).thenReturn(null);
+
+        boolean result = taskService.deleteTask(1, username);
+        
+        assertFalse(result);
     }
 }
