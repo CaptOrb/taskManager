@@ -15,6 +15,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
+import jakarta.validation.constraints.Email;
 
 @Entity
 public class User {
@@ -24,6 +25,7 @@ public class User {
 	private Long id;
 
 	@Column(nullable = false, unique = true, length = 254)
+	@Email(message = "Invalid email address")
 	private String email;
 
 	@Column(nullable = false, length = 64)

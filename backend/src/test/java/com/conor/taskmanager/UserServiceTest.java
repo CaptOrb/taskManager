@@ -16,8 +16,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.conor.taskmanager.exception.InvalidCredentialsException;
 import com.conor.taskmanager.exception.UserNotFoundException;
+import com.conor.taskmanager.exception.ValidationException;
 import com.conor.taskmanager.model.Login;
 import com.conor.taskmanager.model.LoginResponse;
 import com.conor.taskmanager.model.PasswordChangeRequest;
@@ -156,7 +156,7 @@ class UserServiceTest {
         when(userRepository.findByUserName("testUser")).thenReturn(user);
         when(passwordEncoder.matches("wrongPassword", "encodedOldPassword")).thenReturn(false);
 
-        assertThrows(IllegalArgumentException.class, () -> userService.changePassword("testUser", request));
+        assertThrows(ValidationException.class, () -> userService.changePassword("testUser", request));
     }
 
     @Test
@@ -170,7 +170,7 @@ class UserServiceTest {
         when(userRepository.findByUserName("testUser")).thenReturn(user);
         when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);
 
-        assertThrows(IllegalArgumentException.class, () -> userService.changePassword("testUser", request));
+        assertThrows(ValidationException.class, () -> userService.changePassword("testUser", request));
     }
 
     @Test
@@ -184,7 +184,7 @@ class UserServiceTest {
         when(userRepository.findByUserName("testUser")).thenReturn(user);
         when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);
 
-        assertThrows(IllegalArgumentException.class, () -> userService.changePassword("testUser", request));
+        assertThrows(ValidationException.class, () -> userService.changePassword("testUser", request));
     }
 
     @Test
@@ -198,6 +198,6 @@ class UserServiceTest {
         when(userRepository.findByUserName("testUser")).thenReturn(user);
         when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);
 
-        assertThrows(IllegalArgumentException.class, () -> userService.changePassword("testUser", request));
+        assertThrows(ValidationException.class, () -> userService.changePassword("testUser", request));
     }
 }

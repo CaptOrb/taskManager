@@ -31,7 +31,6 @@ import com.conor.taskmanager.service.TaskService;
 import tools.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @WebMvcTest(TaskController.class)

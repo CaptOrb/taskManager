@@ -23,6 +23,7 @@ import com.conor.taskmanager.controller.UserController;
 import com.conor.taskmanager.exception.GlobalExceptionHandler;
 import com.conor.taskmanager.exception.InvalidCredentialsException;
 import com.conor.taskmanager.exception.UserNotFoundException;
+import com.conor.taskmanager.exception.ValidationException;
 import com.conor.taskmanager.model.Login;
 import com.conor.taskmanager.model.LoginResponse;
 import com.conor.taskmanager.model.PasswordChangeRequest;
@@ -149,7 +150,7 @@ public class UserControllerTest {
     @Test
     public void register_whenUsernameIsEmpty_returnsBadRequest() throws Exception {
         when(userService.registerUser(any(User.class)))
-                .thenThrow(new IllegalArgumentException("Username cannot be empty."));
+                .thenThrow(new ValidationException("Username cannot be empty."));
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -162,7 +163,7 @@ public class UserControllerTest {
     @Test
     public void register_whenUsernameIsTaken_returnsBadRequest() throws Exception {
         when(userService.registerUser(any(User.class)))
-                .thenThrow(new IllegalArgumentException("Username is already taken."));
+                .thenThrow(new ValidationException("Username is already taken."));
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -176,7 +177,7 @@ public class UserControllerTest {
     @Test
     public void register_whenEmailIsTaken_returnsBadRequest() throws Exception {
         when(userService.registerUser(any(User.class)))
-                .thenThrow(new IllegalArgumentException("Email is already taken."));
+                .thenThrow(new ValidationException("Email is already taken."));
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -190,7 +191,7 @@ public class UserControllerTest {
     @Test
     public void register_whenUsernameIsTooShort_returnsBadRequest() throws Exception {
         when(userService.registerUser(any(User.class)))
-                .thenThrow(new IllegalArgumentException("Username must be at least 3 characters long."));
+                .thenThrow(new ValidationException("Username must be at least 3 characters long."));
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -203,7 +204,7 @@ public class UserControllerTest {
     @Test
     public void register_whenPasswordIsTooShort_returnsBadRequest() throws Exception {
         when(userService.registerUser(any(User.class)))
-                .thenThrow(new IllegalArgumentException("Password must be at least 7 characters long."));
+                .thenThrow(new ValidationException("Password must be at least 7 characters long."));
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -296,7 +297,7 @@ public class UserControllerTest {
     @WithMockUser(username = "test@example.com")
     public void changePassword_whenCurrentPasswordIncorrect_returnsBadRequest() throws Exception {
         when(userService.changePassword(eq("test@example.com"), any(PasswordChangeRequest.class)))
-                .thenThrow(new IllegalArgumentException("Current password is incorrect"));
+                .thenThrow(new ValidationException("Current password is incorrect"));
 
         mockMvc.perform(post("/api/auth/change-password")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -310,7 +311,7 @@ public class UserControllerTest {
     @WithMockUser(username = "test@example.com")
     public void changePassword_whenNewPasswordTooShort_returnsBadRequest() throws Exception {
         when(userService.changePassword(eq("test@example.com"), any(PasswordChangeRequest.class)))
-                .thenThrow(new IllegalArgumentException("New password must be at least 7 characters long"));
+                .thenThrow(new ValidationException("New password must be at least 7 characters long"));
 
         mockMvc.perform(post("/api/auth/change-password")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -324,7 +325,7 @@ public class UserControllerTest {
     @WithMockUser(username = "test@example.com")
     public void changePassword_whenPasswordsDontMatch_returnsBadRequest() throws Exception {
         when(userService.changePassword(eq("test@example.com"), any(PasswordChangeRequest.class)))
-                .thenThrow(new IllegalArgumentException("New password and confirmation password do not match"));
+                .thenThrow(new ValidationException("New password and confirmation password do not match"));
 
         mockMvc.perform(post("/api/auth/change-password")
                 .contentType(MediaType.APPLICATION_JSON)

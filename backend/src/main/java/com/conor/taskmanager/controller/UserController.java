@@ -16,6 +16,8 @@ import com.conor.taskmanager.model.PasswordChangeRequest;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.service.UserService;
 
+import jakarta.validation.Valid;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -30,19 +32,19 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@RequestBody User user) {
+    public ResponseEntity<String> register(@Valid @RequestBody User user) {
         userService.registerUser(user);
         return ResponseEntity.ok("User registered successfully");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<LoginResponse> login(@RequestBody Login body) {
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody Login body) {
         LoginResponse response = userService.login(body);
         return ResponseEntity.ok(response);
     }
 
     @PostMapping("/change-password")
-    public ResponseEntity<Map<String, String>> changePassword(@RequestBody PasswordChangeRequest request) {
+    public ResponseEntity<Map<String, String>> changePassword(@Valid @RequestBody PasswordChangeRequest request) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         userService.changePassword(username, request);
         return ResponseEntity.ok(Collections.singletonMap("message", "Password changed successfully"));

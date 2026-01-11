@@ -2,7 +2,6 @@ package com.conor.taskmanager.service;
 
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,14 +14,16 @@ import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.TaskRepository;
 import com.conor.taskmanager.repository.UserRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
+
 public class TaskService {
 
-    @Autowired
-    private TaskRepository taskRepository;
+    private final TaskRepository taskRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
     public List<Task> getTasksForUser(String username) {
