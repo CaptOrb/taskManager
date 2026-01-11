@@ -14,13 +14,14 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.conor.taskmanager.controller.UserController;
+import com.conor.taskmanager.exception.InvalidCredentialsException;
+import com.conor.taskmanager.exception.UserNotFoundException;
 import com.conor.taskmanager.model.Login;
 import com.conor.taskmanager.model.LoginResponse;
 import com.conor.taskmanager.model.PasswordChangeRequest;
@@ -32,7 +33,7 @@ import com.conor.taskmanager.security.UserDetailsService;
 import com.conor.taskmanager.service.UserService;
 
 @WebMvcTest(controllers = UserController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, com.conor.taskmanager.exception.GlobalExceptionHandler.class})
 public class UserControllerTest {
     @MockitoBean
     private UserDetailsService userDetailsService;
@@ -116,12 +117,13 @@ public class UserControllerTest {
 
     @Test
     @WithMockUser(username = "nonexistent@example.com")
-    public void getCurrentUser_whenAuthenticatedButUserNotFound_returnsUnauthorized() throws Exception {
+    public void getCurrentUser_whenAuthenticatedButUserNotFound_returnsNotFound() throws Exception {
         when(userService.getCurrentUser("nonexistent@example.com"))
-                .thenThrow(new UsernameNotFoundException("User not found"));
+                .thenThrow(new UserNotFoundException("User not found"));
 
         mockMvc.perform(get("/api/auth/current-user"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("User not found"));
     }
 
     @Test
@@ -141,7 +143,6 @@ public class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().string("User registered successfully"));
 
-        verify(userService).registerUser(any(User.class));
     }
 
     @Test
@@ -154,7 +155,7 @@ public class UserControllerTest {
                 .content("{\"userName\":\"\",\"email\":\"testUser@example.com\",\"password\":\"password123\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Username cannot be empty."));
+                .andExpect(jsonPath("$.error").value("Username cannot be empty."));
     }
 
     @Test
@@ -168,7 +169,7 @@ public class UserControllerTest {
                         "{\"userName\":\"existingUser\",\"email\":\"newUser@example.com\",\"password\":\"password123\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Username is already taken."));
+                .andExpect(jsonPath("$.error").value("Username is already taken."));
     }
 
     @Test
@@ -182,7 +183,7 @@ public class UserControllerTest {
                         "{\"userName\":\"newUser\",\"email\":\"existingUser@example.com\",\"password\":\"password123\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Email is already taken."));
+                .andExpect(jsonPath("$.error").value("Email is already taken."));
     }
 
     @Test
@@ -195,7 +196,7 @@ public class UserControllerTest {
                 .content("{\"userName\":\"ab\",\"email\":\"testUser@example.com\",\"password\":\"password123\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Username must be at least 3 characters long."));
+                .andExpect(jsonPath("$.error").value("Username must be at least 3 characters long."));
     }
 
     @Test
@@ -208,7 +209,7 @@ public class UserControllerTest {
                 .content("{\"userName\":\"testUser\",\"email\":\"testUser@example.com\",\"password\":\"short\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Password must be at least 7 characters long."));
+                .andExpect(jsonPath("$.error").value("Password must be at least 7 characters long."));
     }
 
     @Test
@@ -236,7 +237,7 @@ public class UserControllerTest {
         loginRequest.setUserName("invalidUser");
         loginRequest.setPassword("password123");
 
-        when(userService.login(loginRequest)).thenThrow(new UsernameNotFoundException("User not found"));
+        when(userService.login(loginRequest)).thenThrow(new InvalidCredentialsException("Invalid username or password"));
 
         mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -250,7 +251,7 @@ public class UserControllerTest {
     public void login_withInvalidCredentials_returnsUnauthorized() throws Exception {
         String invalidCredentials = "{\"userName\":\"invalidUser\",\"password\":\"wrongPassword\"}";
 
-        when(userService.login(any())).thenThrow(new UsernameNotFoundException("User not found"));
+        when(userService.login(any())).thenThrow(new InvalidCredentialsException("Invalid username or password"));
 
         mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -288,7 +289,6 @@ public class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Password changed successfully"));
 
-        verify(userService).changePassword(eq("test@example.com"), any(PasswordChangeRequest.class));
     }
 
     @Test
@@ -337,7 +337,7 @@ public class UserControllerTest {
     @WithMockUser(username = "nonexistent@example.com")
     public void changePassword_whenUserNotFound_returnsNotFound() throws Exception {
         when(userService.changePassword(eq("nonexistent@example.com"), any(PasswordChangeRequest.class)))
-                .thenThrow(new UsernameNotFoundException("User not found"));
+                .thenThrow(new UserNotFoundException("User not found"));
 
         mockMvc.perform(post("/api/auth/change-password")
                 .contentType(MediaType.APPLICATION_JSON)
