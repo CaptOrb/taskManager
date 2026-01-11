@@ -16,6 +16,11 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.conor.taskmanager.controller.TaskController;
+import com.conor.taskmanager.exception.GlobalExceptionHandler;
+import com.conor.taskmanager.exception.TaskNotFoundException;
+import com.conor.taskmanager.exception.ForbiddenException;
+import com.conor.taskmanager.exception.UserNotFoundException;
+import com.conor.taskmanager.exception.ValidationException;
 import com.conor.taskmanager.model.Task;
 import com.conor.taskmanager.model.Task.Priority;
 import com.conor.taskmanager.model.Task.Status;
@@ -30,7 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @WebMvcTest(TaskController.class)
-@Import(SecurityConfig.class)
+@Import({ SecurityConfig.class, GlobalExceptionHandler.class })
 public class TaskControllerTest {
 
         @Autowired
@@ -71,11 +76,13 @@ public class TaskControllerTest {
 
         @Test
         @WithMockUser(username = "1@1.com")
-        public void getTasks_whenUserDoesNotExist_returnsUnauthorised() throws Exception {
-                when(taskService.getTasksForUser("1@1.com")).thenReturn(null);
+        public void getTasks_whenUserDoesNotExist_returnsNotFound() throws Exception {
+                when(taskService.getTasksForUser("1@1.com"))
+                                .thenThrow(new UserNotFoundException("User not found"));
 
                 mockMvc.perform(get("/api/tasks"))
-                                .andExpect(status().isUnauthorized());
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath("$.error").value("User not found"));
         }
 
         @Test
@@ -95,19 +102,24 @@ public class TaskControllerTest {
         @Test
         @WithMockUser(username = "1@1.com")
         public void getTask_whenTaskDoesNotExist_returnsNotFound() throws Exception {
-                when(taskService.getTaskById(1, "1@1.com")).thenReturn(null);
+                when(taskService.getTaskById(1, "1@1.com"))
+                                .thenThrow(new TaskNotFoundException("Task not found."));
 
                 mockMvc.perform(get("/api/tasks/1"))
-                                .andExpect(status().isNotFound());
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath("$.error").value("Task not found."));
         }
 
         @Test
         @WithMockUser(username = "1@1.com")
-        public void getTask_whenUnauthorised_returnsNotFound() throws Exception {
-                when(taskService.getTaskById(1, "1@1.com")).thenReturn(null);
+        public void getTask_whenUnauthorised_returnsForbidden() throws Exception {
+                when(taskService.getTaskById(1, "1@1.com"))
+                                .thenThrow(new ForbiddenException("You do not have permission to access this task."));
 
                 mockMvc.perform(get("/api/tasks/1"))
-                                .andExpect(status().isNotFound());
+                                .andExpect(status().isForbidden())
+                                .andExpect(jsonPath("$.error")
+                                                .value("You do not have permission to access this task."));
         }
 
         @Test
@@ -116,13 +128,14 @@ public class TaskControllerTest {
                 Task newTask = new Task(null, "New Task That is exceeds the character limit for the task title",
                                 "Task description", Status.COMPLETED, Priority.MEDIUM, LocalDateTime.now().plusDays(1));
 
-                when(taskService.validateTaskFields(any(Task.class))).thenReturn("Title can only be 50 words.");
+                when(taskService.createTask(any(Task.class), eq("1@1.com")))
+                                .thenThrow(new ValidationException("Title can only be 50 characters."));
 
                 mockMvc.perform(post("/api/create/task")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isBadRequest())
-                                .andExpect(content().string("Title can only be 50 words."));
+                                .andExpect(jsonPath("$.error").value("Title can only be 50 characters."));
         }
 
         @Test
@@ -133,13 +146,14 @@ public class TaskControllerTest {
                 Task newTask = new Task(null, "New Task", longDescription, Status.COMPLETED, Priority.MEDIUM,
                                 LocalDateTime.now().plusDays(1));
 
-                when(taskService.validateTaskFields(any(Task.class))).thenReturn("Description can only be 500 words.");
+                when(taskService.createTask(any(Task.class), eq("1@1.com")))
+                                .thenThrow(new ValidationException("Description can only be 500 characters."));
 
                 mockMvc.perform(post("/api/create/task")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isBadRequest())
-                                .andExpect(content().string("Description can only be 500 words."));
+                                .andExpect(jsonPath("$.error").value("Description can only be 500 characters."));
         }
 
         @Test
@@ -150,7 +164,6 @@ public class TaskControllerTest {
                 Task savedTask = new Task(1, "New Task", "Task description", Status.COMPLETED, Priority.MEDIUM,
                                 LocalDateTime.now().plusDays(1));
 
-                when(taskService.validateTaskFields(any(Task.class))).thenReturn(null);
                 when(taskService.createTask(any(Task.class), eq("1@1.com"))).thenReturn(savedTask);
 
                 mockMvc.perform(post("/api/create/task")
@@ -172,7 +185,6 @@ public class TaskControllerTest {
                 Task savedTask = new Task(taskId, "New Title", "New Description", Status.IN_PROGRESS, Priority.HIGH,
                                 LocalDateTime.now().plusDays(2));
 
-                when(taskService.validateTaskFields(any(Task.class))).thenReturn(null);
                 when(taskService.updateTask(eq(taskId), any(Task.class), eq("testUser"))).thenReturn(savedTask);
 
                 mockMvc.perform(put("/api/tasks/" + taskId)
@@ -182,7 +194,7 @@ public class TaskControllerTest {
                                 .andExpect(jsonPath("$.title").value("New Title"))
                                 .andExpect(jsonPath("$.description").value("New Description"));
 
-                (taskService).updateTask(eq(taskId), any(Task.class), eq("testUser"));
+                verify(taskService).updateTask(eq(taskId), any(Task.class), eq("testUser"));
         }
 
         @Test
@@ -193,49 +205,54 @@ public class TaskControllerTest {
                                 Priority.HIGH,
                                 LocalDateTime.now().plusDays(5));
 
-                when(taskService.validateTaskFields(any(Task.class))).thenReturn(null);
-                when(taskService.updateTask(eq(taskId), any(Task.class), eq("1@1.com"))).thenReturn(null);
+                when(taskService.updateTask(eq(taskId), any(Task.class), eq("1@1.com")))
+                                .thenThrow(new TaskNotFoundException("Task not found."));
 
                 mockMvc.perform(put("/api/tasks/" + taskId)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updatedTask)))
-                                .andExpect(status().isNotFound());
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath("$.error").value("Task not found."));
         }
 
         @Test
         @WithMockUser(username = "testUser")
-        public void updateTask_whenUnauthorised_returnsNotFound() throws Exception {
+        public void updateTask_whenUnauthorised_returnsForbidden() throws Exception {
                 int taskId = 1;
                 Task updatedTask = new Task(null, "New Title", "New Description", Status.IN_PROGRESS, Priority.HIGH,
                                 LocalDateTime.now().plusDays(2));
 
-                when(taskService.validateTaskFields(any(Task.class))).thenReturn(null);
-                when(taskService.updateTask(eq(taskId), any(Task.class), eq("testUser"))).thenReturn(null);
+                when(taskService.updateTask(eq(taskId), any(Task.class), eq("testUser")))
+                                .thenThrow(new ForbiddenException("You do not have permission to update this task."));
 
                 mockMvc.perform(put("/api/tasks/" + taskId)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updatedTask)))
-                                .andExpect(status().isNotFound());
+                                .andExpect(status().isForbidden())
+                                .andExpect(jsonPath("$.error")
+                                                .value("You do not have permission to update this task."));
         }
 
         @Test
         @WithMockUser(username = "1@1.com")
         public void deleteTask_whenAuthorised_deletesTask() throws Exception {
-                when(taskService.deleteTask(1, "1@1.com")).thenReturn(true);
+                doNothing().when(taskService).deleteTask(1, "1@1.com");
 
                 mockMvc.perform(delete("/api/tasks/delete/1"))
                                 .andExpect(status().isOk())
-                                .andExpect(content().string("Task deleted successfully."));
+                                .andExpect(jsonPath("$.message").value("Task deleted successfully."));
 
-                (taskService).deleteTask(1, "1@1.com");
+                verify(taskService).deleteTask(1, "1@1.com");
         }
 
         @Test
         @WithMockUser(username = "1@1.com")
         public void deleteTask_whenTaskNotFound_returnsNotFound() throws Exception {
-                when(taskService.deleteTask(1, "1@1.com")).thenReturn(false);
+                doThrow(new TaskNotFoundException("Task not found."))
+                                .when(taskService).deleteTask(1, "1@1.com");
 
                 mockMvc.perform(delete("/api/tasks/delete/1"))
-                                .andExpect(status().isNotFound());
+                                .andExpect(status().isNotFound())
+                                .andExpect(jsonPath("$.error").value("Task not found."));
         }
 }

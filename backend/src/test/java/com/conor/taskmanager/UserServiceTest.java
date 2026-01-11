@@ -14,9 +14,10 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.conor.taskmanager.exception.InvalidCredentialsException;
+import com.conor.taskmanager.exception.UserNotFoundException;
 import com.conor.taskmanager.model.Login;
 import com.conor.taskmanager.model.LoginResponse;
 import com.conor.taskmanager.model.PasswordChangeRequest;
@@ -88,7 +89,7 @@ class UserServiceTest {
 
         when(userRepository.findByUserNameOrEmail("username")).thenReturn(null);
 
-        assertThrows(UsernameNotFoundException.class, () -> userService.login(loginRequest));
+        assertThrows(com.conor.taskmanager.exception.InvalidCredentialsException.class, () -> userService.login(loginRequest));
         verify(authManager, never()).authenticate(any(UsernamePasswordAuthenticationToken.class));
     }
 
@@ -102,7 +103,7 @@ class UserServiceTest {
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 
-        assertThrows(BadCredentialsException.class, () -> userService.login(loginRequest));
+        assertThrows(com.conor.taskmanager.exception.InvalidCredentialsException.class, () -> userService.login(loginRequest));
     }
 
     @Test
@@ -141,7 +142,7 @@ class UserServiceTest {
 
         when(userRepository.findByUserName("nonexistent")).thenReturn(null);
 
-        assertThrows(UsernameNotFoundException.class, () -> userService.changePassword("nonexistent", request));
+        assertThrows(UserNotFoundException.class, () -> userService.changePassword("nonexistent", request));
     }
 
     @Test
