@@ -20,6 +20,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.conor.taskmanager.controller.UserController;
+import com.conor.taskmanager.exception.GlobalExceptionHandler;
 import com.conor.taskmanager.exception.InvalidCredentialsException;
 import com.conor.taskmanager.exception.UserNotFoundException;
 import com.conor.taskmanager.model.Login;
@@ -33,7 +34,7 @@ import com.conor.taskmanager.security.UserDetailsService;
 import com.conor.taskmanager.service.UserService;
 
 @WebMvcTest(controllers = UserController.class)
-@Import({SecurityConfig.class, com.conor.taskmanager.exception.GlobalExceptionHandler.class})
+@Import({SecurityConfig.class, GlobalExceptionHandler.class})
 public class UserControllerTest {
     @MockitoBean
     private UserDetailsService userDetailsService;
