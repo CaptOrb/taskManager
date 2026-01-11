@@ -4,6 +4,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.conor.taskmanager.exception.InvalidCredentialsException;
 import com.conor.taskmanager.exception.UserNotFoundException;
@@ -25,6 +26,7 @@ public class UserService {
   private final AuthenticationManager authManager;
   private final JwtService jwtService;
 
+  @Transactional
   public User registerUser(User user) {
     validateUserRegistration(user);
     
@@ -64,14 +66,17 @@ public class UserService {
     return new LoginResponse(user.getUserName(), token);
   }
 
+  @Transactional(readOnly = true)
   public User findByEmail(String email) {
     return userRepository.findByEmail(email);
   }
 
+  @Transactional(readOnly = true)
   public User findByUserName(String userName) {
     return userRepository.findByUserName(userName);
   }
 
+  @Transactional(readOnly = true)
   public User getCurrentUser(String username) {
     User user = userRepository.findByUserName(username);
     if (user == null) {
@@ -80,6 +85,7 @@ public class UserService {
     return user;
   }
 
+  @Transactional
   public boolean changePassword(String username, PasswordChangeRequest request) {
     User user = userRepository.findByUserName(username);
     if (user == null) {

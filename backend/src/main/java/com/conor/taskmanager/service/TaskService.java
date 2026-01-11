@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.conor.taskmanager.exception.TaskNotFoundException;
 import com.conor.taskmanager.exception.ForbiddenException;
@@ -23,11 +24,13 @@ public class TaskService {
     @Autowired
     private UserRepository userRepository;
 
+    @Transactional(readOnly = true)
     public List<Task> getTasksForUser(String username) {
         User user = getUserByUsername(username);
         return taskRepository.findByUser(user);
     }
 
+    @Transactional(readOnly = true)
     public Task getTaskById(Integer id, String username) {
         User user = getUserByUsername(username);
         Task task = taskRepository.findTaskByID(id);
@@ -42,6 +45,7 @@ public class TaskService {
         return task;
     }
 
+    @Transactional
     public Task createTask(Task task, String username) {
         User user = getUserByUsername(username);
         validateTask(task);
@@ -53,6 +57,7 @@ public class TaskService {
         return taskRepository.save(task);
     }
 
+    @Transactional
     public Task updateTask(Integer id, Task updatedTask, String username) {
         User user = getUserByUsername(username);
         Task existingTask = taskRepository.findTaskByID(id);
@@ -76,6 +81,7 @@ public class TaskService {
         return taskRepository.save(existingTask);
     }
 
+    @Transactional
     public void deleteTask(Integer id, String username) {
         User user = getUserByUsername(username);
         Task task = taskRepository.findTaskByID(id);
