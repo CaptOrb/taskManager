@@ -30,7 +30,7 @@ const Register = (): ReactElement => {
 			setSuccessMessage("");
 			if (error instanceof AxiosError) {
 				setError(
-					`Registration failed: ${error.response?.data || error.message}`,
+					`Registration failed: ${error.response?.data?.error || error.message}`,
 				);
 				console.error("Registration failed:", error);
 			} else if (error instanceof Error) {

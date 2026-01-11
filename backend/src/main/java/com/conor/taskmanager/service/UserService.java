@@ -2,10 +2,12 @@ package com.conor.taskmanager.service;
 
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.conor.taskmanager.exception.InvalidCredentialsException;
+import com.conor.taskmanager.exception.UserNotFoundException;
 import com.conor.taskmanager.model.Login;
 import com.conor.taskmanager.model.LoginResponse;
 import com.conor.taskmanager.model.PasswordChangeRequest;
@@ -24,6 +26,7 @@ public class UserService {
   private final AuthenticationManager authManager;
   private final JwtService jwtService;
 
+  @Transactional
   public User registerUser(User user) {
     validateUserRegistration(user);
     
@@ -47,38 +50,46 @@ public class UserService {
     User user = userRepository.findByUserNameOrEmail(loginRequest.getUserName());
     
     if (user == null) {
-      throw new UsernameNotFoundException("User not found");
+      throw new InvalidCredentialsException("Invalid username or password");
     }
-    
+
     UsernamePasswordAuthenticationToken authInputToken = new UsernamePasswordAuthenticationToken(
         user.getUserName(), loginRequest.getPassword());
-    authManager.authenticate(authInputToken);
-    
+    try {
+      authManager.authenticate(authInputToken);
+    } catch (org.springframework.security.core.AuthenticationException e) {
+      throw new InvalidCredentialsException("Invalid username or password");
+    }
+
     String token = jwtService.generateToken(user.getUserName());
     user.setJwtToken(token);
     return new LoginResponse(user.getUserName(), token);
   }
 
+  @Transactional(readOnly = true)
   public User findByEmail(String email) {
     return userRepository.findByEmail(email);
   }
 
+  @Transactional(readOnly = true)
   public User findByUserName(String userName) {
     return userRepository.findByUserName(userName);
   }
 
+  @Transactional(readOnly = true)
   public User getCurrentUser(String username) {
     User user = userRepository.findByUserName(username);
     if (user == null) {
-      throw new UsernameNotFoundException("User not found");
+      throw new UserNotFoundException("User not found");
     }
     return user;
   }
 
+  @Transactional
   public boolean changePassword(String username, PasswordChangeRequest request) {
     User user = userRepository.findByUserName(username);
     if (user == null) {
-      throw new UsernameNotFoundException("User not found");
+      throw new UserNotFoundException("User not found");
     }
 
     if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
