@@ -74,7 +74,7 @@ class UserServiceTest {
         User user = new User();
         user.setUserName("username");
 
-        when(userRepository.findByUserNameOrEmail("username")).thenReturn(user);
+        when(userRepository.findByUserName("username")).thenReturn(user);
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
         when(jwtService.generateToken("username")).thenReturn("mockJwtToken");
 
@@ -88,7 +88,8 @@ class UserServiceTest {
     void testLoginUserNotFound() {
         Login loginRequest = new Login("username", "password");
 
-        when(userRepository.findByUserNameOrEmail("username")).thenReturn(null);
+        when(userRepository.findByUserName("username")).thenReturn(null);
+        when(userRepository.findByEmail("username")).thenReturn(null);
 
         assertThrows(InvalidCredentialsException.class, () -> userService.login(loginRequest));
         verify(authManager, never()).authenticate(any(UsernamePasswordAuthenticationToken.class));
@@ -100,7 +101,7 @@ class UserServiceTest {
         User user = new User();
         user.setUserName("username");
 
-        when(userRepository.findByUserNameOrEmail("username")).thenReturn(user);
+        when(userRepository.findByUserName("username")).thenReturn(user);
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 

@@ -49,7 +49,10 @@ public class UserService {
   }
 
   public LoginResponse login(Login loginRequest) {
-    User user = userRepository.findByUserNameOrEmail(loginRequest.getUserName());
+    User user = userRepository.findByUserName(loginRequest.getUserName());
+    if (user == null) {
+      user = userRepository.findByEmail(loginRequest.getUserName());
+    }
     
     if (user == null) {
       throw new InvalidCredentialsException("Invalid username or password");
