@@ -42,7 +42,7 @@ public class User {
 
     @Column(name = "user_name", nullable = false, length = 32)
 	@NotBlank(message = "Username cannot be empty.")
-	@Size(min = 3, max = 32, message = "Username must be at least 3 characters long.")
+	@Size(min = 3, max = 32, message = "Username must be between 3 and 32 characters long.")
 	private String userName;
 
 	@Column(nullable = false, length = 64)
