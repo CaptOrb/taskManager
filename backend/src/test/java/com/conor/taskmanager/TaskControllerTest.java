@@ -131,7 +131,7 @@ public class TaskControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.error").exists());
+                                .andExpect(jsonPath("$.error").value("Title cannot be empty."));
         }
 
         @Test
@@ -160,7 +160,7 @@ public class TaskControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.error").exists());
+                                .andExpect(jsonPath("$.error").value("Description cannot be empty."));
         }
 
         @Test

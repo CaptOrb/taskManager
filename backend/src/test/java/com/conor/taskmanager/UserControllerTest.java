@@ -156,7 +156,7 @@ public class UserControllerTest {
                 .content("{\"userName\":\"\",\"email\":\"testUser@example.com\",\"password\":\"password123\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").exists());
+                .andExpect(jsonPath("$.error").value("Username must be between 3 and 32 characters long."));
     }
 
     @Test
@@ -195,8 +195,8 @@ public class UserControllerTest {
                 .content("{\"userName\":\"ab\",\"email\":\"testUser@example.com\",\"password\":\"password123\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").exists());
-    }
+                .andExpect(jsonPath("$.error").value("Username must be between 3 and 32 characters long."));
+            }
 
     @Test
     public void register_whenPasswordIsTooShort_returnsBadRequest() throws Exception {
@@ -206,8 +206,8 @@ public class UserControllerTest {
                 .content("{\"userName\":\"testUser\",\"email\":\"testUser@example.com\",\"password\":\"short\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").exists());
-    }
+                .andExpect(jsonPath("$.error").value("Password must be at least 7 characters long."));
+        }
 
     @Test
     public void login_whenCredentialsAreValid_returnsLoginResponse() throws Exception {
