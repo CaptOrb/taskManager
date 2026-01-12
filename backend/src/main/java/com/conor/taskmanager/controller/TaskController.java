@@ -20,15 +20,14 @@ import com.conor.taskmanager.model.Task;
 import com.conor.taskmanager.service.TaskService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @CrossOrigin
+@RequiredArgsConstructor
 public class TaskController {
 
     private final TaskService taskService;
-    public TaskController(TaskService taskService) {
-        this.taskService = taskService;
-    }
 
     @GetMapping(value = "/api/tasks", produces = "application/json")
     public ResponseEntity<List<Task>> getTasks() {

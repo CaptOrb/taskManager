@@ -21,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 public class TaskService {
 
     private final TaskRepository taskRepository;
-
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
