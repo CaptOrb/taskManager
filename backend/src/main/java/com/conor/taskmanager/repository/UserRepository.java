@@ -9,11 +9,10 @@ import com.conor.taskmanager.model.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
 
-	@Query("SELECT u FROM User u WHERE u.email = ?1")
-	public User findByEmail(String email);
-
-    @Query("SELECT u FROM User u WHERE u.userName = ?1")
-	public User findByUserName(String userName);
+    User findByEmail(String email);
+    User findByUserName(String userName);
+    boolean existsByUserName(String userName);
+    boolean existsByEmail(String email);
 
 	@Query("SELECT u FROM User u WHERE u.userName = ?1 OR u.email = ?1")
 	public User findByUserNameOrEmail(String identifier);

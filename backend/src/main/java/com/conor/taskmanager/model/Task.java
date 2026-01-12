@@ -11,6 +11,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
 public class Task {
@@ -24,9 +26,13 @@ public class Task {
     private Integer id;
 
     @Column(length = 50, nullable = false)
+    @NotBlank(message = "Title cannot be empty.")
+    @Size(max = 50, message = "Title can only be 50 characters.")
     private String title;
 
     @Column(length = 500, nullable = false)
+    @NotBlank(message = "Description cannot be empty.")
+    @Size(max = 500, message = "Description can only be 500 characters.")
     private String description;
 
     @Enumerated(EnumType.STRING)

@@ -54,9 +54,10 @@ const TaskDetail = (): ReactElement => {
 					) {
 						navigate("/");
 					} else {
-						setError(
-							`Error fetching task: ${error instanceof AxiosError ? error.response?.data || error.message : "Unknown error"}`,
-						);
+						const errorMessage = error instanceof AxiosError
+							? (error.response?.data?.error || error.message)
+							: "Unknown error";
+						setError(`Error fetching task: ${errorMessage}`);
 					}
 				} finally {
 					setLoading(false);
@@ -94,9 +95,10 @@ const TaskDetail = (): ReactElement => {
 				setIsEditing(false);
 			}
 		} catch (error) {
-			setError(
-				`Error updating task: ${error instanceof AxiosError ? error.response?.data || error.message : "Unknown error"}`,
-			);
+			const errorMessage = error instanceof AxiosError
+				? (error.response?.data?.error || error.message)
+				: "Unknown error";
+			setError(`Error updating task: ${errorMessage}`);
 		}
 	};
 
@@ -113,9 +115,10 @@ const TaskDetail = (): ReactElement => {
 				});
 				navigate("/");
 			} catch (error) {
-				setError(
-					`Error deleting task: ${error instanceof AxiosError ? error.response?.data || error.message : "Unknown error"}`,
-				);
+				const errorMessage = error instanceof AxiosError
+					? (error.response?.data?.error || error.message)
+					: "Unknown error";
+				setError(`Error deleting task: ${errorMessage}`);
 			}
 		}
 	};
@@ -273,7 +276,20 @@ const TaskDetail = (): ReactElement => {
 
 						<button
 							type="button"
-							onClick={() => setIsEditing(false)}
+							onClick={() => {
+								setError("");
+								setIsEditing(false);
+								// Reset form fields to original task values
+								if (task) {
+									setTaskTitle(task.title);
+									setTaskDescription(task.description);
+									setTaskStatus(task.status);
+									setTaskPriority(task.priority);
+									setTaskDueDate(
+										new Date(task.dueDate).toISOString().slice(0, 16),
+									);
+								}
+							}}
 							className="text-white bg-gray-600 hover:bg-gray-700 font-medium rounded-lg text-sm px-6 py-3"
 						>
 							Cancel

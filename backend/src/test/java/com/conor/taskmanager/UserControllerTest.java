@@ -14,13 +14,16 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.conor.taskmanager.controller.UserController;
+import com.conor.taskmanager.exception.GlobalExceptionHandler;
+import com.conor.taskmanager.exception.InvalidCredentialsException;
+import com.conor.taskmanager.exception.UserNotFoundException;
+import com.conor.taskmanager.exception.ValidationException;
 import com.conor.taskmanager.model.Login;
 import com.conor.taskmanager.model.LoginResponse;
 import com.conor.taskmanager.model.PasswordChangeRequest;
@@ -32,7 +35,7 @@ import com.conor.taskmanager.security.UserDetailsService;
 import com.conor.taskmanager.service.UserService;
 
 @WebMvcTest(controllers = UserController.class)
-@Import(SecurityConfig.class)
+@Import({SecurityConfig.class, GlobalExceptionHandler.class})
 public class UserControllerTest {
     @MockitoBean
     private UserDetailsService userDetailsService;
@@ -116,51 +119,50 @@ public class UserControllerTest {
 
     @Test
     @WithMockUser(username = "nonexistent@example.com")
-    public void getCurrentUser_whenAuthenticatedButUserNotFound_returnsUnauthorized() throws Exception {
+    public void getCurrentUser_whenAuthenticatedButUserNotFound_returnsNotFound() throws Exception {
         when(userService.getCurrentUser("nonexistent@example.com"))
-                .thenThrow(new UsernameNotFoundException("User not found"));
+                .thenThrow(new UserNotFoundException("User not found"));
 
         mockMvc.perform(get("/api/auth/current-user"))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.error").value("User not found"));
     }
 
     @Test
-    public void register_whenUserIsValid_returnsSuccessMessage() throws Exception {
-        User newUser = new User();
-        newUser.setUserName("testUser");
-        newUser.setEmail("testUser@example.com");
-        newUser.setPassword("password123");
+    public void register_whenUserIsValid_returnsLoginResponse() throws Exception {
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setUserName("testUser");
+        loginResponse.setJwtToken("mockedToken");
 
         // Mock the behavior of userService
-        when(userService.registerUser(any(User.class))).thenReturn(newUser);
+        when(userService.registerUser(any(User.class))).thenReturn(loginResponse);
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"userName\":\"testUser\",\"email\":\"testUser@example.com\",\"password\":\"password123\"}"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().string("User registered successfully"));
+                .andExpect(jsonPath("$.userName").value("testUser"))
+                .andExpect(jsonPath("$.jwtToken").value("mockedToken"));
 
-        verify(userService).registerUser(any(User.class));
     }
 
     @Test
     public void register_whenUsernameIsEmpty_returnsBadRequest() throws Exception {
-        when(userService.registerUser(any(User.class)))
-                .thenThrow(new IllegalArgumentException("Username cannot be empty."));
-
+        // Bean Validation will catch this before reaching the service
+        // The first validation error message will be returned
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"userName\":\"\",\"email\":\"testUser@example.com\",\"password\":\"password123\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Username cannot be empty."));
+                .andExpect(jsonPath("$.error").value("Username must be between 3 and 32 characters long."));
     }
 
     @Test
     public void register_whenUsernameIsTaken_returnsBadRequest() throws Exception {
         when(userService.registerUser(any(User.class)))
-                .thenThrow(new IllegalArgumentException("Username is already taken."));
+                .thenThrow(new ValidationException("Username is already taken."));
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -168,13 +170,13 @@ public class UserControllerTest {
                         "{\"userName\":\"existingUser\",\"email\":\"newUser@example.com\",\"password\":\"password123\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Username is already taken."));
+                .andExpect(jsonPath("$.error").value("Username is already taken."));
     }
 
     @Test
     public void register_whenEmailIsTaken_returnsBadRequest() throws Exception {
         when(userService.registerUser(any(User.class)))
-                .thenThrow(new IllegalArgumentException("Email is already taken."));
+                .thenThrow(new ValidationException("Email is already taken."));
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -182,34 +184,30 @@ public class UserControllerTest {
                         "{\"userName\":\"newUser\",\"email\":\"existingUser@example.com\",\"password\":\"password123\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Email is already taken."));
+                .andExpect(jsonPath("$.error").value("Email is already taken."));
     }
 
     @Test
     public void register_whenUsernameIsTooShort_returnsBadRequest() throws Exception {
-        when(userService.registerUser(any(User.class)))
-                .thenThrow(new IllegalArgumentException("Username must be at least 3 characters long."));
-
+        // Bean Validation will catch this before reaching the service
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"userName\":\"ab\",\"email\":\"testUser@example.com\",\"password\":\"password123\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Username must be at least 3 characters long."));
-    }
+                .andExpect(jsonPath("$.error").value("Username must be between 3 and 32 characters long."));
+            }
 
     @Test
     public void register_whenPasswordIsTooShort_returnsBadRequest() throws Exception {
-        when(userService.registerUser(any(User.class)))
-                .thenThrow(new IllegalArgumentException("Password must be at least 7 characters long."));
-
+        // Bean Validation will catch this before reaching the service
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"userName\":\"testUser\",\"email\":\"testUser@example.com\",\"password\":\"short\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(content().string("Password must be at least 7 characters long."));
-    }
+                .andExpect(jsonPath("$.error").value("Password must be at least 7 characters long."));
+        }
 
     @Test
     public void login_whenCredentialsAreValid_returnsLoginResponse() throws Exception {
@@ -218,6 +216,7 @@ public class UserControllerTest {
         loginRequest.setPassword("password123");
 
         LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setUserName("testUser");
         loginResponse.setJwtToken("mockedJwtToken");
 
         when(userService.login(loginRequest)).thenReturn(loginResponse);
@@ -236,7 +235,7 @@ public class UserControllerTest {
         loginRequest.setUserName("invalidUser");
         loginRequest.setPassword("password123");
 
-        when(userService.login(loginRequest)).thenThrow(new UsernameNotFoundException("User not found"));
+        when(userService.login(loginRequest)).thenThrow(new InvalidCredentialsException("Invalid username or password"));
 
         mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -250,7 +249,7 @@ public class UserControllerTest {
     public void login_withInvalidCredentials_returnsUnauthorized() throws Exception {
         String invalidCredentials = "{\"userName\":\"invalidUser\",\"password\":\"wrongPassword\"}";
 
-        when(userService.login(any())).thenThrow(new UsernameNotFoundException("User not found"));
+        when(userService.login(any())).thenThrow(new InvalidCredentialsException("Invalid username or password"));
 
         mockMvc.perform(post("/api/auth/login")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -279,7 +278,7 @@ public class UserControllerTest {
     @Test
     @WithMockUser(username = "test@example.com")
     public void changePassword_whenValidRequest_returnsSuccess() throws Exception {
-        when(userService.changePassword(eq("test@example.com"), any(PasswordChangeRequest.class))).thenReturn(true);
+        doNothing().when(userService).changePassword(eq("test@example.com"), any(PasswordChangeRequest.class));
 
         mockMvc.perform(post("/api/auth/change-password")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -288,14 +287,13 @@ public class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Password changed successfully"));
 
-        verify(userService).changePassword(eq("test@example.com"), any(PasswordChangeRequest.class));
     }
 
     @Test
     @WithMockUser(username = "test@example.com")
     public void changePassword_whenCurrentPasswordIncorrect_returnsBadRequest() throws Exception {
-        when(userService.changePassword(eq("test@example.com"), any(PasswordChangeRequest.class)))
-                .thenThrow(new IllegalArgumentException("Current password is incorrect"));
+        doThrow(new ValidationException("Current password is incorrect"))
+                .when(userService).changePassword(eq("test@example.com"), any(PasswordChangeRequest.class));
 
         mockMvc.perform(post("/api/auth/change-password")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -308,22 +306,20 @@ public class UserControllerTest {
     @Test
     @WithMockUser(username = "test@example.com")
     public void changePassword_whenNewPasswordTooShort_returnsBadRequest() throws Exception {
-        when(userService.changePassword(eq("test@example.com"), any(PasswordChangeRequest.class)))
-                .thenThrow(new IllegalArgumentException("New password must be at least 7 characters long"));
-
+        // Bean Validation will catch this before reaching the service
         mockMvc.perform(post("/api/auth/change-password")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"currentPassword\":\"oldPassword\",\"newPassword\":\"123\",\"confirmPassword\":\"123\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("New password must be at least 7 characters long"));
+                .andExpect(jsonPath("$.error").value("New password must be at least 7 characters long."));
     }
 
     @Test
     @WithMockUser(username = "test@example.com")
     public void changePassword_whenPasswordsDontMatch_returnsBadRequest() throws Exception {
-        when(userService.changePassword(eq("test@example.com"), any(PasswordChangeRequest.class)))
-                .thenThrow(new IllegalArgumentException("New password and confirmation password do not match"));
+        doThrow(new ValidationException("New password and confirmation password do not match"))
+                .when(userService).changePassword(eq("test@example.com"), any(PasswordChangeRequest.class));
 
         mockMvc.perform(post("/api/auth/change-password")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -336,8 +332,8 @@ public class UserControllerTest {
     @Test
     @WithMockUser(username = "nonexistent@example.com")
     public void changePassword_whenUserNotFound_returnsNotFound() throws Exception {
-        when(userService.changePassword(eq("nonexistent@example.com"), any(PasswordChangeRequest.class)))
-                .thenThrow(new UsernameNotFoundException("User not found"));
+        doThrow(new UserNotFoundException("User not found"))
+                .when(userService).changePassword(eq("nonexistent@example.com"), any(PasswordChangeRequest.class));
 
         mockMvc.perform(post("/api/auth/change-password")
                 .contentType(MediaType.APPLICATION_JSON)

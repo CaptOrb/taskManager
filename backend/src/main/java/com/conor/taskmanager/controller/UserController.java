@@ -1,8 +1,8 @@
 package com.conor.taskmanager.controller;
 
 import java.util.Collections;
+import java.util.Map;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,67 +16,37 @@ import com.conor.taskmanager.model.PasswordChangeRequest;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.service.UserService;
 
+import jakarta.validation.Valid;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class UserController {
 
     private final UserService userService;
 
-    public UserController(UserService userService) {
-        this.userService = userService;
-    }
-
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
-        try {
-            userService.registerUser(user);
-            return ResponseEntity.ok("User registered successfully");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Collections.singletonMap("error", "An unexpected error occurred"));
-        }
+    public ResponseEntity<LoginResponse> register(@Valid @RequestBody User user) {
+        LoginResponse response = userService.registerUser(user);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Login body) {
-        try {
-            LoginResponse response = userService.login(body);
-            return ResponseEntity.ok(response);
-        } catch (UsernameNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Collections.singletonMap("error", "Invalid username or password"));
-        } catch (org.springframework.security.core.AuthenticationException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Collections.singletonMap("error", "Invalid username or password"));
-        } catch (Exception e) {
-            System.out.println(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Collections.singletonMap("error", "An unexpected error occurred"));
-        }
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody Login body) {
+        LoginResponse response = userService.login(body);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/change-password")
-    public ResponseEntity<?> changePassword(@RequestBody PasswordChangeRequest request) {
-        try {
-            String username = SecurityContextHolder.getContext().getAuthentication().getName();
-            userService.changePassword(username, request);
-            return ResponseEntity.ok(Collections.singletonMap("message", "Password changed successfully"));
-        } catch (UsernameNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Collections.singletonMap("error", "User not found"));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                    .body(Collections.singletonMap("error", e.getMessage()));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Collections.singletonMap("error", "An unexpected error occurred"));
-        }
+    public ResponseEntity<Map<String, String>> changePassword(@Valid @RequestBody PasswordChangeRequest request) {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        userService.changePassword(username, request);
+        return ResponseEntity.ok(Collections.singletonMap("message", "Password changed successfully"));
     }
 
     @GetMapping("/user")
@@ -86,16 +56,9 @@ public class UserController {
     }
 
     @GetMapping("/current-user")
-    public ResponseEntity<?> getCurrentUser() {
-        try {
-            String username = SecurityContextHolder.getContext().getAuthentication().getName();
-            User currentUser = userService.getCurrentUser(username);
-            return ResponseEntity.ok(currentUser);
-        } catch (UsernameNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Collections.singletonMap("error", "An unexpected error occurred"));
-        }
+    public ResponseEntity<User> getCurrentUser() {
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User currentUser = userService.getCurrentUser(username);
+        return ResponseEntity.ok(currentUser);
     }
 }
