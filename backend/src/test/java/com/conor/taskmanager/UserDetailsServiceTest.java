@@ -5,9 +5,9 @@ import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.security.UserDetailsService;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,8 +22,12 @@ public class UserDetailsServiceTest {
     @Mock
     private UserRepository userRepository;
 
-    @InjectMocks
     private UserDetailsService userDetailsService;
+
+    @BeforeEach
+    void setUp() {
+        userDetailsService = new UserDetailsService(userRepository);
+    }
 
     @Test
     void loadUserByUsername_userFound() {

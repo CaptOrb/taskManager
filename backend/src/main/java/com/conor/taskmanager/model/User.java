@@ -15,6 +15,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Transient;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
 public class User {
@@ -24,10 +27,14 @@ public class User {
 	private Long id;
 
 	@Column(nullable = false, unique = true, length = 254)
+	@NotBlank(message = "Email cannot be empty.")
+	@Email(message = "Invalid email address")
 	private String email;
 
 	@Column(nullable = false, length = 64)
 	@JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+	@NotBlank(message = "Password cannot be empty.")
+	@Size(min = 7, message = "Password must be at least 7 characters long.")
 	private String password;
 
 	@Transient
@@ -35,6 +42,7 @@ public class User {
 	private String passwordConfirm;
 
     @Column(name = "user_name", nullable = false, length = 32)
+	@Size(min = 3, max = 32, message = "Username must be between 3 and 32 characters long.")
 	private String userName;
 
 	@Column(nullable = false, length = 64)
