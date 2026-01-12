@@ -15,9 +15,9 @@ import { AuthProvider } from "./hooks/AuthProvider";
 import ProtectedRoute from "./hooks/ProtectedRoute";
 
 if (import.meta.env.PROD) {
-	console.log = () => {};
-	console.debug = () => {};
-	console.info = () => {};
+	console.log = (): void => {};
+	console.debug = (): void => {};
+	console.info = (): void => {};
 }
 
 function App(): ReactElement {
