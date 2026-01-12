@@ -3,7 +3,6 @@ package com.conor.taskmanager;
 import com.conor.taskmanager.exception.TaskNotFoundException;
 import com.conor.taskmanager.exception.ForbiddenException;
 import com.conor.taskmanager.exception.UserNotFoundException;
-import com.conor.taskmanager.exception.ValidationException;
 import com.conor.taskmanager.model.Task;
 import com.conor.taskmanager.model.Task.Priority;
 import com.conor.taskmanager.model.Task.Status;
@@ -155,23 +154,6 @@ public class TaskServiceTest {
         assertNotNull(result);
         assertEquals(1, result.getId());
         assertEquals("New Task", result.getTitle());
-    }
-
-    @Test
-    void createTask_whenInvalidTitle_throwsException() {
-
-        String username = "test@test.com";
-        User user = new User();
-        user.setUserName(username);
-
-        Task invalidTask = new Task(null, "", "Description", Status.PENDING, Priority.MEDIUM,
-                LocalDateTime.now().plusDays(1));
-
-        when(userRepository.findByUserName(username)).thenReturn(user);
-
-        assertThrows(ValidationException.class, () -> {
-            taskService.createTask(invalidTask, username);
-        });
     }
 
     @Test

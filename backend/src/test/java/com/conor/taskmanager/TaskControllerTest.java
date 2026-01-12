@@ -20,7 +20,6 @@ import com.conor.taskmanager.exception.GlobalExceptionHandler;
 import com.conor.taskmanager.exception.TaskNotFoundException;
 import com.conor.taskmanager.exception.ForbiddenException;
 import com.conor.taskmanager.exception.UserNotFoundException;
-import com.conor.taskmanager.exception.ValidationException;
 import com.conor.taskmanager.model.Task;
 import com.conor.taskmanager.model.Task.Priority;
 import com.conor.taskmanager.model.Task.Status;
@@ -121,39 +120,8 @@ public class TaskControllerTest {
                                                 .value("You do not have permission to access this task."));
         }
 
-        @Test
-        @WithMockUser(username = "1@1.com")
-        public void createTask_whenTitleIsTooLong_returnsBadRequest() throws Exception {
-                Task newTask = new Task(null, "New Task That is exceeds the character limit for the task title",
-                                "Task description", Status.COMPLETED, Priority.MEDIUM, LocalDateTime.now().plusDays(1));
-
-                when(taskService.createTask(any(Task.class), eq("1@1.com")))
-                                .thenThrow(new ValidationException("Title can only be 50 characters."));
-
-                mockMvc.perform(post("/api/create/task")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(newTask)))
-                                .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.error").value("Title can only be 50 characters."));
-        }
-
-        @Test
-        @WithMockUser(username = "1@1.com")
-        public void createTask_whenDescriptionIsTooLong_returnsBadRequest() throws Exception {
-                String longDescription = "This description is intentionally too long and exceeds the 500 word limit. "
-                                .repeat(10);
-                Task newTask = new Task(null, "New Task", longDescription, Status.COMPLETED, Priority.MEDIUM,
-                                LocalDateTime.now().plusDays(1));
-
-                when(taskService.createTask(any(Task.class), eq("1@1.com")))
-                                .thenThrow(new ValidationException("Description can only be 500 characters."));
-
-                mockMvc.perform(post("/api/create/task")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(newTask)))
-                                .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.error").value("Description can only be 500 characters."));
-        }
+        // Note: Title and description length validation is now handled by Bean Validation at controller level
+        // These tests are no longer needed as validation happens before the service is called
 
         @Test
         @WithMockUser(username = "1@1.com")

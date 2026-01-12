@@ -130,13 +130,12 @@ public class UserControllerTest {
 
     @Test
     public void register_whenUserIsValid_returnsSuccessMessage() throws Exception {
-        User newUser = new User();
-        newUser.setUserName("testUser");
-        newUser.setEmail("testUser@example.com");
-        newUser.setPassword("password123");
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setUserName("testUser");
+        loginResponse.setJwtToken("mockedToken");
 
         // Mock the behavior of userService
-        when(userService.registerUser(any(User.class))).thenReturn(newUser);
+        when(userService.registerUser(any(User.class))).thenReturn(loginResponse);
 
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -149,15 +148,14 @@ public class UserControllerTest {
 
     @Test
     public void register_whenUsernameIsEmpty_returnsBadRequest() throws Exception {
-        when(userService.registerUser(any(User.class)))
-                .thenThrow(new ValidationException("Username cannot be empty."));
-
+        // Bean Validation will catch this before reaching the service
+        // The first validation error message will be returned
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"userName\":\"\",\"email\":\"testUser@example.com\",\"password\":\"password123\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Username cannot be empty."));
+                .andExpect(jsonPath("$.error").exists());
     }
 
     @Test
@@ -190,28 +188,24 @@ public class UserControllerTest {
 
     @Test
     public void register_whenUsernameIsTooShort_returnsBadRequest() throws Exception {
-        when(userService.registerUser(any(User.class)))
-                .thenThrow(new ValidationException("Username must be at least 3 characters long."));
-
+        // Bean Validation will catch this before reaching the service
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"userName\":\"ab\",\"email\":\"testUser@example.com\",\"password\":\"password123\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Username must be at least 3 characters long."));
+                .andExpect(jsonPath("$.error").exists());
     }
 
     @Test
     public void register_whenPasswordIsTooShort_returnsBadRequest() throws Exception {
-        when(userService.registerUser(any(User.class)))
-                .thenThrow(new ValidationException("Password must be at least 7 characters long."));
-
+        // Bean Validation will catch this before reaching the service
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"userName\":\"testUser\",\"email\":\"testUser@example.com\",\"password\":\"short\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Password must be at least 7 characters long."));
+                .andExpect(jsonPath("$.error").exists());
     }
 
     @Test
@@ -221,6 +215,7 @@ public class UserControllerTest {
         loginRequest.setPassword("password123");
 
         LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setUserName("testUser");
         loginResponse.setJwtToken("mockedJwtToken");
 
         when(userService.login(loginRequest)).thenReturn(loginResponse);
@@ -282,7 +277,7 @@ public class UserControllerTest {
     @Test
     @WithMockUser(username = "test@example.com")
     public void changePassword_whenValidRequest_returnsSuccess() throws Exception {
-        when(userService.changePassword(eq("test@example.com"), any(PasswordChangeRequest.class))).thenReturn(true);
+        doNothing().when(userService).changePassword(eq("test@example.com"), any(PasswordChangeRequest.class));
 
         mockMvc.perform(post("/api/auth/change-password")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -296,8 +291,8 @@ public class UserControllerTest {
     @Test
     @WithMockUser(username = "test@example.com")
     public void changePassword_whenCurrentPasswordIncorrect_returnsBadRequest() throws Exception {
-        when(userService.changePassword(eq("test@example.com"), any(PasswordChangeRequest.class)))
-                .thenThrow(new ValidationException("Current password is incorrect"));
+        doThrow(new ValidationException("Current password is incorrect"))
+                .when(userService).changePassword(eq("test@example.com"), any(PasswordChangeRequest.class));
 
         mockMvc.perform(post("/api/auth/change-password")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -310,22 +305,20 @@ public class UserControllerTest {
     @Test
     @WithMockUser(username = "test@example.com")
     public void changePassword_whenNewPasswordTooShort_returnsBadRequest() throws Exception {
-        when(userService.changePassword(eq("test@example.com"), any(PasswordChangeRequest.class)))
-                .thenThrow(new ValidationException("New password must be at least 7 characters long"));
-
+        // Bean Validation will catch this before reaching the service
         mockMvc.perform(post("/api/auth/change-password")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"currentPassword\":\"oldPassword\",\"newPassword\":\"123\",\"confirmPassword\":\"123\"}"))
                 .andDo(print())
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("New password must be at least 7 characters long"));
+                .andExpect(jsonPath("$.error").value("New password must be at least 7 characters long."));
     }
 
     @Test
     @WithMockUser(username = "test@example.com")
     public void changePassword_whenPasswordsDontMatch_returnsBadRequest() throws Exception {
-        when(userService.changePassword(eq("test@example.com"), any(PasswordChangeRequest.class)))
-                .thenThrow(new ValidationException("New password and confirmation password do not match"));
+        doThrow(new ValidationException("New password and confirmation password do not match"))
+                .when(userService).changePassword(eq("test@example.com"), any(PasswordChangeRequest.class));
 
         mockMvc.perform(post("/api/auth/change-password")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -338,8 +331,8 @@ public class UserControllerTest {
     @Test
     @WithMockUser(username = "nonexistent@example.com")
     public void changePassword_whenUserNotFound_returnsNotFound() throws Exception {
-        when(userService.changePassword(eq("nonexistent@example.com"), any(PasswordChangeRequest.class)))
-                .thenThrow(new UserNotFoundException("User not found"));
+        doThrow(new UserNotFoundException("User not found"))
+                .when(userService).changePassword(eq("nonexistent@example.com"), any(PasswordChangeRequest.class));
 
         mockMvc.perform(post("/api/auth/change-password")
                 .contentType(MediaType.APPLICATION_JSON)

@@ -8,7 +8,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.conor.taskmanager.exception.TaskNotFoundException;
 import com.conor.taskmanager.exception.ForbiddenException;
 import com.conor.taskmanager.exception.UserNotFoundException;
-import com.conor.taskmanager.exception.ValidationException;
 import com.conor.taskmanager.model.Task;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.TaskRepository;
@@ -47,7 +46,6 @@ public class TaskService {
     @Transactional
     public Task createTask(Task task, String username) {
         User user = getUserByUsername(username);
-        validateTask(task);
 
         task.setUser(user);
         task.setStatus(Task.Status.PENDING);
@@ -68,8 +66,6 @@ public class TaskService {
         if (!existingTask.getUser().getId().equals(user.getId())) {
             throw new ForbiddenException("You do not have permission to update this task.");
         }
-
-        validateTask(updatedTask);
 
         existingTask.setTitle(updatedTask.getTitle());
         existingTask.setDescription(updatedTask.getDescription());
@@ -94,21 +90,6 @@ public class TaskService {
         }
 
         taskRepository.delete(task);
-    }
-
-    private void validateTask(Task task) {
-        if (task.getTitle() == null || task.getTitle().isEmpty()) {
-            throw new ValidationException("Title cannot be empty.");
-        }
-        if (task.getTitle().length() > 50) {
-            throw new ValidationException("Title can only be 50 characters.");
-        }
-        if (task.getDescription() == null || task.getDescription().strip().isEmpty()) {
-            throw new ValidationException("Description cannot be empty.");
-        }
-        if (task.getDescription().length() > 500) {
-            throw new ValidationException("Description can only be 500 characters.");
-        }
     }
 
     private User getUserByUsername(String username) {

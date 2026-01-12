@@ -28,23 +28,20 @@ public class UserService {
   private final JwtService jwtService;
 
   @Transactional
-  public User registerUser(User user) {
-    validateUserRegistration(user);
-    
-    if (userRepository.findByUserName(user.getUserName()) != null) {
+  public LoginResponse registerUser(User user) {
+    if (userRepository.existsByUserName(user.getUserName())) {
       throw new ValidationException("Username is already taken.");
     }
     
-    if (userRepository.findByEmail(user.getEmail()) != null) {
+    if (userRepository.existsByEmail(user.getEmail())) {
       throw new ValidationException("Email is already taken.");
     }
 
-    String encodedPassword = passwordEncoder.encode(user.getPassword());
-    user.setPassword(encodedPassword);
-    String token = jwtService.generateToken(user.getUserName());
-    user.setJwtToken(token);
-
-    return userRepository.save(user);
+    user.setPassword(passwordEncoder.encode(user.getPassword()));
+    User savedUser = userRepository.save(user);
+    
+    String token = jwtService.generateToken(savedUser.getUserName());
+    return new LoginResponse(savedUser.getUserName(), token);
   }
 
   public LoginResponse login(Login loginRequest) {
@@ -54,8 +51,9 @@ public class UserService {
       throw new InvalidCredentialsException("Invalid username or password");
     }
 
-    UsernamePasswordAuthenticationToken authInputToken = new UsernamePasswordAuthenticationToken(
-        user.getUserName(), loginRequest.getPassword());
+    UsernamePasswordAuthenticationToken authInputToken = 
+        new UsernamePasswordAuthenticationToken(user.getUserName(), loginRequest.getPassword());
+    
     try {
       authManager.authenticate(authInputToken);
     } catch (org.springframework.security.core.AuthenticationException e) {
@@ -63,7 +61,6 @@ public class UserService {
     }
 
     String token = jwtService.generateToken(user.getUserName());
-    user.setJwtToken(token);
     return new LoginResponse(user.getUserName(), token);
   }
 
@@ -87,7 +84,7 @@ public class UserService {
   }
 
   @Transactional
-  public boolean changePassword(String username, PasswordChangeRequest request) {
+  public void changePassword(String username, PasswordChangeRequest request) {
     User user = userRepository.findByUserName(username);
     if (user == null) {
       throw new UserNotFoundException("User not found");
@@ -97,8 +94,8 @@ public class UserService {
       throw new ValidationException("Current password is incorrect");
     }
 
-    if (request.getNewPassword() == null || request.getNewPassword().length() < 7) {
-      throw new ValidationException("New password must be at least 7 characters long");
+    if (request.getNewPassword() == null || request.getConfirmPassword() == null) {
+      throw new ValidationException("New password and confirmation password cannot be empty");
     }
 
     if (!request.getNewPassword().equals(request.getConfirmPassword())) {
@@ -107,19 +104,5 @@ public class UserService {
 
     user.setPassword(passwordEncoder.encode(request.getNewPassword()));
     userRepository.save(user);
-    
-    return true;
-  }
-
-  private void validateUserRegistration(User user) {
-    if (user.getUserName() == null || user.getUserName().isEmpty()) {
-      throw new ValidationException("Username cannot be empty.");
-    }
-    if (user.getUserName().length() < 3) {
-      throw new ValidationException("Username must be at least 3 characters long.");
-    }
-    if (user.getPassword() == null || user.getPassword().length() < 7) {
-      throw new ValidationException("Password must be at least 7 characters long.");
-    }
   }
 }
