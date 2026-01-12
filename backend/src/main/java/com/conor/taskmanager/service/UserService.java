@@ -36,6 +36,10 @@ public class UserService {
     if (userRepository.existsByEmail(user.getEmail())) {
       throw new ValidationException("Email is already taken.");
     }
+      if (!user.getPassword().equals(user.getPasswordConfirm())) {
+      throw new ValidationException("New password and confirmation password do not match");
+    }
+
 
     user.setPassword(passwordEncoder.encode(user.getPassword()));
     User savedUser = userRepository.save(user);

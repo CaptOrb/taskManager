@@ -46,7 +46,7 @@ public class Task {
     @Column
     private LocalDateTime dueDate;
 
-    @Column
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdDate;
 
     public Task() {

@@ -54,16 +54,12 @@ class UserServiceTest {
         user.setUserName("testUser");
         user.setEmail("test@example.com");
         user.setPassword("plainPassword");
-
-        User savedUser = new User();
-        savedUser.setUserName("testUser");
-        savedUser.setEmail("test@example.com");
-        savedUser.setPassword("encodedPassword");
+        user.setPasswordConfirm("plainPassword");
 
         when(userRepository.existsByUserName("testUser")).thenReturn(false);
         when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
         when(passwordEncoder.encode("plainPassword")).thenReturn("encodedPassword");
-        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(userRepository.save(any(User.class))).thenReturn(user);
         when(jwtService.generateToken("testUser")).thenReturn("mockedToken");
 
         LoginResponse response = userService.registerUser(user);

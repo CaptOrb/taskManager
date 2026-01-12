@@ -46,6 +46,7 @@ public class User {
 	private String userName;
 
 	@Column(nullable = false, length = 64)
+	@NotBlank
 	private String userRole = "user";
 
 	@Transient
