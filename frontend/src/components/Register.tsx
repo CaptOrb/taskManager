@@ -1,6 +1,8 @@
 import axios, { AxiosError } from "axios";
 import { type FormEvent, type ReactElement, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import type { LoginResponse } from "@/types/auth";
+import { useAuth } from "../hooks/auth-context";
 
 const Register = (): ReactElement => {
 	const [userName, setUsername] = useState("");
@@ -8,8 +10,8 @@ const Register = (): ReactElement => {
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [error, setError] = useState("");
-	const [successMessage, setSuccessMessage] = useState("");
 	const navigate = useNavigate();
+	const { login } = useAuth();
 
 	const handleRegister = async (
 		e: FormEvent<HTMLFormElement>,
@@ -23,22 +25,28 @@ const Register = (): ReactElement => {
 		try {
 			setError("");
 
-			await axios.post("/api/auth/register", { userName, email, password });
-			navigate("/login?success=true");
-			setSuccessMessage("Registration successful! Please login.");
+			const response = await axios.post<LoginResponse>("/api/auth/register", { 
+				userName, 
+				email, 
+				password 
+			});
+
+			// Automatically log in the user with the JWT token from registration
+			const { jwtToken } = response.data;
+			login(jwtToken);
+			navigate("/");
 		} catch (error) {
-			setSuccessMessage("");
 			if (error instanceof AxiosError) {
 				setError(
 					`Registration failed: ${error.response?.data?.error || error.message}`,
 				);
-				console.error("Registration failed:", error);
+				console.log("Registration failed:", error);
 			} else if (error instanceof Error) {
 				setError(`Registration failed: ${error.message}`);
-				console.error("Registration error:", error);
+				console.log("Registration error:", error);
 			} else {
 				setError("Registration failed: Unknown error occurred");
-				console.error("Unknown error:", error);
+				console.log("Unknown error:", error);
 			}
 		}
 	};
@@ -49,14 +57,10 @@ const Register = (): ReactElement => {
 				onSubmit={handleRegister}
 				className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 dark:bg-gray-800"
 			>
-				{successMessage && (
-					<p className="text-green-500 mb-4">{successMessage}</p>
-				)}
-
 				<div className="mb-4">
 					<input
 						type="text"
-						placeholder="UserName"
+						placeholder="Username"
 						value={userName}
 						onChange={(e) => setUsername(e.target.value)}
 						required

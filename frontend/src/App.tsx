@@ -14,6 +14,12 @@ import TaskDetail from "./components/TaskDetail";
 import { AuthProvider } from "./hooks/AuthProvider";
 import ProtectedRoute from "./hooks/ProtectedRoute";
 
+if (import.meta.env.PROD) {
+	console.log = () => {};
+	console.debug = () => {};
+	console.info = () => {};
+}
+
 function App(): ReactElement {
 	return (
 		<AuthProvider>
