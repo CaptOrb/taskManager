@@ -32,9 +32,9 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<String> register(@Valid @RequestBody User user) {
-        userService.registerUser(user);
-        return ResponseEntity.ok("User registered successfully");
+    public ResponseEntity<LoginResponse> register(@Valid @RequestBody User user) {
+        LoginResponse response = userService.registerUser(user);
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/login")

@@ -129,7 +129,7 @@ public class UserControllerTest {
     }
 
     @Test
-    public void register_whenUserIsValid_returnsSuccessMessage() throws Exception {
+    public void register_whenUserIsValid_returnsLoginResponse() throws Exception {
         LoginResponse loginResponse = new LoginResponse();
         loginResponse.setUserName("testUser");
         loginResponse.setJwtToken("mockedToken");
@@ -142,7 +142,8 @@ public class UserControllerTest {
                 .content("{\"userName\":\"testUser\",\"email\":\"testUser@example.com\",\"password\":\"password123\"}"))
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().string("User registered successfully"));
+                .andExpect(jsonPath("$.userName").value("testUser"))
+                .andExpect(jsonPath("$.jwtToken").value("mockedToken"));
 
     }
 

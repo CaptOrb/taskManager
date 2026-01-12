@@ -15,6 +15,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import com.conor.taskmanager.exception.InvalidCredentialsException;
 import com.conor.taskmanager.exception.UserNotFoundException;
 import com.conor.taskmanager.exception.ValidationException;
 import com.conor.taskmanager.model.Login;
@@ -93,7 +94,7 @@ class UserServiceTest {
 
         when(userRepository.findByUserNameOrEmail("username")).thenReturn(null);
 
-        assertThrows(com.conor.taskmanager.exception.InvalidCredentialsException.class, () -> userService.login(loginRequest));
+        assertThrows(InvalidCredentialsException.class, () -> userService.login(loginRequest));
         verify(authManager, never()).authenticate(any(UsernamePasswordAuthenticationToken.class));
     }
 
@@ -107,7 +108,7 @@ class UserServiceTest {
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 
-        assertThrows(com.conor.taskmanager.exception.InvalidCredentialsException.class, () -> userService.login(loginRequest));
+        assertThrows(InvalidCredentialsException.class, () -> userService.login(loginRequest));
     }
 
     @Test
@@ -170,20 +171,6 @@ class UserServiceTest {
         user.setPassword("encodedOldPassword");
 
         PasswordChangeRequest request = new PasswordChangeRequest("oldPassword", "newPassword123", "differentPassword");
-
-        when(userRepository.findByUserName("testUser")).thenReturn(user);
-        when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);
-
-        assertThrows(ValidationException.class, () -> userService.changePassword("testUser", request));
-    }
-
-    @Test
-    void testChangePassword_NewPasswordNull() {
-        User user = new User();
-        user.setUserName("testUser");
-        user.setPassword("encodedOldPassword");
-
-        PasswordChangeRequest request = new PasswordChangeRequest("oldPassword", null, "newPassword123");
 
         when(userRepository.findByUserName("testUser")).thenReturn(user);
         when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);

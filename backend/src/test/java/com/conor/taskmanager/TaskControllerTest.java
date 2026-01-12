@@ -120,8 +120,63 @@ public class TaskControllerTest {
                                                 .value("You do not have permission to access this task."));
         }
 
-        // Note: Title and description length validation is now handled by Bean Validation at controller level
-        // These tests are no longer needed as validation happens before the service is called
+        @Test
+        @WithMockUser(username = "1@1.com")
+        public void createTask_whenTitleIsEmpty_returnsBadRequest() throws Exception {
+                // Bean Validation will catch this before reaching the service
+                Task newTask = new Task(null, "", "Task description", Status.COMPLETED, Priority.MEDIUM,
+                                LocalDateTime.now().plusDays(1));
+
+                mockMvc.perform(post("/api/create/task")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(newTask)))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.error").exists());
+        }
+
+        @Test
+        @WithMockUser(username = "1@1.com")
+        public void createTask_whenTitleIsTooLong_returnsBadRequest() throws Exception {
+                // Bean Validation will catch this before reaching the service
+                String longTitle = "A".repeat(51); // 51 characters, exceeds max of 50
+                Task newTask = new Task(null, longTitle, "Task description", Status.COMPLETED, Priority.MEDIUM,
+                                LocalDateTime.now().plusDays(1));
+
+                mockMvc.perform(post("/api/create/task")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(newTask)))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.error").value("Title can only be 50 characters."));
+        }
+
+        @Test
+        @WithMockUser(username = "1@1.com")
+        public void createTask_whenDescriptionIsEmpty_returnsBadRequest() throws Exception {
+                // Bean Validation will catch this before reaching the service
+                Task newTask = new Task(null, "New Task", "", Status.COMPLETED, Priority.MEDIUM,
+                                LocalDateTime.now().plusDays(1));
+
+                mockMvc.perform(post("/api/create/task")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(newTask)))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.error").exists());
+        }
+
+        @Test
+        @WithMockUser(username = "1@1.com")
+        public void createTask_whenDescriptionIsTooLong_returnsBadRequest() throws Exception {
+                // Bean Validation will catch this before reaching the service
+                String longDescription = "A".repeat(501); // 501 characters, exceeds max of 500
+                Task newTask = new Task(null, "New Task", longDescription, Status.COMPLETED, Priority.MEDIUM,
+                                LocalDateTime.now().plusDays(1));
+
+                mockMvc.perform(post("/api/create/task")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(newTask)))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.error").value("Description can only be 500 characters."));
+        }
 
         @Test
         @WithMockUser(username = "1@1.com")

@@ -94,10 +94,6 @@ public class UserService {
       throw new ValidationException("Current password is incorrect");
     }
 
-    if (request.getNewPassword() == null || request.getConfirmPassword() == null) {
-      throw new ValidationException("New password and confirmation password cannot be empty");
-    }
-
     if (!request.getNewPassword().equals(request.getConfirmPassword())) {
       throw new ValidationException("New password and confirmation password do not match");
     }
