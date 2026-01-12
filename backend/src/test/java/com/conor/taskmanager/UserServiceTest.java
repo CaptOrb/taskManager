@@ -7,9 +7,9 @@ import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -26,6 +26,7 @@ import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.security.JwtService;
 import com.conor.taskmanager.service.UserService;
 
+@ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
     @Mock
@@ -40,12 +41,11 @@ class UserServiceTest {
     @Mock
     private JwtService jwtService;
 
-    @InjectMocks
     private UserService userService;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        userService = new UserService(userRepository, passwordEncoder, authManager, jwtService);
     }
 
     @Test

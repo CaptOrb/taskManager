@@ -11,6 +11,7 @@ import com.conor.taskmanager.repository.TaskRepository;
 import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.service.TaskService;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -34,8 +35,12 @@ public class TaskServiceTest {
     @Mock
     private UserRepository userRepository;
 
-    @InjectMocks
     private TaskService taskService;
+
+    @BeforeEach
+    void setUp() {
+        taskService = new TaskService(taskRepository, userRepository);
+    }
 
     @Test
     void getTasksForUser_whenUserExists_returnsTaskList() {
