@@ -30,11 +30,11 @@ public class UserService {
   @Transactional
   public LoginResponse registerUser(User user) {
     if (userRepository.existsByUserName(user.getUserName())) {
-      throw new ValidationException("Username is already taken.");
+      throw new ValidationException("Username is already taken");
     }
     
     if (userRepository.existsByEmail(user.getEmail())) {
-      throw new ValidationException("Email is already taken.");
+      throw new ValidationException("Email is already taken");
     }
       if (!user.getPassword().equals(user.getPasswordConfirm())) {
       throw new ValidationException("New password and confirmation password do not match");
