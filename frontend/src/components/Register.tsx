@@ -28,7 +28,8 @@ const Register = (): ReactElement => {
 			const response = await axios.post<LoginResponse>("/api/auth/register", { 
 				userName, 
 				email, 
-				password 
+				password,
+				passwordConfirm: confirmPassword
 			});
 
 			// Automatically log in the user with the JWT token from registration
