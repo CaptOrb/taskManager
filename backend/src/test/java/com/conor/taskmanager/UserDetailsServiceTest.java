@@ -1,13 +1,13 @@
 package com.conor.taskmanager;
 
+import java.util.Optional;
 
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.security.UserDetailsService;
-
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,19 +22,24 @@ public class UserDetailsServiceTest {
     @Mock
     private UserRepository userRepository;
 
-    @InjectMocks
     private UserDetailsService userDetailsService;
+
+    @BeforeEach
+    void setUp() {
+        userDetailsService = new UserDetailsService(userRepository);
+    }
 
     @Test
     void loadUserByUsername_userFound() {
         String username = "testuser";
         String password = "password";
+
         User user = new User();
         user.setUserName(username);
         user.setPassword(password);
         user.setUserRole("user");
 
-        when(userRepository.findByUserNameOrEmail(username)).thenReturn(user);
+        when(userRepository.findByUserNameOrEmail(username)).thenReturn(Optional.of(user));
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
@@ -46,8 +51,10 @@ public class UserDetailsServiceTest {
     @Test
     void loadUserByUsername_userNotFound() {
         String username = "nonexistentuser";
-        when(userRepository.findByUserNameOrEmail(username)).thenReturn(null);
 
-        assertThrows(UsernameNotFoundException.class, () -> userDetailsService.loadUserByUsername(username));
+        when(userRepository.findByUserNameOrEmail(username)).thenReturn(Optional.empty());
+
+        assertThrows(UsernameNotFoundException.class,
+                () -> userDetailsService.loadUserByUsername(username));
     }
 }

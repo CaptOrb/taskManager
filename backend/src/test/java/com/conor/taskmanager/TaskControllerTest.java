@@ -20,7 +20,6 @@ import com.conor.taskmanager.exception.GlobalExceptionHandler;
 import com.conor.taskmanager.exception.TaskNotFoundException;
 import com.conor.taskmanager.exception.ForbiddenException;
 import com.conor.taskmanager.exception.UserNotFoundException;
-import com.conor.taskmanager.exception.ValidationException;
 import com.conor.taskmanager.model.Task;
 import com.conor.taskmanager.model.Task.Priority;
 import com.conor.taskmanager.model.Task.Status;
@@ -31,7 +30,6 @@ import com.conor.taskmanager.service.TaskService;
 import tools.jackson.databind.ObjectMapper;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @WebMvcTest(TaskController.class)
@@ -124,14 +122,27 @@ public class TaskControllerTest {
 
         @Test
         @WithMockUser(username = "1@1.com")
+        public void createTask_whenTitleIsEmpty_returnsBadRequest() throws Exception {
+                // Bean Validation will catch this before reaching the service
+                Task newTask = new Task(null, "", "Task description", Status.COMPLETED, Priority.MEDIUM,
+                                LocalDateTime.now().plusDays(1));
+
+                mockMvc.perform(post("/api/tasks")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(newTask)))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.error").value("Title cannot be empty."));
+        }
+
+        @Test
+        @WithMockUser(username = "1@1.com")
         public void createTask_whenTitleIsTooLong_returnsBadRequest() throws Exception {
-                Task newTask = new Task(null, "New Task That is exceeds the character limit for the task title",
-                                "Task description", Status.COMPLETED, Priority.MEDIUM, LocalDateTime.now().plusDays(1));
+                // Bean Validation will catch this before reaching the service
+                String longTitle = "A".repeat(51); // 51 characters, exceeds max of 50
+                Task newTask = new Task(null, longTitle, "Task description", Status.COMPLETED, Priority.MEDIUM,
+                                LocalDateTime.now().plusDays(1));
 
-                when(taskService.createTask(any(Task.class), eq("1@1.com")))
-                                .thenThrow(new ValidationException("Title can only be 50 characters."));
-
-                mockMvc.perform(post("/api/create/task")
+                mockMvc.perform(post("/api/tasks")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isBadRequest())
@@ -140,16 +151,27 @@ public class TaskControllerTest {
 
         @Test
         @WithMockUser(username = "1@1.com")
+        public void createTask_whenDescriptionIsEmpty_returnsBadRequest() throws Exception {
+                // Bean Validation will catch this before reaching the service
+                Task newTask = new Task(null, "New Task", "", Status.COMPLETED, Priority.MEDIUM,
+                                LocalDateTime.now().plusDays(1));
+
+                mockMvc.perform(post("/api/tasks")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(newTask)))
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.error").value("Description cannot be empty."));
+        }
+
+        @Test
+        @WithMockUser(username = "1@1.com")
         public void createTask_whenDescriptionIsTooLong_returnsBadRequest() throws Exception {
-                String longDescription = "This description is intentionally too long and exceeds the 500 word limit. "
-                                .repeat(10);
+                // Bean Validation will catch this before reaching the service
+                String longDescription = "A".repeat(501); // 501 characters, exceeds max of 500
                 Task newTask = new Task(null, "New Task", longDescription, Status.COMPLETED, Priority.MEDIUM,
                                 LocalDateTime.now().plusDays(1));
 
-                when(taskService.createTask(any(Task.class), eq("1@1.com")))
-                                .thenThrow(new ValidationException("Description can only be 500 characters."));
-
-                mockMvc.perform(post("/api/create/task")
+                mockMvc.perform(post("/api/tasks")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isBadRequest())
@@ -166,7 +188,7 @@ public class TaskControllerTest {
 
                 when(taskService.createTask(any(Task.class), eq("1@1.com"))).thenReturn(savedTask);
 
-                mockMvc.perform(post("/api/create/task")
+                mockMvc.perform(post("/api/tasks")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isCreated())
@@ -238,7 +260,7 @@ public class TaskControllerTest {
         public void deleteTask_whenAuthorised_deletesTask() throws Exception {
                 doNothing().when(taskService).deleteTask(1, "1@1.com");
 
-                mockMvc.perform(delete("/api/tasks/delete/1"))
+                mockMvc.perform(delete("/api/tasks/1"))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.message").value("Task deleted successfully."));
 
@@ -251,7 +273,7 @@ public class TaskControllerTest {
                 doThrow(new TaskNotFoundException("Task not found."))
                                 .when(taskService).deleteTask(1, "1@1.com");
 
-                mockMvc.perform(delete("/api/tasks/delete/1"))
+                mockMvc.perform(delete("/api/tasks/1"))
                                 .andExpect(status().isNotFound())
                                 .andExpect(jsonPath("$.error").value("Task not found."));
         }

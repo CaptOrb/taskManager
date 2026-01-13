@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -26,6 +28,19 @@ public class GlobalExceptionHandler {
     @ExceptionHandler({ValidationException.class, IllegalArgumentException.class})
     public ResponseEntity<Map<String, String>> handleBadRequestExceptions(RuntimeException e) {
         return errorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
+    }
+
+    // When a controller method uses @Valid on a request argument,
+    // Spring validates the argument using Bean Validation annotations.
+    // If validation fails, Spring throws a MethodArgumentNotValidException.
+    // This handler catches it and returns a user-friendly error response based on the first validation error message.
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+        String errorMessage = e.getBindingResult().getFieldErrors().stream()
+                .map(FieldError::getDefaultMessage)
+                .findFirst()
+                .orElse("Validation failed");
+        return errorResponse(HttpStatus.BAD_REQUEST, errorMessage);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
