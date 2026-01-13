@@ -1,5 +1,7 @@
 package com.conor.taskmanager;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -74,7 +76,7 @@ class UserServiceTest {
         User user = new User();
         user.setUserName("username");
 
-        when(userRepository.findByUserName("username")).thenReturn(user);
+        when(userRepository.findByUserName("username")).thenReturn(Optional.of(user));
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
         when(jwtService.generateToken("username")).thenReturn("mockJwtToken");
 
@@ -88,8 +90,8 @@ class UserServiceTest {
     void testLoginUserNotFound() {
         Login loginRequest = new Login("username", "password");
 
-        when(userRepository.findByUserName("username")).thenReturn(null);
-        when(userRepository.findByEmail("username")).thenReturn(null);
+        when(userRepository.findByUserName("username")).thenReturn(Optional.empty());
+        when(userRepository.findByEmail("username")).thenReturn(Optional.empty());
 
         assertThrows(InvalidCredentialsException.class, () -> userService.login(loginRequest));
         verify(authManager, never()).authenticate(any(UsernamePasswordAuthenticationToken.class));
@@ -101,7 +103,7 @@ class UserServiceTest {
         User user = new User();
         user.setUserName("username");
 
-        when(userRepository.findByUserName("username")).thenReturn(user);
+        when(userRepository.findByUserName("username")).thenReturn(Optional.of(user));
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 
@@ -113,7 +115,7 @@ class UserServiceTest {
         User user = new User();
         user.setEmail("test@example.com");
 
-        when(userRepository.findByEmail("test@example.com")).thenReturn(user);
+        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
 
         User foundUser = userService.findByEmail("test@example.com");
 
@@ -128,7 +130,7 @@ class UserServiceTest {
 
         PasswordChangeRequest request = new PasswordChangeRequest("oldPassword", "newPassword123", "newPassword123");
 
-        when(userRepository.findByUserName("testUser")).thenReturn(user);
+        when(userRepository.findByUserName("testUser")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);
         when(passwordEncoder.encode("newPassword123")).thenReturn("encodedNewPassword");
         when(userRepository.save(any(User.class))).thenReturn(user);
@@ -142,7 +144,7 @@ class UserServiceTest {
     void testChangePassword_UserNotFound() {
         PasswordChangeRequest request = new PasswordChangeRequest("oldPassword", "newPassword123", "newPassword123");
 
-        when(userRepository.findByUserName("nonexistent")).thenReturn(null);
+        when(userRepository.findByUserName("nonexistent")).thenReturn(Optional.empty());
 
         assertThrows(UserNotFoundException.class, () -> userService.changePassword("nonexistent", request));
     }
@@ -155,7 +157,7 @@ class UserServiceTest {
 
         PasswordChangeRequest request = new PasswordChangeRequest("wrongPassword", "newPassword123", "newPassword123");
 
-        when(userRepository.findByUserName("testUser")).thenReturn(user);
+        when(userRepository.findByUserName("testUser")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrongPassword", "encodedOldPassword")).thenReturn(false);
 
         assertThrows(ValidationException.class, () -> userService.changePassword("testUser", request));
@@ -169,7 +171,7 @@ class UserServiceTest {
 
         PasswordChangeRequest request = new PasswordChangeRequest("oldPassword", "newPassword123", "differentPassword");
 
-        when(userRepository.findByUserName("testUser")).thenReturn(user);
+        when(userRepository.findByUserName("testUser")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);
 
         assertThrows(ValidationException.class, () -> userService.changePassword("testUser", request));

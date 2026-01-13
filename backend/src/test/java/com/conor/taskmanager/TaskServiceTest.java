@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -55,7 +56,7 @@ public class TaskServiceTest {
                 LocalDateTime.now().plusDays(2));
         List<Task> tasks = Arrays.asList(task1, task2);
 
-        when(userRepository.findByUserName(username)).thenReturn(user);
+        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
         when(taskRepository.findByUser(user)).thenReturn(tasks);
 
         List<Task> result = taskService.getTasksForUser(username);
@@ -68,7 +69,7 @@ public class TaskServiceTest {
     void getTasksForUser_whenUserDoesNotExist_throwsException() {
 
         String username = "nonexistent@test.com";
-        when(userRepository.findByUserName(username)).thenReturn(null);
+        when(userRepository.findByUserName(username)).thenReturn(Optional.empty());
 
         assertThrows(UserNotFoundException.class, () -> {
             taskService.getTasksForUser(username);
@@ -87,8 +88,8 @@ public class TaskServiceTest {
                 LocalDateTime.now().plusDays(1));
         task.setUser(user);
 
-        when(userRepository.findByUserName(username)).thenReturn(user);
-        when(taskRepository.findTaskByID(1)).thenReturn(task);
+        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(taskRepository.findById(1)).thenReturn(Optional.of(task));
 
         Task result = taskService.getTaskById(1, username);
 
@@ -112,8 +113,8 @@ public class TaskServiceTest {
                 LocalDateTime.now().plusDays(1));
         task.setUser(otherUser); // Different user owns this task
 
-        when(userRepository.findByUserName(username)).thenReturn(user);
-        when(taskRepository.findTaskByID(1)).thenReturn(task);
+        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(taskRepository.findById(1)).thenReturn(Optional.of(task));
 
         assertThrows(ForbiddenException.class, () -> {
             taskService.getTaskById(1, username);
@@ -128,8 +129,8 @@ public class TaskServiceTest {
         user.setId(1L);
         user.setUserName(username);
 
-        when(userRepository.findByUserName(username)).thenReturn(user);
-        when(taskRepository.findTaskByID(1)).thenReturn(null);
+        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(taskRepository.findById(1)).thenReturn(Optional.empty());
 
         assertThrows(TaskNotFoundException.class, () -> {
             taskService.getTaskById(1, username);
@@ -150,7 +151,7 @@ public class TaskServiceTest {
                 LocalDateTime.now().plusDays(1));
         savedTask.setUser(user);
 
-        when(userRepository.findByUserName(username)).thenReturn(user);
+        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
         when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
 
         Task result = taskService.createTask(newTask, username);
@@ -175,8 +176,8 @@ public class TaskServiceTest {
         Task updatedTaskDetails = new Task(1, "New Title", "New Description", Status.IN_PROGRESS, Priority.HIGH,
                 LocalDateTime.now().plusDays(2));
 
-        when(userRepository.findByUserName(username)).thenReturn(user);
-        when(taskRepository.findTaskByID(1)).thenReturn(existingTask);
+        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(taskRepository.findById(1)).thenReturn(Optional.of(existingTask));
         when(taskRepository.save(existingTask)).thenReturn(existingTask);
 
         Task result = taskService.updateTask(1, updatedTaskDetails, username);
@@ -198,8 +199,8 @@ public class TaskServiceTest {
         Task updatedTaskDetails = new Task(1, "New Title", "New Description", Status.IN_PROGRESS, Priority.HIGH,
                 LocalDateTime.now().plusDays(2));
 
-        when(userRepository.findByUserName(username)).thenReturn(user);
-        when(taskRepository.findTaskByID(1)).thenReturn(null);
+        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(taskRepository.findById(1)).thenReturn(Optional.empty());
 
         assertThrows(TaskNotFoundException.class, () -> {
             taskService.updateTask(1, updatedTaskDetails, username);
@@ -224,8 +225,8 @@ public class TaskServiceTest {
         Task updatedTaskDetails = new Task(1, "New Title", "New Description", Status.IN_PROGRESS, Priority.HIGH,
                 LocalDateTime.now().plusDays(2));
 
-        when(userRepository.findByUserName(username)).thenReturn(user);
-        when(taskRepository.findTaskByID(1)).thenReturn(existingTask);
+        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(taskRepository.findById(1)).thenReturn(Optional.of(existingTask));
 
         assertThrows(ForbiddenException.class, () -> {
             taskService.updateTask(1, updatedTaskDetails, username);
@@ -244,8 +245,8 @@ public class TaskServiceTest {
                 LocalDateTime.now().plusDays(1));
         task.setUser(user);
 
-        when(userRepository.findByUserName(username)).thenReturn(user);
-        when(taskRepository.findTaskByID(1)).thenReturn(task);
+        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(taskRepository.findById(1)).thenReturn(Optional.of(task));
         doNothing().when(taskRepository).delete(task);
 
         taskService.deleteTask(1, username);
@@ -260,8 +261,8 @@ public class TaskServiceTest {
         User user = new User();
         user.setUserName(username);
 
-        when(userRepository.findByUserName(username)).thenReturn(user);
-        when(taskRepository.findTaskByID(1)).thenReturn(null);
+        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(taskRepository.findById(1)).thenReturn(Optional.empty());
 
         assertThrows(TaskNotFoundException.class, () -> {
             taskService.deleteTask(1, username);

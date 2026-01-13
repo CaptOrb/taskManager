@@ -1,6 +1,8 @@
 package com.conor.taskmanager.security;
 
 import java.util.Collections;
+import java.util.Optional;
+
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -20,14 +22,13 @@ public class UserDetailsService implements org.springframework.security.core.use
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
 
-        User user = userRepository.findByUserName(username);
-        if (user == null) {
-            user = userRepository.findByEmail(username);
+        Optional<User> userOpt = userRepository.findByUserName(username);
+        if (userOpt.isEmpty()) {
+            userOpt = userRepository.findByEmail(username);
         }
 
-        if (user == null) {
-            throw new UsernameNotFoundException("User not found with username or email: " + username);
-        }
+        User user = userOpt.orElseThrow(() -> 
+            new UsernameNotFoundException("User not found with username or email: " + username));
 
         return new org.springframework.security.core.userdetails.User(
                 user.getUserName(),

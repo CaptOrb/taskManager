@@ -1,5 +1,6 @@
 package com.conor.taskmanager;
 
+import java.util.Optional;
 
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.UserRepository;
@@ -38,7 +39,7 @@ public class UserDetailsServiceTest {
         user.setPassword(password);
         user.setUserRole("user");
 
-        when(userRepository.findByUserName(username)).thenReturn(user);
+        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
@@ -50,8 +51,8 @@ public class UserDetailsServiceTest {
     @Test
     void loadUserByUsername_userNotFound() {
         String username = "nonexistentuser";
-        when(userRepository.findByUserName(username)).thenReturn(null);
-        when(userRepository.findByEmail(username)).thenReturn(null);
+        when(userRepository.findByUserName(username)).thenReturn(Optional.empty());
+        when(userRepository.findByEmail(username)).thenReturn(Optional.empty());
 
         assertThrows(UsernameNotFoundException.class, () -> userDetailsService.loadUserByUsername(username));
     }

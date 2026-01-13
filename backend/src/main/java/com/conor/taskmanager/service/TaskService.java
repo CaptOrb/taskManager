@@ -85,10 +85,7 @@ public class TaskService {
     }
 
     private User getUserByUsername(String username) {
-        User user = userRepository.findByUserName(username);
-        if (user == null) {
-            throw new UserNotFoundException("User not found");
-        }
-        return user;
+        return userRepository.findByUserName(username)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
 }

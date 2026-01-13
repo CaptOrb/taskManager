@@ -1,5 +1,7 @@
 package com.conor.taskmanager;
 
+import java.util.Optional;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -66,7 +68,7 @@ public class UserControllerTest {
         testUser.setEmail("1@1.com");
         testUser.setPassword("password");
 
-        when(userRepository.findByUserName("1@1.com")).thenReturn(testUser);
+        when(userRepository.findByUserName("1@1.com")).thenReturn(Optional.of(testUser));
 
         when(jwtService.extractUserName(any())).thenReturn("1@1.com");
         when(jwtService.validateToken(any(), any())).thenReturn(true);
