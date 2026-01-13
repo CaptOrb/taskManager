@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.conor.taskmanager.model.Login;
 import com.conor.taskmanager.model.LoginResponse;
 import com.conor.taskmanager.model.PasswordChangeRequest;
+import com.conor.taskmanager.model.RegisterRequest;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.service.UserService;
 
@@ -31,8 +32,8 @@ public class UserController {
     private final UserService userService;
 
     @PostMapping("/register")
-    public ResponseEntity<LoginResponse> register(@Valid @RequestBody User user) {
-        LoginResponse response = userService.registerUser(user);
+    public ResponseEntity<LoginResponse> register(@Valid @RequestBody RegisterRequest request) {
+        LoginResponse response = userService.registerUser(request);
         return ResponseEntity.ok(response);
     }
 

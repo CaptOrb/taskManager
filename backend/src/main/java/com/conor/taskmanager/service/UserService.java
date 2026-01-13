@@ -1,66 +1,63 @@
 package com.conor.taskmanager.service;
 
-import java.util.Optional;
-
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 import com.conor.taskmanager.exception.InvalidCredentialsException;
 import com.conor.taskmanager.exception.UserNotFoundException;
 import com.conor.taskmanager.exception.ValidationException;
 import com.conor.taskmanager.model.Login;
 import com.conor.taskmanager.model.LoginResponse;
 import com.conor.taskmanager.model.PasswordChangeRequest;
+import com.conor.taskmanager.model.RegisterRequest;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.security.JwtService;
-
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
-
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final AuthenticationManager authManager;
   private final JwtService jwtService;
 
   @Transactional
-  public LoginResponse registerUser(User user) {
-    if (userRepository.existsByUserName(user.getUserName())) {
+  public LoginResponse registerUser(RegisterRequest request) {
+    if (!request.getPassword().equals(request.getPasswordConfirm())) {
+      throw new ValidationException("Passwords do not match");
+    }
+
+    String userName = request.getUserName().trim();
+    String email = request.getEmail().trim().toLowerCase();
+
+    if (userRepository.existsByUserName(userName)) {
       throw new ValidationException("Username is already taken");
     }
-    
-    if (userRepository.existsByEmail(user.getEmail())) {
+    if (userRepository.existsByEmail(email)) {
       throw new ValidationException("Email is already taken");
     }
-      if (!user.getPassword().equals(user.getPasswordConfirm())) {
-      throw new ValidationException("New password and confirmation password do not match");
-    }
 
+    User user = new User();
+    user.setUserName(userName);
+    user.setEmail(email);
+    user.setPassword(passwordEncoder.encode(request.getPassword()));
+    user.setUserRole("user");
 
-    user.setPassword(passwordEncoder.encode(user.getPassword()));
     User savedUser = userRepository.save(user);
-    
     String token = jwtService.generateToken(savedUser.getUserName());
     return new LoginResponse(savedUser.getUserName(), token);
   }
 
   public LoginResponse login(Login loginRequest) {
-    Optional<User> userOpt = userRepository.findByUserName(loginRequest.getUserName());
-    if (userOpt.isEmpty()) {
-      userOpt = userRepository.findByEmail(loginRequest.getUserName());
-    }
-    
-    User user = userOpt.orElseThrow(() -> new InvalidCredentialsException("Invalid username or password"));
+    User user = userRepository.findByUserNameOrEmail(loginRequest.getUserName())
+        .orElseThrow(() -> new InvalidCredentialsException("Invalid username or password"));
 
-    UsernamePasswordAuthenticationToken authInputToken = 
-        new UsernamePasswordAuthenticationToken(user.getUserName(), loginRequest.getPassword());
-    
+    UsernamePasswordAuthenticationToken authInputToken = new UsernamePasswordAuthenticationToken(user.getUserName(),
+        loginRequest.getPassword());
     try {
       authManager.authenticate(authInputToken);
     } catch (org.springframework.security.core.AuthenticationException e) {
@@ -72,25 +69,15 @@ public class UserService {
   }
 
   @Transactional(readOnly = true)
-  public User findByEmail(String email) {
-    return userRepository.findByEmail(email).orElse(null);
-  }
-
-  @Transactional(readOnly = true)
-  public User findByUserName(String userName) {
-    return userRepository.findByUserName(userName).orElse(null);
-  }
-
-  @Transactional(readOnly = true)
   public User getCurrentUser(String username) {
     return userRepository.findByUserName(username)
-            .orElseThrow(() -> new UserNotFoundException("User not found"));
+        .orElseThrow(() -> new UserNotFoundException("User not found"));
   }
 
   @Transactional
   public void changePassword(String username, PasswordChangeRequest request) {
     User user = userRepository.findByUserName(username)
-            .orElseThrow(() -> new UserNotFoundException("User not found"));
+        .orElseThrow(() -> new UserNotFoundException("User not found"));
 
     if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
       throw new ValidationException("Current password is incorrect");

@@ -5,7 +5,6 @@ import java.util.Optional;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.security.UserDetailsService;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,12 +33,13 @@ public class UserDetailsServiceTest {
     void loadUserByUsername_userFound() {
         String username = "testuser";
         String password = "password";
+
         User user = new User();
         user.setUserName(username);
         user.setPassword(password);
         user.setUserRole("user");
 
-        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(userRepository.findByUserNameOrEmail(username)).thenReturn(Optional.of(user));
 
         UserDetails userDetails = userDetailsService.loadUserByUsername(username);
 
@@ -51,9 +51,10 @@ public class UserDetailsServiceTest {
     @Test
     void loadUserByUsername_userNotFound() {
         String username = "nonexistentuser";
-        when(userRepository.findByUserName(username)).thenReturn(Optional.empty());
-        when(userRepository.findByEmail(username)).thenReturn(Optional.empty());
 
-        assertThrows(UsernameNotFoundException.class, () -> userDetailsService.loadUserByUsername(username));
+        when(userRepository.findByUserNameOrEmail(username)).thenReturn(Optional.empty());
+
+        assertThrows(UsernameNotFoundException.class,
+                () -> userDetailsService.loadUserByUsername(username));
     }
 }

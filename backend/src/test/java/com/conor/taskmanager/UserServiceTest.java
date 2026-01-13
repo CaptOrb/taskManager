@@ -23,6 +23,7 @@ import com.conor.taskmanager.exception.ValidationException;
 import com.conor.taskmanager.model.Login;
 import com.conor.taskmanager.model.LoginResponse;
 import com.conor.taskmanager.model.PasswordChangeRequest;
+import com.conor.taskmanager.model.RegisterRequest;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.security.JwtService;
@@ -52,22 +53,27 @@ class UserServiceTest {
 
     @Test
     void testRegisterUser() {
-        User user = new User();
-        user.setUserName("testUser");
-        user.setEmail("test@example.com");
-        user.setPassword("plainPassword");
-        user.setPasswordConfirm("plainPassword");
+        RegisterRequest request = new RegisterRequest();
+        request.setUserName("testUser");
+        request.setEmail("test@example.com");
+        request.setPassword("plainPassword");
+        request.setPasswordConfirm("plainPassword");
+
+        User savedUser = new User();
+        savedUser.setUserName("testUser");
+        savedUser.setEmail("test@example.com");
 
         when(userRepository.existsByUserName("testUser")).thenReturn(false);
         when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
         when(passwordEncoder.encode("plainPassword")).thenReturn("encodedPassword");
-        when(userRepository.save(any(User.class))).thenReturn(user);
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
         when(jwtService.generateToken("testUser")).thenReturn("mockedToken");
 
-        LoginResponse response = userService.registerUser(user);
+        LoginResponse response = userService.registerUser(request);
 
         assertEquals("testUser", response.getUserName());
         assertEquals("mockedToken", response.getJwtToken());
+        verify(userRepository).save(any(User.class));
     }
 
     @Test
@@ -76,7 +82,8 @@ class UserServiceTest {
         User user = new User();
         user.setUserName("username");
 
-        when(userRepository.findByUserName("username")).thenReturn(Optional.of(user));
+        // Use findByUserNameOrEmail instead of findByUserName
+        when(userRepository.findByUserNameOrEmail("username")).thenReturn(Optional.of(user));
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
         when(jwtService.generateToken("username")).thenReturn("mockJwtToken");
 
@@ -90,8 +97,8 @@ class UserServiceTest {
     void testLoginUserNotFound() {
         Login loginRequest = new Login("username", "password");
 
-        when(userRepository.findByUserName("username")).thenReturn(Optional.empty());
-        when(userRepository.findByEmail("username")).thenReturn(Optional.empty());
+        // Use findByUserNameOrEmail instead of separate findByUserName and findByEmail
+        when(userRepository.findByUserNameOrEmail("username")).thenReturn(Optional.empty());
 
         assertThrows(InvalidCredentialsException.class, () -> userService.login(loginRequest));
         verify(authManager, never()).authenticate(any(UsernamePasswordAuthenticationToken.class));
@@ -103,23 +110,12 @@ class UserServiceTest {
         User user = new User();
         user.setUserName("username");
 
-        when(userRepository.findByUserName("username")).thenReturn(Optional.of(user));
+        // Use findByUserNameOrEmail instead of findByUserName
+        when(userRepository.findByUserNameOrEmail("username")).thenReturn(Optional.of(user));
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 
         assertThrows(InvalidCredentialsException.class, () -> userService.login(loginRequest));
-    }
-
-    @Test
-    void testFindByEmail() {
-        User user = new User();
-        user.setEmail("test@example.com");
-
-        when(userRepository.findByEmail("test@example.com")).thenReturn(Optional.of(user));
-
-        User foundUser = userService.findByEmail("test@example.com");
-
-        assertEquals("test@example.com", foundUser.getEmail());
     }
 
     @Test
