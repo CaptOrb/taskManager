@@ -53,7 +53,6 @@ public class SecurityConfig {
     public UrlBasedCorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of(
-                "http://localhost",
                 "http://localhost:3000",
                 "https://taskapp.librepush.net",
                 "https://taskapp.conordev.com"));
