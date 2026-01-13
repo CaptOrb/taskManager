@@ -30,10 +30,10 @@ public class GlobalExceptionHandler {
         return errorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
     }
 
-    // When a controller method receives a request with @Valid @RequestBody, 
-    // Spring validates the object using Bean Validation annotations.
-    // If validation fails, Spring throws a MethodArgumentNotValidException. 
-    // This handler catches it and returns a user-friendly error response.
+    // When a controller method uses @Valid on a request argument,
+    // Spring validates the argument using Bean Validation annotations.
+    // If validation fails, Spring throws a MethodArgumentNotValidException.
+    // This handler catches it and returns a user-friendly error response based on the first validation error message.
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
         String errorMessage = e.getBindingResult().getFieldErrors().stream()

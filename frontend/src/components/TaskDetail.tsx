@@ -107,7 +107,7 @@ const TaskDetail = (): ReactElement => {
 		);
 		if (confirmDelete) {
 			try {
-				await axios.delete(`/api/tasks/delete/${id}`, {
+				await axios.delete(`/api/tasks/${id}`, {
 					headers: {
 						Authorization: `Bearer ${localStorage.getItem("token")}`,
 					},

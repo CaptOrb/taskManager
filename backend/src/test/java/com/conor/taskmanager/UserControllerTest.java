@@ -303,7 +303,7 @@ public class UserControllerTest {
                                 .andDo(print())
                                 .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.error")
-                                                .value("New password must be at least 7 characters long."));
+                                                .value("New password must be at least 7 characters long"));
         }
 
         @Test

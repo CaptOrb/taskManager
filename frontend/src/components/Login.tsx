@@ -43,7 +43,7 @@ function Login(): ReactElement {
 			setErrorMessage("");
 			navigate("/");
 		} catch (error) {
-			console.log("Login failed", error);
+			console.error("Login failed", error);
 			setErrorMessage("Login failed. Check your credentials.");
 		}
 	};

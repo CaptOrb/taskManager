@@ -27,9 +27,6 @@ public class UserService {
 
   @Transactional
   public LoginResponse registerUser(RegisterRequest request) {
-    if (!request.getPassword().equals(request.getPasswordConfirm())) {
-      throw new ValidationException("Passwords do not match");
-    }
 
     String userName = request.getUserName().trim();
     String email = request.getEmail().trim().toLowerCase();
@@ -39,6 +36,10 @@ public class UserService {
     }
     if (userRepository.existsByEmail(email)) {
       throw new ValidationException("Email is already taken");
+    }
+
+    if (!request.getPassword().equals(request.getPasswordConfirm())) {
+      throw new ValidationException("Passwords do not match");
     }
 
     User user = new User();
@@ -52,6 +53,7 @@ public class UserService {
     return new LoginResponse(savedUser.getUserName(), token);
   }
 
+  @Transactional(readOnly = true)
   public LoginResponse login(Login loginRequest) {
     User user = userRepository.findByUserNameOrEmail(loginRequest.getUserName())
         .orElseThrow(() -> new InvalidCredentialsException("Invalid username or password"));

@@ -11,13 +11,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class PasswordChangeRequest {
-    @NotBlank(message = "Current password cannot be empty.")
+    @NotBlank(message = "Current password cannot be empty")
     private String currentPassword;
 
-    @NotBlank(message = "New password cannot be empty.")
-    @Size(min = 7, message = "New password must be at least 7 characters long.")
+    @NotBlank(message = "New password cannot be empty")
+    @Size(min = 7, message = "New password must be at least 7 characters long")
     private String newPassword;
 
-    @NotBlank(message = "Confirm password cannot be empty.")
+    @NotBlank(message = "Confirm password cannot be empty")
     private String confirmPassword;
 }

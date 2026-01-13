@@ -28,7 +28,8 @@ const Register = (): ReactElement => {
 			const response = await axios.post<LoginResponse>("/api/auth/register", { 
 				userName, 
 				email, 
-				password 
+				password,
+				passwordConfirm: confirmPassword
 			});
 
 			// Automatically log in the user with the JWT token from registration
@@ -40,13 +41,13 @@ const Register = (): ReactElement => {
 				setError(
 					`Registration failed: ${error.response?.data?.error || error.message}`,
 				);
-				console.log("Registration failed:", error);
+				console.error("Registration failed:", error);
 			} else if (error instanceof Error) {
 				setError(`Registration failed: ${error.message}`);
-				console.log("Registration error:", error);
+				console.error("Registration error:", error);
 			} else {
 				setError("Registration failed: Unknown error occurred");
-				console.log("Unknown error:", error);
+				console.error("Unknown error:", error);
 			}
 		}
 	};

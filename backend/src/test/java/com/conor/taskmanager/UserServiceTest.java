@@ -10,6 +10,7 @@ import static org.mockito.Mockito.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -73,6 +74,51 @@ class UserServiceTest {
 
         assertEquals("testUser", response.getUserName());
         assertEquals("mockedToken", response.getJwtToken());
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void testRegisterUserPasswordMismatch() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUserName("testUser");
+        request.setEmail("test@example.com");
+        request.setPassword("plainPassword");
+        request.setPasswordConfirm("differentPassword");
+
+        assertThrows(ValidationException.class, () -> userService.registerUser(request));
+
+        verify(userRepository, never()).save(any(User.class));
+        verify(passwordEncoder, never()).encode(any());
+        verify(jwtService, never()).generateToken(any());
+    }
+
+    @Test
+    void testRegisterUserEmailNormalisation() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUserName("testUser");
+        request.setEmail("Test@Example.com");
+        request.setPassword("plainPassword");
+        request.setPasswordConfirm("plainPassword");
+
+        when(userRepository.existsByUserName("testUser")).thenReturn(false);
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("plainPassword")).thenReturn("encodedPassword");
+        when(jwtService.generateToken("testUser")).thenReturn("mockedToken");
+
+        // ArgumentCaptor verifies the actual object passed to the repository
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        when(userRepository.save(userCaptor.capture()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
+
+        LoginResponse response = userService.registerUser(request);
+
+        User savedUser = userCaptor.getValue();
+
+        assertEquals("testUser", savedUser.getUserName());
+        assertEquals("test@example.com", savedUser.getEmail());
+        assertEquals("mockedToken", response.getJwtToken());
+
+        verify(userRepository).existsByEmail("test@example.com");
         verify(userRepository).save(any(User.class));
     }
 

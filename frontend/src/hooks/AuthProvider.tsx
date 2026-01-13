@@ -40,7 +40,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): ReactElement => {
 						navigate("/login");
 					}
 				} catch (error) {
-					console.log("Error decoding token:", error);
+					console.error("Error decoding token:", error);
 					logout();
 					navigate("/login");
 				}
