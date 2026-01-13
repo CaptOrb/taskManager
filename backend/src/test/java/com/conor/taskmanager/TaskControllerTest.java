@@ -127,7 +127,7 @@ public class TaskControllerTest {
                 Task newTask = new Task(null, "", "Task description", Status.COMPLETED, Priority.MEDIUM,
                                 LocalDateTime.now().plusDays(1));
 
-                mockMvc.perform(post("/api/create/task")
+                mockMvc.perform(post("/api/tasks")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isBadRequest())
@@ -142,7 +142,7 @@ public class TaskControllerTest {
                 Task newTask = new Task(null, longTitle, "Task description", Status.COMPLETED, Priority.MEDIUM,
                                 LocalDateTime.now().plusDays(1));
 
-                mockMvc.perform(post("/api/create/task")
+                mockMvc.perform(post("/api/tasks")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isBadRequest())
@@ -156,7 +156,7 @@ public class TaskControllerTest {
                 Task newTask = new Task(null, "New Task", "", Status.COMPLETED, Priority.MEDIUM,
                                 LocalDateTime.now().plusDays(1));
 
-                mockMvc.perform(post("/api/create/task")
+                mockMvc.perform(post("/api/tasks")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isBadRequest())
@@ -171,7 +171,7 @@ public class TaskControllerTest {
                 Task newTask = new Task(null, "New Task", longDescription, Status.COMPLETED, Priority.MEDIUM,
                                 LocalDateTime.now().plusDays(1));
 
-                mockMvc.perform(post("/api/create/task")
+                mockMvc.perform(post("/api/tasks")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isBadRequest())
@@ -188,7 +188,7 @@ public class TaskControllerTest {
 
                 when(taskService.createTask(any(Task.class), eq("1@1.com"))).thenReturn(savedTask);
 
-                mockMvc.perform(post("/api/create/task")
+                mockMvc.perform(post("/api/tasks")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isCreated())
@@ -260,7 +260,7 @@ public class TaskControllerTest {
         public void deleteTask_whenAuthorised_deletesTask() throws Exception {
                 doNothing().when(taskService).deleteTask(1, "1@1.com");
 
-                mockMvc.perform(delete("/api/tasks/delete/1"))
+                mockMvc.perform(delete("/api/tasks/1"))
                                 .andExpect(status().isOk())
                                 .andExpect(jsonPath("$.message").value("Task deleted successfully."));
 
@@ -273,7 +273,7 @@ public class TaskControllerTest {
                 doThrow(new TaskNotFoundException("Task not found."))
                                 .when(taskService).deleteTask(1, "1@1.com");
 
-                mockMvc.perform(delete("/api/tasks/delete/1"))
+                mockMvc.perform(delete("/api/tasks/1"))
                                 .andExpect(status().isNotFound())
                                 .andExpect(jsonPath("$.error").value("Task not found."));
         }

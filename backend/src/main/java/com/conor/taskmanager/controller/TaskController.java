@@ -41,14 +41,14 @@ public class TaskController {
         return ResponseEntity.ok(task);
     }
 
-    @PostMapping(value = "/api/create/task", consumes = "application/json", produces = "application/json")
+    @PostMapping(value = "/api/tasks", consumes = "application/json", produces = "application/json")
     public ResponseEntity<Task> createTask(@Valid @RequestBody Task task) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         Task savedTask = taskService.createTask(task, username);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTask);
     }
 
-    @DeleteMapping(value = "/api/tasks/delete/{id}", produces = "application/json")
+    @DeleteMapping(value = "/api/tasks/{id}", produces = "application/json")
     public ResponseEntity<Map<String, String>> deleteTask(@PathVariable int id) {
         String username = SecurityContextHolder.getContext().getAuthentication().getName();
         taskService.deleteTask(id, username);
