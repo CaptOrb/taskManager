@@ -31,13 +31,11 @@ public class TaskService {
     @Transactional(readOnly = true)
     public Task getTaskById(Integer id, String username) {
         User user = getUserByUsername(username);
-        Task task = taskRepository.findTaskByID(id);
-        if (task == null) {
-            throw new TaskNotFoundException("Task not found.");
-        }
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException("Task not found"));
 
         if (!task.getUser().getId().equals(user.getId())) {
-            throw new ForbiddenException("You do not have permission to access this task.");
+            throw new ForbiddenException("You do not have permission to access this task");
         }
 
         return task;
@@ -57,14 +55,11 @@ public class TaskService {
     @Transactional
     public Task updateTask(Integer id, Task updatedTask, String username) {
         User user = getUserByUsername(username);
-        Task existingTask = taskRepository.findTaskByID(id);
-
-        if (existingTask == null) {
-            throw new TaskNotFoundException("Task not found.");
-        }
+        Task existingTask = taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException("Task not found"));
 
         if (!existingTask.getUser().getId().equals(user.getId())) {
-            throw new ForbiddenException("You do not have permission to update this task.");
+            throw new ForbiddenException("You do not have permission to update this task");
         }
 
         existingTask.setTitle(updatedTask.getTitle());
@@ -79,14 +74,11 @@ public class TaskService {
     @Transactional
     public void deleteTask(Integer id, String username) {
         User user = getUserByUsername(username);
-        Task task = taskRepository.findTaskByID(id);
-
-        if (task == null) {
-            throw new TaskNotFoundException("Task not found.");
-        }
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException("Task not found"));
 
         if (!task.getUser().getId().equals(user.getId())) {
-            throw new ForbiddenException("You do not have permission to delete this task.");
+            throw new ForbiddenException("You do not have permission to delete this task");
         }
 
         taskRepository.delete(task);
