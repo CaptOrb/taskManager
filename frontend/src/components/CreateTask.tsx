@@ -23,7 +23,7 @@ const CreateTask = (): ReactElement => {
 		try {
 			setError("");
 			await axios.post(
-				"/api/create/task",
+				"/api/tasks",
 				{ title, description, dueDate, priority },
 				{
 					headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },

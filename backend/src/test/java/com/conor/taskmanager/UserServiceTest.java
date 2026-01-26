@@ -1,16 +1,18 @@
 package com.conor.taskmanager;
 
+import java.util.Optional;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -18,14 +20,17 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.conor.taskmanager.exception.InvalidCredentialsException;
 import com.conor.taskmanager.exception.UserNotFoundException;
+import com.conor.taskmanager.exception.ValidationException;
 import com.conor.taskmanager.model.Login;
 import com.conor.taskmanager.model.LoginResponse;
 import com.conor.taskmanager.model.PasswordChangeRequest;
+import com.conor.taskmanager.model.RegisterRequest;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.security.JwtService;
 import com.conor.taskmanager.service.UserService;
 
+@ExtendWith(MockitoExtension.class)
 class UserServiceTest {
 
     @Mock
@@ -40,31 +45,81 @@ class UserServiceTest {
     @Mock
     private JwtService jwtService;
 
-    @InjectMocks
     private UserService userService;
 
     @BeforeEach
     void setUp() {
-        MockitoAnnotations.openMocks(this);
+        userService = new UserService(userRepository, passwordEncoder, authManager, jwtService);
     }
 
     @Test
     void testRegisterUser() {
-        User user = new User();
-        user.setUserName("testUser");
-        user.setEmail("test@example.com");
-        user.setPassword("plainPassword");
+        RegisterRequest request = new RegisterRequest();
+        request.setUserName("testUser");
+        request.setEmail("test@example.com");
+        request.setPassword("plainPassword");
+        request.setPasswordConfirm("plainPassword");
 
-        when(userRepository.findByUserName("testUser")).thenReturn(null);
-        when(userRepository.findByEmail("test@example.com")).thenReturn(null);
+        User savedUser = new User();
+        savedUser.setUserName("testUser");
+        savedUser.setEmail("test@example.com");
+
+        when(userRepository.existsByUserName("testUser")).thenReturn(false);
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("plainPassword")).thenReturn("encodedPassword");
+        when(userRepository.save(any(User.class))).thenReturn(savedUser);
+        when(jwtService.generateToken("testUser")).thenReturn("mockedToken");
+
+        LoginResponse response = userService.registerUser(request);
+
+        assertEquals("testUser", response.getUserName());
+        assertEquals("mockedToken", response.getJwtToken());
+        verify(userRepository).save(any(User.class));
+    }
+
+    @Test
+    void testRegisterUserPasswordMismatch() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUserName("testUser");
+        request.setEmail("test@example.com");
+        request.setPassword("plainPassword");
+        request.setPasswordConfirm("differentPassword");
+
+        assertThrows(ValidationException.class, () -> userService.registerUser(request));
+
+        verify(userRepository, never()).save(any(User.class));
+        verify(passwordEncoder, never()).encode(any());
+        verify(jwtService, never()).generateToken(any());
+    }
+
+    @Test
+    void testRegisterUserEmailNormalisation() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUserName("testUser");
+        request.setEmail("Test@Example.com");
+        request.setPassword("plainPassword");
+        request.setPasswordConfirm("plainPassword");
+
+        when(userRepository.existsByUserName("testUser")).thenReturn(false);
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(false);
         when(passwordEncoder.encode("plainPassword")).thenReturn("encodedPassword");
         when(jwtService.generateToken("testUser")).thenReturn("mockedToken");
-        when(userRepository.save(any(User.class))).thenReturn(user);
 
-        User registeredUser = userService.registerUser(user);
+        // ArgumentCaptor verifies the actual object passed to the repository
+        ArgumentCaptor<User> userCaptor = ArgumentCaptor.forClass(User.class);
+        when(userRepository.save(userCaptor.capture()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
 
-        assertEquals("encodedPassword", registeredUser.getPassword());
-        assertEquals("mockedToken", registeredUser.getJwtToken());
+        LoginResponse response = userService.registerUser(request);
+
+        User savedUser = userCaptor.getValue();
+
+        assertEquals("testUser", savedUser.getUserName());
+        assertEquals("test@example.com", savedUser.getEmail());
+        assertEquals("mockedToken", response.getJwtToken());
+
+        verify(userRepository).existsByEmail("test@example.com");
+        verify(userRepository).save(any(User.class));
     }
 
     @Test
@@ -73,7 +128,8 @@ class UserServiceTest {
         User user = new User();
         user.setUserName("username");
 
-        when(userRepository.findByUserNameOrEmail("username")).thenReturn(user);
+        // Use findByUserNameOrEmail instead of findByUserName
+        when(userRepository.findByUserNameOrEmail("username")).thenReturn(Optional.of(user));
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class))).thenReturn(null);
         when(jwtService.generateToken("username")).thenReturn("mockJwtToken");
 
@@ -87,9 +143,10 @@ class UserServiceTest {
     void testLoginUserNotFound() {
         Login loginRequest = new Login("username", "password");
 
-        when(userRepository.findByUserNameOrEmail("username")).thenReturn(null);
+        // Use findByUserNameOrEmail instead of separate findByUserName and findByEmail
+        when(userRepository.findByUserNameOrEmail("username")).thenReturn(Optional.empty());
 
-        assertThrows(com.conor.taskmanager.exception.InvalidCredentialsException.class, () -> userService.login(loginRequest));
+        assertThrows(InvalidCredentialsException.class, () -> userService.login(loginRequest));
         verify(authManager, never()).authenticate(any(UsernamePasswordAuthenticationToken.class));
     }
 
@@ -99,23 +156,12 @@ class UserServiceTest {
         User user = new User();
         user.setUserName("username");
 
-        when(userRepository.findByUserNameOrEmail("username")).thenReturn(user);
+        // Use findByUserNameOrEmail instead of findByUserName
+        when(userRepository.findByUserNameOrEmail("username")).thenReturn(Optional.of(user));
         when(authManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenThrow(new BadCredentialsException("Invalid credentials"));
 
-        assertThrows(com.conor.taskmanager.exception.InvalidCredentialsException.class, () -> userService.login(loginRequest));
-    }
-
-    @Test
-    void testFindByEmail() {
-        User user = new User();
-        user.setEmail("test@example.com");
-
-        when(userRepository.findByEmail("test@example.com")).thenReturn(user);
-
-        User foundUser = userService.findByEmail("test@example.com");
-
-        assertEquals("test@example.com", foundUser.getEmail());
+        assertThrows(InvalidCredentialsException.class, () -> userService.login(loginRequest));
     }
 
     @Test
@@ -126,21 +172,21 @@ class UserServiceTest {
 
         PasswordChangeRequest request = new PasswordChangeRequest("oldPassword", "newPassword123", "newPassword123");
 
-        when(userRepository.findByUserName("testUser")).thenReturn(user);
+        when(userRepository.findByUserName("testUser")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);
         when(passwordEncoder.encode("newPassword123")).thenReturn("encodedNewPassword");
         when(userRepository.save(any(User.class))).thenReturn(user);
 
-        boolean result = userService.changePassword("testUser", request);
+        userService.changePassword("testUser", request);
 
-        assertTrue(result);
+        verify(userRepository).save(any(User.class));
     }
 
     @Test
     void testChangePassword_UserNotFound() {
         PasswordChangeRequest request = new PasswordChangeRequest("oldPassword", "newPassword123", "newPassword123");
 
-        when(userRepository.findByUserName("nonexistent")).thenReturn(null);
+        when(userRepository.findByUserName("nonexistent")).thenReturn(Optional.empty());
 
         assertThrows(UserNotFoundException.class, () -> userService.changePassword("nonexistent", request));
     }
@@ -153,24 +199,10 @@ class UserServiceTest {
 
         PasswordChangeRequest request = new PasswordChangeRequest("wrongPassword", "newPassword123", "newPassword123");
 
-        when(userRepository.findByUserName("testUser")).thenReturn(user);
+        when(userRepository.findByUserName("testUser")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrongPassword", "encodedOldPassword")).thenReturn(false);
 
-        assertThrows(IllegalArgumentException.class, () -> userService.changePassword("testUser", request));
-    }
-
-    @Test
-    void testChangePassword_NewPasswordTooShort() {
-        User user = new User();
-        user.setUserName("testUser");
-        user.setPassword("encodedOldPassword");
-
-        PasswordChangeRequest request = new PasswordChangeRequest("oldPassword", "123", "123");
-
-        when(userRepository.findByUserName("testUser")).thenReturn(user);
-        when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class, () -> userService.changePassword("testUser", request));
+        assertThrows(ValidationException.class, () -> userService.changePassword("testUser", request));
     }
 
     @Test
@@ -181,23 +213,9 @@ class UserServiceTest {
 
         PasswordChangeRequest request = new PasswordChangeRequest("oldPassword", "newPassword123", "differentPassword");
 
-        when(userRepository.findByUserName("testUser")).thenReturn(user);
+        when(userRepository.findByUserName("testUser")).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);
 
-        assertThrows(IllegalArgumentException.class, () -> userService.changePassword("testUser", request));
-    }
-
-    @Test
-    void testChangePassword_NewPasswordNull() {
-        User user = new User();
-        user.setUserName("testUser");
-        user.setPassword("encodedOldPassword");
-
-        PasswordChangeRequest request = new PasswordChangeRequest("oldPassword", null, "newPassword123");
-
-        when(userRepository.findByUserName("testUser")).thenReturn(user);
-        when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);
-
-        assertThrows(IllegalArgumentException.class, () -> userService.changePassword("testUser", request));
+        assertThrows(ValidationException.class, () -> userService.changePassword("testUser", request));
     }
 }
