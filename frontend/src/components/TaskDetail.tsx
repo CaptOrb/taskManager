@@ -38,6 +38,9 @@ const getInputClassName = (hasError: boolean): string =>
 
 const TaskDetail = (): ReactElement => {
 	const { id } = useParams();
+	const { loggedInUser } = useAuth();
+	const navigate = useNavigate();
+
 	const [task, setTask] = useState<Task | null>(null);
 	const [loading, setLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string>("");
@@ -45,8 +48,6 @@ const TaskDetail = (): ReactElement => {
 	const [fieldErrors, setFieldErrors] = useState<TaskFieldErrors>(() =>
 		createEmptyFieldErrors(),
 	);
-	const { loggedInUser } = useAuth();
-	const navigate = useNavigate();
 
 	const [taskTitle, setTaskTitle] = useState("");
 	const [taskDescription, setTaskDescription] = useState("");
@@ -121,12 +122,9 @@ const TaskDetail = (): ReactElement => {
 			const response = await api.put<Task>(`/tasks/${id}`, updatedTask);
 
 			if (response.status === 200) {
-				setTask((prevTask) => ({
-					...prevTask,
-					...response.data,
-				}));
-				setError("");
-				setFieldErrors(createEmptyFieldErrors());
+				setTask((previousTask) =>
+					previousTask ? { ...previousTask, ...response.data } : response.data,
+				);
 				setIsEditing(false);
 			}
 		} catch (error) {
@@ -181,6 +179,11 @@ const TaskDetail = (): ReactElement => {
 					{error && <p className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg dark:bg-red-900 dark:border-red-700 dark:text-red-200">{error}</p>}
 
 					<div className="mb-6">
+						{fieldErrors.title.map((fieldError) => (
+							<p key={`title-${fieldError}`} className="text-red-500 text-sm mb-1">
+								{fieldError}
+							</p>
+						))}
 						<label
 							htmlFor={taskTitleId}
 							className="block text-sm font-medium text-gray-700 dark:text-white mb-2"
@@ -208,16 +211,20 @@ const TaskDetail = (): ReactElement => {
 							</div>
 							<button
 								type="button"
-								onClick={() => setShowPreview(!showPreview)}
+								onClick={() => setShowPreview((v) => !v)}
 								className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
 							>
 								{showPreview ? 'Hide Preview' : 'Show Preview'}
 							</button>
 						</div>
 						<p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-							Supports Markdown formatting (e.g., **bold**, *italic*, [links](url), # headings)
+							Supports Markdown formatting (e.g., **bold**, *italic*, [links](url),
+							# headings)
 						</p>
-						<div className={showPreview ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : ""}>
+
+						<div
+							className={showPreview ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : ""}
+						>
 							<div className={showPreview ? "" : "w-full"}>
 								<textarea
 									id={taskDescriptionId}
@@ -245,6 +252,11 @@ const TaskDetail = (): ReactElement => {
 
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
 						<div>
+							{fieldErrors.status.map((fieldError) => (
+								<p key={`status-${fieldError}`} className="text-red-500 text-sm mb-1">
+									{fieldError}
+								</p>
+							))}
 							<label
 								htmlFor={taskStatusId}
 								className="block text-sm font-medium text-gray-700 dark:text-white mb-2"
@@ -264,6 +276,11 @@ const TaskDetail = (): ReactElement => {
 						</div>
 
 						<div>
+							{fieldErrors.priority.map((fieldError) => (
+								<p key={`priority-${fieldError}`} className="text-red-500 text-sm mb-1">
+									{fieldError}
+								</p>
+							))}
 							<label
 								htmlFor={taskPriorityId}
 								className="block text-sm font-medium text-gray-700 dark:text-white mb-2"
@@ -283,6 +300,11 @@ const TaskDetail = (): ReactElement => {
 						</div>
 
 						<div>
+							{fieldErrors.dueDate.map((fieldError) => (
+								<p key={`dueDate-${fieldError}`} className="text-red-500 text-sm mb-1">
+									{fieldError}
+								</p>
+							))}
 							<label
 								htmlFor={taskDueDateId}
 								className="block text-sm font-medium text-gray-700 dark:text-white mb-2"
@@ -310,8 +332,22 @@ const TaskDetail = (): ReactElement => {
 
 						<button
 							type="button"
-							onClick={() => setIsEditing(false)}
-							className="text-white bg-gray-600 hover:bg-gray-700 font-medium rounded-lg text-sm px-6 py-3"
+							onClick={() => {
+								setError("");
+								setFieldErrors(createEmptyFieldErrors());
+								setIsEditing(false);
+								// Reset form fields to original task values
+								if (task) {
+									setTaskTitle(task.title);
+									setTaskDescription(task.description);
+									setTaskStatus(task.status);
+									setTaskPriority(task.priority);
+									setTaskDueDate(
+										new Date(task.dueDate).toISOString().slice(0, 16),
+									);
+								}
+							}}
+							className="bg-gray-600 hover:bg-gray-700 text-white px-5 py-2 rounded text-sm"
 						>
 							Cancel
 						</button>
@@ -332,10 +368,15 @@ const TaskDetail = (): ReactElement => {
 									}`}>
 									{task.status.replace(/_/g, ' ')}
 								</span>
-								<span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${task.priority === 'HIGH' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-										task.priority === 'MEDIUM' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' :
-											'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-									}`}>
+								<span
+									className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+										task.priority === "HIGH"
+											? "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+											: task.priority === "MEDIUM"
+												? "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200"
+												: "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200"
+									}`}
+								>
 									{task.priority}
 								</span>
 							</div>
@@ -360,12 +401,9 @@ const TaskDetail = (): ReactElement => {
 									Created
 								</p>
 								<p className="text-sm text-gray-700 dark:text-gray-300">
-									{new Date(task.createdDate).toLocaleDateString(navigator.language, {
-										year: 'numeric',
-										month: 'long',
-										day: 'numeric',
-										hour: '2-digit',
-										minute: '2-digit'
+									{new Date(task.createdDate).toLocaleString(undefined, {
+										dateStyle: "medium",
+										timeStyle: "short",
 									})}
 								</p>
 							</div>
@@ -375,12 +413,9 @@ const TaskDetail = (): ReactElement => {
 									Due Date
 								</p>
 								<p className="text-sm text-gray-700 dark:text-gray-300">
-									{new Date(task.dueDate).toLocaleDateString(navigator.language, {
-										year: 'numeric',
-										month: 'long',
-										day: 'numeric',
-										hour: '2-digit',
-										minute: '2-digit'
+									{new Date(task.dueDate).toLocaleString(undefined, {
+										dateStyle: "medium",
+										timeStyle: "short",
 									})}
 								</p>
 							</div>
