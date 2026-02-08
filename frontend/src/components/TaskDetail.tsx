@@ -178,7 +178,11 @@ const TaskDetail = (): ReactElement => {
 						Edit Task
 					</h2>
 
-					{error && <p className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg dark:bg-red-900 dark:border-red-700 dark:text-red-200">{error}</p>}
+					{error && (
+						<p className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg dark:bg-red-900 dark:border-red-700 dark:text-red-200">
+							{error}
+						</p>
+					)}
 
 					<div className="mb-6">
 						{fieldErrors.title.map((fieldError) => (
@@ -219,7 +223,7 @@ const TaskDetail = (): ReactElement => {
 								onClick={() => setShowPreview((v) => !v)}
 								className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 font-medium"
 							>
-								{showPreview ? 'Hide Preview' : 'Show Preview'}
+								{showPreview ? "Hide Preview" : "Show Preview"}
 							</button>
 						</div>
 						<p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
@@ -236,20 +240,24 @@ const TaskDetail = (): ReactElement => {
 								<textarea
 									id={taskDescriptionId}
 									value={taskDescription}
-									onChange={(e) => setTaskDescription(e.target.value)}
-									className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-4 dark:bg-gray-700 dark:border-gray-600 dark:text-white resize-none font-mono"
+									onChange={(event) => {
+										setTaskDescription(event.target.value);
+										clearFieldError("description");
+									}}
+									aria-invalid={fieldErrors.description.length > 0}
+									className={`${getInputClassName(
+										fieldErrors.description.length > 0,
+									)} h-[300px] resize-none font-mono p-4`}
 									wrap="hard"
-									rows={12}
 								/>
 							</div>
 							{showPreview && (
 								<div>
-									<p className="block text-sm font-medium text-gray-700 dark:text-white mb-2">
-										Preview:
-									</p>
-									<div className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-4 dark:bg-gray-700 dark:border-gray-600 dark:text-white break-words overflow-y-auto min-h-[300px]">
+									<div className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-4 dark:bg-gray-700 dark:border-gray-600 dark:text-white break-words overflow-y-auto h-[300px]">
 										<div className="markdown text-gray-700 dark:text-gray-300 leading-relaxed">
-											<ReactMarkdown>{taskDescription || "*No preview available*"}</ReactMarkdown>
+											<ReactMarkdown>
+												{taskDescription || "*No preview available*"}
+											</ReactMarkdown>
 										</div>
 									</div>
 								</div>
@@ -378,11 +386,16 @@ const TaskDetail = (): ReactElement => {
 								{task.title}
 							</h1>
 							<div className="flex gap-2 flex-shrink-0">
-								<span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${task.status === 'COMPLETED' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-										task.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-											'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-									}`}>
-									{task.status.replace(/_/g, ' ')}
+								<span
+									className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
+										task.status === "COMPLETED"
+											? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+											: task.status === "IN_PROGRESS"
+												? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+												: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+									}`}
+								>
+									{task.status.replace(/_/g, " ")}
 								</span>
 								<span
 									className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold ${
@@ -403,7 +416,9 @@ const TaskDetail = (): ReactElement => {
 						<div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl shadow-sm px-8 py-6">
 							<div className="prose prose-gray dark:prose-invert max-w-none">
 								<div className="markdown text-gray-700 dark:text-gray-300 leading-relaxed">
-									<ReactMarkdown>{task.description || "*No description provided*"}</ReactMarkdown>
+									<ReactMarkdown>
+										{task.description || "*No description provided*"}
+									</ReactMarkdown>
 								</div>
 							</div>
 						</div>
