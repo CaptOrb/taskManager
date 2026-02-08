@@ -7,6 +7,7 @@ import {
 	useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
+import { getApiErrorMessage, getApiErrorMessageFromBody } from "../utils/apiError";
 
 const MyAccount = (): ReactElement => {
 	const [userName, setUserName] = useState("");
@@ -39,22 +40,24 @@ const MyAccount = (): ReactElement => {
 			try {
 				const response = await fetch("/api/auth/current-user", {
 					headers: {
-						Authorization: `Bearer ${localStorage.getItem("token")}`, // Add JWT token to the request
+						Authorization: `Bearer ${localStorage.getItem("token")}`,
 					},
 				});
 
 				if (!response.ok) {
-					throw new Error("Failed to fetch user");
+					const data: unknown = await response.json().catch(() => null);
+					throw new Error(getApiErrorMessageFromBody(data, "Failed to fetch user"));
 				}
 
-				const data = await response.json();
-				setUserName(data.userName);
-				setEmail(data.email);
-				setLoading(false);
+				const data: unknown = await response.json();
+				if (typeof data === "object" && data !== null) {
+					const user = data as { userName?: string; email?: string };
+					setUserName(user.userName ?? "");
+					setEmail(user.email ?? "");
+				}
 			} catch (error) {
-				setError(
-					error instanceof Error ? error.message : "Unknown error occurred",
-				);
+				setError(getApiErrorMessage(error, "Failed to fetch user"));
+			} finally {
 				setLoading(false);
 			}
 		};
@@ -70,20 +73,6 @@ const MyAccount = (): ReactElement => {
 		setPasswordChangeError(null);
 		setPasswordChangeSuccess(false);
 
-		if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-			setPasswordChangeError(
-				"New password and confirmation password do not match",
-			);
-			setPasswordChangeLoading(false);
-			return;
-		}
-
-		if (passwordForm.newPassword.length < 7) {
-			setPasswordChangeError("New password must be at least 7 characters long");
-			setPasswordChangeLoading(false);
-			return;
-		}
-
 		try {
 			const response = await fetch("/api/auth/change-password", {
 				method: "POST",
@@ -94,10 +83,9 @@ const MyAccount = (): ReactElement => {
 				body: JSON.stringify(passwordForm),
 			});
 
-			const data = await response.json();
-
 			if (!response.ok) {
-				throw new Error(data.error || "Failed to change password");
+				const data: unknown = await response.json().catch(() => null);
+				throw new Error(getApiErrorMessageFromBody(data, "Failed to change password"));
 			}
 
 			setPasswordChangeSuccess(true);
@@ -113,9 +101,7 @@ const MyAccount = (): ReactElement => {
 				setPasswordChangeSuccess(false);
 			}, 3000);
 		} catch (error) {
-			setPasswordChangeError(
-				error instanceof Error ? error.message : "Unknown error occurred",
-			);
+			setPasswordChangeError(getApiErrorMessage(error, "Failed to change password"));
 		} finally {
 			setPasswordChangeLoading(false);
 		}

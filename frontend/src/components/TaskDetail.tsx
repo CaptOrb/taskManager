@@ -5,6 +5,7 @@ import ReactMarkdown from "react-markdown";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import type { Task } from "@/types/task";
 import { useAuth } from "../hooks/auth-context";
+import { getApiErrorMessage } from "../utils/apiError";
 
 const TaskDetail = (): ReactElement => {
 	const { id } = useParams();
@@ -53,9 +54,7 @@ const TaskDetail = (): ReactElement => {
 					) {
 						navigate("/");
 					} else {
-						const errorMessage = error instanceof AxiosError
-							? (error.response?.data?.error || error.message)
-							: "Unknown error";
+						const errorMessage = getApiErrorMessage(error);
 						setError(`Error fetching task: ${errorMessage}`);
 					}
 				} finally {
@@ -94,9 +93,7 @@ const TaskDetail = (): ReactElement => {
 				setIsEditing(false);
 			}
 		} catch (error) {
-			const errorMessage = error instanceof AxiosError
-				? (error.response?.data?.error || error.message)
-				: "Unknown error";
+			const errorMessage = getApiErrorMessage(error);
 			setError(`Error updating task: ${errorMessage}`);
 		}
 	};
@@ -114,9 +111,7 @@ const TaskDetail = (): ReactElement => {
 				});
 				navigate("/");
 			} catch (error) {
-				const errorMessage = error instanceof AxiosError
-					? (error.response?.data?.error || error.message)
-					: "Unknown error";
+				const errorMessage = getApiErrorMessage(error);
 				setError(`Error deleting task: ${errorMessage}`);
 			}
 		}

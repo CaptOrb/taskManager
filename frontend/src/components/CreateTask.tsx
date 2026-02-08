@@ -1,7 +1,8 @@
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { type FormEvent, type ReactElement, useId, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
+import { getApiErrorMessage } from "../utils/apiError";
 
 const CreateTask = (): ReactElement => {
 	const [title, setTitle] = useState("");
@@ -33,13 +34,7 @@ const CreateTask = (): ReactElement => {
 			navigate("/?success=true");
 		} catch (error) {
 			setSuccessMessage("");
-			if (error instanceof AxiosError) {
-				setError(`Task failed: ${error.response?.data?.error || error.message}`);
-			} else if (error instanceof Error) {
-				setError(`Task failed: ${error.message}`);
-			} else {
-				setError("Task failed: Unknown error occurred");
-			}
+			setError(`Task failed: ${getApiErrorMessage(error)}`);
 		}
 	};
 

@@ -1,7 +1,10 @@
 package com.conor.taskmanager;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import static org.hamcrest.Matchers.hasItems;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -127,7 +130,7 @@ public class UserControllerTest {
 
                 mockMvc.perform(get("/api/auth/current-user"))
                                 .andExpect(status().isNotFound())
-                                .andExpect(jsonPath("$.error").value("User not found"));
+                                .andExpect(jsonPath("$.message").value("User not found"));
         }
 
         @Test
@@ -154,36 +157,60 @@ public class UserControllerTest {
                                 .content("{\"userName\":\"\",\"email\":\"testUser@example.com\",\"password\":\"password123\",\"passwordConfirm\":\"password123\"}"))
                                 .andDo(print())
                                 .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.error").value("Username must be between 3 and 32 characters")); // Fixed:
-                                                                                                                       // matches
-                                                                                                                       // actual
-                                                                                                                       // validation
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors",
+                                                hasItems("Username must be between 3 and 32 characters")));
         }
 
         @Test
         public void register_whenUsernameIsTaken_returnsBadRequest() throws Exception {
                 when(userService.registerUser(any(RegisterRequest.class)))
-                                .thenThrow(new ValidationException("Username is already taken"));
+                                .thenThrow(new ValidationException(Map.of(
+                                                "userName", List.of("Username is already taken"))));
 
                 mockMvc.perform(post("/api/auth/register")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"userName\":\"existingUser\",\"email\":\"newUser@example.com\",\"password\":\"password123\",\"passwordConfirm\":\"password123\"}"))
                                 .andDo(print())
                                 .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.error").value("Username is already taken"));
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors", hasItems("Username is already taken")))
+                                .andExpect(jsonPath("$.fieldErrors.userName", hasItems("Username is already taken")));
         }
 
         @Test
         public void register_whenEmailIsTaken_returnsBadRequest() throws Exception {
                 when(userService.registerUser(any(RegisterRequest.class)))
-                                .thenThrow(new ValidationException("Email is already taken"));
+                                .thenThrow(new ValidationException(Map.of(
+                                                "email", List.of("Email is already taken"))));
 
                 mockMvc.perform(post("/api/auth/register")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"userName\":\"newUser\",\"email\":\"existingUser@example.com\",\"password\":\"password123\",\"passwordConfirm\":\"password123\"}"))
                                 .andDo(print())
                                 .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.error").value("Email is already taken"));
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors", hasItems("Email is already taken")))
+                                .andExpect(jsonPath("$.fieldErrors.email", hasItems("Email is already taken")));
+        }
+
+        @Test
+        public void register_whenUsernameAndEmailAreTaken_returnsAllValidationErrors() throws Exception {
+                when(userService.registerUser(any(RegisterRequest.class)))
+                                .thenThrow(new ValidationException(Map.of(
+                                                "userName", List.of("Username is already taken"),
+                                                "email", List.of("Email is already taken"))));
+
+                mockMvc.perform(post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"userName\":\"existingUser\",\"email\":\"existingUser@example.com\",\"password\":\"password123\",\"passwordConfirm\":\"password123\"}"))
+                                .andDo(print())
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors",
+                                                hasItems("Username is already taken", "Email is already taken")))
+                                .andExpect(jsonPath("$.fieldErrors.userName", hasItems("Username is already taken")))
+                                .andExpect(jsonPath("$.fieldErrors.email", hasItems("Email is already taken")));
         }
 
         @Test
@@ -193,8 +220,9 @@ public class UserControllerTest {
                                 .content("{\"userName\":\"ab\",\"email\":\"testUser@example.com\",\"password\":\"password123\",\"passwordConfirm\":\"password123\"}"))
                                 .andDo(print())
                                 .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.error")
-                                                .value("Username must be between 3 and 32 characters"));
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors",
+                                                hasItems("Username must be between 3 and 32 characters")));
         }
 
         @Test
@@ -204,7 +232,31 @@ public class UserControllerTest {
                                 .content("{\"userName\":\"testUser\",\"email\":\"testUser@example.com\",\"password\":\"short\",\"passwordConfirm\":\"short\"}"))
                                 .andDo(print())
                                 .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.error").value("Password must be at least 7 characters long"));
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors",
+                                                hasItems("Password must be at least 7 characters long")));
+        }
+
+        @Test
+        public void register_whenMultipleFieldsAreInvalid_returnsAllValidationErrors() throws Exception {
+                mockMvc.perform(post("/api/auth/register")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content("{\"userName\":\"ab\",\"email\":\"\",\"password\":\"123\",\"passwordConfirm\":\"\"}"))
+                                .andDo(print())
+                                .andExpect(status().isBadRequest())
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors", hasItems(
+                                                "Username must be between 3 and 32 characters",
+                                                "Email cannot be empty",
+                                                "Password must be at least 7 characters long",
+                                                "Password confirmation cannot be empty")))
+                                .andExpect(jsonPath("$.fieldErrors.userName",
+                                                hasItems("Username must be between 3 and 32 characters")))
+                                .andExpect(jsonPath("$.fieldErrors.email", hasItems("Email cannot be empty")))
+                                .andExpect(jsonPath("$.fieldErrors.password",
+                                                hasItems("Password must be at least 7 characters long")))
+                                .andExpect(jsonPath("$.fieldErrors.passwordConfirm",
+                                                hasItems("Password confirmation cannot be empty")));
         }
 
         @Test
@@ -237,7 +289,7 @@ public class UserControllerTest {
                                 .content("{\"userName\":\"invalidUser\",\"password\":\"password123\"}"))
                                 .andDo(print())
                                 .andExpect(status().isUnauthorized())
-                                .andExpect(jsonPath("$.error").value("Invalid username or password"));
+                                .andExpect(jsonPath("$.message").value("Invalid username or password"));
         }
 
         @Test
@@ -250,7 +302,7 @@ public class UserControllerTest {
                                 .content("{\"userName\":\"invalidUser\",\"password\":\"wrongPassword\"}"))
                                 .andDo(print())
                                 .andExpect(status().isUnauthorized())
-                                .andExpect(jsonPath("$.error").value("Invalid username or password"));
+                                .andExpect(jsonPath("$.message").value("Invalid username or password"));
         }
 
         @Test
@@ -263,7 +315,7 @@ public class UserControllerTest {
                                 .content("{\"userName\":\"testUser\",\"password\":\"password123\"}"))
                                 .andDo(print())
                                 .andExpect(status().isInternalServerError())
-                                .andExpect(jsonPath("$.error").value("An unexpected error occurred"));
+                                .andExpect(jsonPath("$.message").value("An unexpected error occurred"));
         }
 
         @Test
@@ -291,7 +343,8 @@ public class UserControllerTest {
                                 .content("{\"currentPassword\":\"wrongPassword\",\"newPassword\":\"newPassword123\",\"confirmPassword\":\"newPassword123\"}"))
                                 .andDo(print())
                                 .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.error").value("Current password is incorrect"));
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors", hasItems("Current password is incorrect")));
         }
 
         @Test
@@ -302,8 +355,9 @@ public class UserControllerTest {
                                 .content("{\"currentPassword\":\"oldPassword\",\"newPassword\":\"123\",\"confirmPassword\":\"123\"}"))
                                 .andDo(print())
                                 .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.error")
-                                                .value("New password must be at least 7 characters long"));
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors",
+                                                hasItems("New password must be at least 7 characters long")));
         }
 
         @Test
@@ -318,8 +372,8 @@ public class UserControllerTest {
                                 .content("{\"currentPassword\":\"oldPassword\",\"newPassword\":\"newPassword123\",\"confirmPassword\":\"differentPassword\"}"))
                                 .andDo(print())
                                 .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.error")
-                                                .value("New password and confirmation password do not match"));
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors", hasItems("New password and confirmation password do not match")));
         }
 
         @Test
@@ -334,6 +388,6 @@ public class UserControllerTest {
                                 .content("{\"currentPassword\":\"oldPassword\",\"newPassword\":\"newPassword123\",\"confirmPassword\":\"newPassword123\"}"))
                                 .andDo(print())
                                 .andExpect(status().isNotFound())
-                                .andExpect(jsonPath("$.error").value("User not found"));
+                                .andExpect(jsonPath("$.message").value("User not found"));
         }
 }

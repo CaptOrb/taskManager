@@ -1,54 +1,85 @@
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { type FormEvent, type ReactElement, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { LoginResponse } from "@/types/auth";
 import { useAuth } from "../hooks/auth-context";
+import { getApiErrorMessage, getApiFieldErrors } from "../utils/apiError";
+
+type RegisterField = "userName" | "email" | "password" | "passwordConfirm";
+
+type RegisterFieldErrors = Record<RegisterField, string[]>;
+
+const createEmptyFieldErrors = (): RegisterFieldErrors => ({
+	userName: [],
+	email: [],
+	password: [],
+	passwordConfirm: [],
+});
+
+const mapApiFieldErrorsToRegisterFields = (
+	apiFieldErrors: Record<string, string[]>,
+): RegisterFieldErrors => ({
+	userName: apiFieldErrors["userName"] ?? [],
+	email: apiFieldErrors["email"] ?? [],
+	password: apiFieldErrors["password"] ?? [],
+	passwordConfirm: apiFieldErrors["passwordConfirm"] ?? [],
+});
+
+const hasAnyFieldError = (fieldErrors: RegisterFieldErrors): boolean =>
+	Object.values(fieldErrors).some((errorsForField) => errorsForField.length > 0);
+
+const getInputClassName = (hasError: boolean): string =>
+	`bg-gray-50 border text-gray-900 text-sm rounded-lg block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${hasError ? "border-red-500 focus:ring-red-500 focus:border-red-500 dark:focus:ring-red-500 dark:focus:border-red-500" : "border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500"}`;
 
 const Register = (): ReactElement => {
 	const [userName, setUsername] = useState("");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
-	const [error, setError] = useState("");
+	const [fieldErrors, setFieldErrors] = useState<RegisterFieldErrors>(() =>
+		createEmptyFieldErrors(),
+	);
+	const [formError, setFormError] = useState("");
 	const navigate = useNavigate();
 	const { login } = useAuth();
+
+	const clearFieldError = (field: RegisterField): void => {
+		setFieldErrors((previousErrors) => ({
+			...previousErrors,
+			[field]: [],
+		}));
+		setFormError("");
+	};
 
 	const handleRegister = async (
 		e: FormEvent<HTMLFormElement>,
 	): Promise<void> => {
 		e.preventDefault();
+		setFormError("");
+		setFieldErrors(createEmptyFieldErrors());
 
-		if (password !== confirmPassword) {
-			setError("Passwords do not match");
-			return;
-		}
 		try {
-			setError("");
-
-			const response = await axios.post<LoginResponse>("/api/auth/register", { 
-				userName, 
-				email, 
+			const response = await axios.post<LoginResponse>("/api/auth/register", {
+				userName,
+				email,
 				password,
-				passwordConfirm: confirmPassword
+				passwordConfirm: confirmPassword,
 			});
 
-			// Automatically log in the user with the JWT token from registration
 			const { jwtToken } = response.data;
 			login(jwtToken);
 			navigate("/");
 		} catch (error) {
-			if (error instanceof AxiosError) {
-				setError(
-					`Registration failed: ${error.response?.data?.error || error.message}`,
-				);
-				console.error("Registration failed:", error);
-			} else if (error instanceof Error) {
-				setError(`Registration failed: ${error.message}`);
-				console.error("Registration error:", error);
-			} else {
-				setError("Registration failed: Unknown error occurred");
-				console.error("Unknown error:", error);
+			const fieldLevelErrors = mapApiFieldErrorsToRegisterFields(
+				getApiFieldErrors(error),
+			);
+			setFieldErrors(fieldLevelErrors);
+
+			if (!hasAnyFieldError(fieldLevelErrors)) {
+				setFormError(getApiErrorMessage(error, "Registration failed"));
 			}
+
+			console.error("Registration failed:", error);
 		}
 	};
 
@@ -59,50 +90,86 @@ const Register = (): ReactElement => {
 				className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4 dark:bg-gray-800"
 			>
 				<div className="mb-4">
+					{fieldErrors.userName.map((fieldError) => (
+						<p key={`userName-${fieldError}`} className="text-red-500 text-sm mb-1">
+							{fieldError}
+						</p>
+					))}
 					<input
 						type="text"
 						placeholder="Username"
 						value={userName}
-						onChange={(e) => setUsername(e.target.value)}
+						onChange={(e) => {
+							setUsername(e.target.value);
+							clearFieldError("userName");
+						}}
+						aria-invalid={fieldErrors.userName.length > 0}
 						required
-						className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+						className={getInputClassName(fieldErrors.userName.length > 0)}
 					/>
 				</div>
 
 				<div className="mb-4">
+					{fieldErrors.email.map((fieldError) => (
+						<p key={`email-${fieldError}`} className="text-red-500 text-sm mb-1">
+							{fieldError}
+						</p>
+					))}
 					<input
 						type="email"
 						placeholder="Email"
 						value={email}
-						onChange={(e) => setEmail(e.target.value)}
+						onChange={(e) => {
+							setEmail(e.target.value);
+							clearFieldError("email");
+						}}
+						aria-invalid={fieldErrors.email.length > 0}
 						required
-						className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+						className={getInputClassName(fieldErrors.email.length > 0)}
 					/>
 				</div>
 
 				<div className="mb-4">
+					{fieldErrors.password.map((fieldError) => (
+						<p key={`password-${fieldError}`} className="text-red-500 text-sm mb-1">
+							{fieldError}
+						</p>
+					))}
 					<input
 						type="password"
 						placeholder="Password"
 						value={password}
-						onChange={(e) => setPassword(e.target.value)}
+						onChange={(e) => {
+							setPassword(e.target.value);
+							clearFieldError("password");
+						}}
+						aria-invalid={fieldErrors.password.length > 0}
 						required
-						className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+						className={getInputClassName(fieldErrors.password.length > 0)}
 					/>
 				</div>
 
 				<div className="mb-4">
+					{fieldErrors.passwordConfirm.map((fieldError) => (
+						<p key={`passwordConfirm-${fieldError}`} className="text-red-500 text-sm mb-1">
+							{fieldError}
+						</p>
+					))}
 					<input
 						type="password"
 						placeholder="Confirm Password"
 						value={confirmPassword}
-						onChange={(e) => setConfirmPassword(e.target.value)}
+						onChange={(e) => {
+							setConfirmPassword(e.target.value);
+							clearFieldError("passwordConfirm");
+						}}
+						aria-invalid={fieldErrors.passwordConfirm.length > 0}
 						required
-						className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+						className={getInputClassName(fieldErrors.passwordConfirm.length > 0)}
 					/>
 				</div>
 
-				{error && <p className="text-red-500 mb-4">{error}</p>}
+				{formError && <p className="text-red-500 mb-4">{formError}</p>}
 
 				<button
 					type="submit"
