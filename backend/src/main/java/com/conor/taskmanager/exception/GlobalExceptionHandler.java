@@ -22,10 +22,12 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+    private static final String GENERIC_ERROR_MESSAGE = "An unexpected error occurred";
 
     private ResponseEntity<ApiErrorResponse> errorResponse(HttpStatus status, String message) {
+        String responseMessage = (message == null || message.isBlank()) ? GENERIC_ERROR_MESSAGE : message;
         return ResponseEntity.status(status)
-                .body(ApiErrorResponse.single(message));
+                .body(ApiErrorResponse.single(responseMessage));
     }
 
     @ExceptionHandler(ValidationException.class)
@@ -107,7 +109,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleGenericException(Exception e) {
-        logger.error("An unexpected error occurred", e);
-        return errorResponse(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred");
+        logger.error(GENERIC_ERROR_MESSAGE, e);
+        return errorResponse(HttpStatus.INTERNAL_SERVER_ERROR, GENERIC_ERROR_MESSAGE);
     }
 }

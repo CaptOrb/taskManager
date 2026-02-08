@@ -25,7 +25,9 @@ public class ValidationException extends RuntimeException {
     public ValidationException(Map<String, List<String>> fieldErrors) {
         super("Validation failed");
         this.fieldErrors = toOrderedFieldErrors(fieldErrors);
-        this.errors = this.fieldErrors.values().stream().flatMap(List::stream).toList();
+        this.errors = this.fieldErrors.values().stream()
+                .flatMap(List::stream)
+                .toList();
     }
 
     public List<String> getErrors() {

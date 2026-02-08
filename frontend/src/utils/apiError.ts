@@ -1,4 +1,4 @@
-import { AxiosError } from "axios";
+import axios from "axios";
 
 type ApiErrorResponse = {
 	message?: string;
@@ -6,44 +6,46 @@ type ApiErrorResponse = {
 	fieldErrors?: Record<string, string[]>;
 };
 
-const isApiErrorResponse = (value: unknown): value is ApiErrorResponse => {
-	return typeof value === "object" && value !== null;
-};
+const isObject = (v: unknown): v is Record<string, unknown> =>
+	typeof v === "object" && v !== null;
 
 export const getApiErrorMessageFromBody = (
 	body: unknown,
 	fallback = "Unknown error occurred",
 ): string => {
-	if (!isApiErrorResponse(body)) {
-		return fallback;
-	}
+	if (!isObject(body)) return fallback;
 
-	if (body.errors?.length) {
-		return body.errors.join(", ");
-	}
+	const b = body as ApiErrorResponse;
 
-	return body.message?.trim() || fallback;
+	if (b.errors?.length) return b.errors.join(", ");
+	return b.message?.trim() || fallback;
 };
 
 export const getApiErrorMessage = (
 	error: unknown,
 	fallback = "Unknown error occurred",
 ): string => {
-	if (!(error instanceof AxiosError)) {
-		return error instanceof Error ? error.message : fallback;
+	if (!axios.isAxiosError(error)) {
+		return error instanceof Error ? error.message.trim() || fallback : fallback;
 	}
 
 	const data = error.response?.data;
-	if (!isApiErrorResponse(data)) {
-		return error.message || fallback;
-	}
+	const axiosMessage = (error.message || "").trim() || fallback;
 
-	return getApiErrorMessageFromBody(data, error.message || fallback);
+	if (!isObject(data)) return axiosMessage;
+
+	return getApiErrorMessageFromBody(data, axiosMessage);
+};
+
+export const getApiFieldErrorsFromBody = (
+	body: unknown,
+): Record<string, string[]> => {
+	if (!isObject(body)) return {};
+	const b = body as ApiErrorResponse;
+	return b.fieldErrors ?? {};
 };
 
 export const getApiFieldErrors = (error: unknown): Record<string, string[]> => {
-	if (!(error instanceof AxiosError)) return {};
-	
-	const data = error.response?.data;
-	return isApiErrorResponse(data) && data.fieldErrors ? data.fieldErrors : {};
+	if (!axios.isAxiosError(error)) return {};
+	return getApiFieldErrorsFromBody(error.response?.data);
 };
