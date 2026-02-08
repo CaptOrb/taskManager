@@ -6,10 +6,10 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -21,20 +21,23 @@ import javax.crypto.SecretKey;
 
 @Component
 public class JwtService {
+    private static final Duration TOKEN_TTL = Duration.ofHours(1);
 
     // Secret Key for signing the JWT. It should be kept private.
     @Value("${jwt.secret}")
     private String secret;
 
-    public String generateToken(String userName) {
+    public String generateToken(Long userId, String userName) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("displayName", userName);
+        Instant now = Instant.now();
 
         return Jwts
                 .builder()
                 .claims().add(claims).and()
-                .subject(userName)
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
+                .subject(String.valueOf(userId))
+                .issuedAt(java.util.Date.from(now))
+                .expiration(java.util.Date.from(now.plus(TOKEN_TTL)))
                 .signWith(getSignKey(), Jwts.SIG.HS256)
                 .compact();
     }
@@ -46,12 +49,12 @@ public class JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String extractUserName(String token) {
-        return extractClaim(token, Claims::getSubject);
+    public Long extractUserId(String token) {
+        return Long.valueOf(extractClaim(token, Claims::getSubject));
     }
 
-    public Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+    public Instant extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration).toInstant();
     }
 
     // Extracts a specific claim from the JWT token.
@@ -74,11 +77,11 @@ public class JwtService {
     }
 
     public Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        return extractExpiration(token).isBefore(Instant.now());
     }
 
-    public Boolean validateToken(String token, UserDetails userDetails) {
-        final String userName = extractUserName(token);
-        return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    public Boolean validateToken(String token, CustomUserDetails userDetails) {
+        final Long userId = extractUserId(token);
+        return (userId.equals(userDetails.getId()) && !isTokenExpired(token));
     }
 }

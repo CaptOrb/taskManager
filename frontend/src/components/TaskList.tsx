@@ -1,9 +1,10 @@
-import axios from "axios";
 import type { ReactElement } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/auth-context";
 import type { Task } from "../types/task";
+import api from "../utils/api";
+import { getApiErrorMessage } from "../utils/apiError";
 
 const TaskList = (): ReactElement => {
 	const { loggedInUser } = useAuth();
@@ -29,15 +30,12 @@ const TaskList = (): ReactElement => {
 
 			try {
 				setLoading(true);
-				const response = await axios.get("/api/tasks", {
-					headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-				});
+				const response = await api.get<Task[]>("/tasks");
 
 				if (Array.isArray(response.data)) setTasks(response.data);
 				else setError("Unexpected data format.");
 			} catch (err: unknown) {
-				const message = err instanceof Error ? err.message : String(err);
-				setError(`Error fetching tasks: ${message}`);
+				setError(`Error fetching tasks: ${getApiErrorMessage(err)}`);
 			} finally {
 				setLoading(false);
 			}
@@ -158,13 +156,13 @@ const TaskList = (): ReactElement => {
 							<span className="font-semibold text-gray-500 dark:text-gray-400">
 								Created Date:{" "}
 							</span>
-							{new Date(task.createdDate).toLocaleString()}
+							{new Date(task.createdDate).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
 						</p>
 						<p className="text-sm">
 							<span className="font-semibold text-gray-500 dark:text-gray-400">
 								Due Date:{" "}
 							</span>
-							{new Date(task.dueDate).toLocaleString()}
+							{new Date(task.dueDate).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
 						</p>
 						<p className="text-sm">
 							<span className="font-semibold text-gray-500 dark:text-gray-400">

@@ -18,34 +18,39 @@ export const AuthProvider = ({ children }: AuthProviderProps): ReactElement => {
 	const login = (token: string): void => {
 		localStorage.setItem("token", token);
 		const decodedToken = decodeToken(token);
-		setLoggedInUser(decodedToken.sub);
+		setLoggedInUser(decodedToken.displayName);
 	};
 
 	useEffect(() => {
 		const checkToken = (): void => {
 			const token = localStorage.getItem("token");
-			if (token) {
-				try {
-					const decodedToken = decodeToken(token);
-					if (decodedToken?.exp) {
-						const expiration = decodedToken.exp * 1000;
-						if (expiration < Date.now()) {
-							logout();
-							navigate("/login");
-							return;
-						}
-						setLoggedInUser(decodedToken.sub);
-					} else {
+			if (!token) {
+				logout();
+				setLoading(false);
+				return;
+			}
+
+			try {
+				const decodedToken = decodeToken(token);
+				if (decodedToken?.exp) {
+					const expiration = decodedToken.exp * 1000;
+					if (expiration < Date.now()) {
 						logout();
 						navigate("/login");
+						return;
 					}
-				} catch (error) {
-					console.error("Error decoding token:", error);
+					setLoggedInUser(decodedToken.displayName);
+				} else {
 					logout();
 					navigate("/login");
 				}
+			} catch (error) {
+				console.error("Error decoding token:", error);
+				logout();
+				navigate("/login");
+			} finally {
+				setLoading(false);
 			}
-			setLoading(false);
 		};
 
 		checkToken();

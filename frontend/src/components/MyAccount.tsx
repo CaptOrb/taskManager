@@ -7,6 +7,42 @@ import {
 	useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
+import {
+	getApiErrorMessage,
+	getApiErrorMessageFromBody,
+	getApiFieldErrorsFromBody,
+} from "../utils/apiError";
+
+type PasswordField = "currentPassword" | "newPassword" | "confirmPassword";
+
+type PasswordForm = Record<PasswordField, string>;
+
+type PasswordFieldErrors = Record<PasswordField, string[]>;
+
+const createEmptyPasswordFieldErrors = (): PasswordFieldErrors => ({
+	currentPassword: [],
+	newPassword: [],
+	confirmPassword: [],
+});
+
+const mapApiFieldErrorsToPasswordFields = (
+	apiFieldErrors: Record<string, string[]>,
+): PasswordFieldErrors => ({
+	currentPassword: apiFieldErrors["currentPassword"] ?? [],
+	newPassword: apiFieldErrors["newPassword"] ?? [],
+	confirmPassword: apiFieldErrors["confirmPassword"] ?? [],
+});
+
+const hasAnyFieldError = (fieldErrors: PasswordFieldErrors): boolean =>
+	Object.values(fieldErrors).some((errorsForField) => errorsForField.length > 0);
+
+const isPasswordField = (field: string): field is PasswordField =>
+	field === "currentPassword" ||
+	field === "newPassword" ||
+	field === "confirmPassword";
+
+const getInputClassName = (hasError: boolean): string =>
+	`bg-gray-50 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${hasError ? "border-red-500 focus:border-red-500 dark:focus:ring-red-500 dark:focus:border-red-500" : "border-gray-300 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500"}`;
 
 const MyAccount = (): ReactElement => {
 	const [userName, setUserName] = useState("");
@@ -21,11 +57,13 @@ const MyAccount = (): ReactElement => {
 	);
 	const [passwordChangeSuccess, setPasswordChangeSuccess] =
 		useState<boolean>(false);
-	const [passwordForm, setPasswordForm] = useState({
+	const [passwordForm, setPasswordForm] = useState<PasswordForm>({
 		currentPassword: "",
 		newPassword: "",
 		confirmPassword: "",
 	});
+	const [passwordFieldErrors, setPasswordFieldErrors] =
+		useState<PasswordFieldErrors>(createEmptyPasswordFieldErrors);
 	const navigate = useNavigate();
 
 	const userNameId = useId();
@@ -39,22 +77,24 @@ const MyAccount = (): ReactElement => {
 			try {
 				const response = await fetch("/api/auth/current-user", {
 					headers: {
-						Authorization: `Bearer ${localStorage.getItem("token")}`, // Add JWT token to the request
+						Authorization: `Bearer ${localStorage.getItem("token")}`,
 					},
 				});
 
 				if (!response.ok) {
-					throw new Error("Failed to fetch user");
+					const data: unknown = await response.json().catch(() => null);
+					throw new Error(getApiErrorMessageFromBody(data, "Failed to fetch user"));
 				}
 
-				const data = await response.json();
-				setUserName(data.userName);
-				setEmail(data.email);
-				setLoading(false);
+				const data: unknown = await response.json();
+				if (typeof data === "object" && data !== null) {
+					const user = data as { userName?: string; email?: string };
+					setUserName(user.userName ?? "");
+					setEmail(user.email ?? "");
+				}
 			} catch (error) {
-				setError(
-					error instanceof Error ? error.message : "Unknown error occurred",
-				);
+				setError(getApiErrorMessage(error, "Failed to fetch user"));
+			} finally {
 				setLoading(false);
 			}
 		};
@@ -69,20 +109,7 @@ const MyAccount = (): ReactElement => {
 		setPasswordChangeLoading(true);
 		setPasswordChangeError(null);
 		setPasswordChangeSuccess(false);
-
-		if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-			setPasswordChangeError(
-				"New password and confirmation password do not match",
-			);
-			setPasswordChangeLoading(false);
-			return;
-		}
-
-		if (passwordForm.newPassword.length < 7) {
-			setPasswordChangeError("New password must be at least 7 characters long");
-			setPasswordChangeLoading(false);
-			return;
-		}
+		setPasswordFieldErrors(createEmptyPasswordFieldErrors());
 
 		try {
 			const response = await fetch("/api/auth/change-password", {
@@ -94,10 +121,20 @@ const MyAccount = (): ReactElement => {
 				body: JSON.stringify(passwordForm),
 			});
 
-			const data = await response.json();
-
 			if (!response.ok) {
-				throw new Error(data.error || "Failed to change password");
+				const data: unknown = await response.json().catch(() => null);
+				const fieldLevelErrors = mapApiFieldErrorsToPasswordFields(
+					getApiFieldErrorsFromBody(data),
+				);
+				setPasswordFieldErrors(fieldLevelErrors);
+
+				if (!hasAnyFieldError(fieldLevelErrors)) {
+					setPasswordChangeError(
+						getApiErrorMessageFromBody(data, "Failed to change password"),
+					);
+				}
+
+				return;
 			}
 
 			setPasswordChangeSuccess(true);
@@ -106,6 +143,7 @@ const MyAccount = (): ReactElement => {
 				newPassword: "",
 				confirmPassword: "",
 			});
+			setPasswordFieldErrors(createEmptyPasswordFieldErrors());
 			setShowPasswordChange(false);
 
 			// Clear success message after 3 seconds
@@ -113,9 +151,7 @@ const MyAccount = (): ReactElement => {
 				setPasswordChangeSuccess(false);
 			}, 3000);
 		} catch (error) {
-			setPasswordChangeError(
-				error instanceof Error ? error.message : "Unknown error occurred",
-			);
+			setPasswordChangeError(getApiErrorMessage(error, "Failed to change password"));
 		} finally {
 			setPasswordChangeLoading(false);
 		}
@@ -123,10 +159,19 @@ const MyAccount = (): ReactElement => {
 
 	const handleInputChange = (e: ChangeEvent<HTMLInputElement>): void => {
 		const { name, value } = e.target;
+		if (!isPasswordField(name)) {
+			return;
+		}
+
 		setPasswordForm((prev) => ({
 			...prev,
 			[name]: value,
 		}));
+		setPasswordFieldErrors((prev) => ({
+			...prev,
+			[name]: [],
+		}));
+		setPasswordChangeError(null);
 	};
 
 	if (loading) {
@@ -179,7 +224,11 @@ const MyAccount = (): ReactElement => {
 				{!showPasswordChange ? (
 					<button
 						type="button"
-						onClick={() => setShowPasswordChange(true)}
+						onClick={() => {
+							setShowPasswordChange(true);
+							setPasswordChangeError(null);
+							setPasswordFieldErrors(createEmptyPasswordFieldErrors());
+						}}
 						className="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 mb-2 mr-2"
 					>
 						Change Password
@@ -197,6 +246,14 @@ const MyAccount = (): ReactElement => {
 						)}
 
 						<form onSubmit={handlePasswordChange} method="POST">
+							{passwordFieldErrors.currentPassword.map((fieldError) => (
+								<p
+									key={`currentPassword-${fieldError}`}
+									className="text-red-500 text-sm mb-1"
+								>
+									{fieldError}
+								</p>
+							))}
 							<label
 								htmlFor={currentPasswordId}
 								className="block text-sm font-medium text-gray-700 dark:text-white"
@@ -209,10 +266,21 @@ const MyAccount = (): ReactElement => {
 								name="currentPassword"
 								value={passwordForm.currentPassword}
 								onChange={handleInputChange}
+								aria-invalid={passwordFieldErrors.currentPassword.length > 0}
 								required
-								className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+								className={getInputClassName(
+									passwordFieldErrors.currentPassword.length > 0,
+								)}
 							/>
 
+							{passwordFieldErrors.newPassword.map((fieldError) => (
+								<p
+									key={`newPassword-${fieldError}`}
+									className="text-red-500 text-sm mb-1"
+								>
+									{fieldError}
+								</p>
+							))}
 							<label
 								htmlFor={newPasswordId}
 								className="block text-sm font-medium text-gray-700 dark:text-white"
@@ -225,10 +293,21 @@ const MyAccount = (): ReactElement => {
 								name="newPassword"
 								value={passwordForm.newPassword}
 								onChange={handleInputChange}
+								aria-invalid={passwordFieldErrors.newPassword.length > 0}
 								required
-								className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+								className={getInputClassName(
+									passwordFieldErrors.newPassword.length > 0,
+								)}
 							/>
 
+							{passwordFieldErrors.confirmPassword.map((fieldError) => (
+								<p
+									key={`confirmPassword-${fieldError}`}
+									className="text-red-500 text-sm mb-1"
+								>
+									{fieldError}
+								</p>
+							))}
 							<label
 								htmlFor={confirmPasswordId}
 								className="block text-sm font-medium text-gray-700 dark:text-white"
@@ -241,8 +320,11 @@ const MyAccount = (): ReactElement => {
 								name="confirmPassword"
 								value={passwordForm.confirmPassword}
 								onChange={handleInputChange}
+								aria-invalid={passwordFieldErrors.confirmPassword.length > 0}
 								required
-								className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+								className={getInputClassName(
+									passwordFieldErrors.confirmPassword.length > 0,
+								)}
 							/>
 
 							<div className="flex gap-2">
@@ -262,6 +344,7 @@ const MyAccount = (): ReactElement => {
 											newPassword: "",
 											confirmPassword: "",
 										});
+										setPasswordFieldErrors(createEmptyPasswordFieldErrors());
 										setPasswordChangeError(null);
 									}}
 									className="text-white bg-gray-700 hover:bg-gray-800 font-medium rounded-lg text-sm px-5 py-2.5 mb-2"

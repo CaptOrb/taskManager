@@ -12,6 +12,11 @@ export default defineConfig({
 				changeOrigin: true,
 				secure: false,
 			},
+			"/ntfy": {
+				target: "http://ntfy:80",
+				changeOrigin: true,
+				secure: false,
+			},
 		},
 	},
 	plugins: [react()],

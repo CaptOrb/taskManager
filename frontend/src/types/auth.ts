@@ -38,5 +38,6 @@ export interface AuthProviderProps {
 
 export interface DecodedToken {
 	sub: string;
+	displayName: string;
 	exp: number;
 }

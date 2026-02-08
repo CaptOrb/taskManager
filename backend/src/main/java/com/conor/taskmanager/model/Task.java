@@ -11,12 +11,15 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
 @Entity
 public class Task {
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false) 
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @Id
@@ -24,9 +27,13 @@ public class Task {
     private Integer id;
 
     @Column(length = 50, nullable = false)
+    @NotBlank(message = "Title cannot be empty")
+    @Size(max = 50, message = "Title can only be 50 characters")
     private String title;
 
-    @Column(length = 500, nullable = false)
+    @Column(length = 5000, nullable = false)
+    @NotBlank(message = "Description cannot be empty")
+    @Size(max = 5000, message = "Description can only be 5000 characters")
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -40,11 +47,13 @@ public class Task {
     @Column
     private LocalDateTime dueDate;
 
-    @Column
+    @Column(nullable = false, updatable = false)
     private LocalDateTime createdDate;
 
+    @Column(name = "reminder_sent_at")
+    private LocalDateTime reminderSentAt;
+
     public Task() {
-        this.createdDate = LocalDateTime.now();
         this.status = Status.PENDING;
     }
 
@@ -53,9 +62,15 @@ public class Task {
         this.title = title;
         this.description = description;
         this.status = status;
-        this.priority = priority != null ? priority : Priority.LOW; 
+        this.priority = priority != null ? priority : Priority.LOW;
         this.dueDate = dueDate;
-        this.createdDate = LocalDateTime.now();
+    }
+
+    @PrePersist
+    public void setCreatedDateIfMissing() {
+        if (this.createdDate == null) {
+            this.createdDate = LocalDateTime.now();
+        }
     }
 
     public String getDescription() {
@@ -86,6 +101,10 @@ public class Task {
         return createdDate;
     }
 
+    public LocalDateTime getReminderSentAt() {
+        return reminderSentAt;
+    }
+
     public User getUser() {
         return user;
     }
@@ -112,6 +131,10 @@ public class Task {
 
     public void setDueDate(LocalDateTime dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public void setReminderSentAt(LocalDateTime reminderSentAt) {
+        this.reminderSentAt = reminderSentAt;
     }
 
     public enum Priority {

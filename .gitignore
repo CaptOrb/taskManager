@@ -5,3 +5,12 @@ target/
 application.properties
 .vscode/
 .actrc
+
+*.class
+.project
+.factorypath
+.classpath
+
+**/.settings/
+
+**/bin/
