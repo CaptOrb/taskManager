@@ -31,9 +31,7 @@ const mapApiFieldErrorsToTaskFields = (
 });
 
 const hasAnyFieldError = (fieldErrors: TaskFieldErrors): boolean =>
-	Object.values(fieldErrors).some(
-		(errorsForField) => errorsForField.length > 0,
-	);
+	Object.values(fieldErrors).some((errorsForField) => errorsForField.length > 0);
 
 const getInputClassName = (hasError: boolean): string =>
 	`bg-gray-50 border text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${hasError ? "border-red-500 focus:ring-red-500 focus:border-red-500 dark:focus:ring-red-500 dark:focus:border-red-500" : "border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500"}`;
