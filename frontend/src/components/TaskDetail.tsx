@@ -35,9 +35,6 @@ const hasAnyFieldError = (fieldErrors: TaskFieldErrors): boolean =>
     (errorsForField) => errorsForField.length > 0,
   );
 
-const getInputClassName = (hasError: boolean): string =>
-  `bg-gray-50 border text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${hasError ? "border-red-500 focus:ring-red-500 focus:border-red-500 dark:focus:ring-red-500 dark:focus:border-red-500" : "border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500"}`;
-
 const TaskDetail = (): ReactElement => {
   const { id } = useParams();
   const { loggedInUser } = useAuth();
@@ -63,14 +60,6 @@ const TaskDetail = (): ReactElement => {
   const taskStatusId = useId();
   const taskPriorityId = useId();
   const taskDueDateId = useId();
-
-  const clearFieldError = (field: TaskField): void => {
-    setFieldErrors((previousErrors) => ({
-      ...previousErrors,
-      [field]: [],
-    }));
-    setError("");
-  };
 
   useEffect(() => {
     const fetchTask = async (): Promise<void> => {
@@ -162,7 +151,7 @@ const TaskDetail = (): ReactElement => {
   if (!task) return <div>No task found.</div>;
 
   return (
-    <div className="max-w-xl md:max-w-2xl lg:max-w-4xl xl:max-w-5xl mx-auto p-6 bg-white shadow-lg rounded-lg dark:bg-gray-800">
+    <div className="max-w-3xl mx-auto p-6 bg-white shadow-lg rounded-lg dark:bg-gray-800">
       <Link to="/">
         <button
           type="button"
@@ -178,21 +167,9 @@ const TaskDetail = (): ReactElement => {
             Edit Task
           </h2>
 
-          {error && (
-            <p className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg dark:bg-red-900 dark:border-red-700 dark:text-red-200">
-              {error}
-            </p>
-          )}
+          {error && <p style={{ color: "red" }}>{error}</p>}
 
           <div className="mb-6">
-            {fieldErrors.title.map((fieldError) => (
-              <p
-                key={`title-${fieldError}`}
-                className="text-red-500 text-sm mb-1"
-              >
-                {fieldError}
-              </p>
-            ))}
             <label
               htmlFor={taskTitleId}
               className="block text-sm font-medium text-gray-700 dark:text-white mb-2"
@@ -248,9 +225,6 @@ const TaskDetail = (): ReactElement => {
               </div>
               {showPreview && (
                 <div>
-                  <p className="block text-sm font-medium text-gray-700 dark:text-white mb-2">
-                    Preview:
-                  </p>
                   <div className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-4 dark:bg-gray-700 dark:border-gray-600 dark:text-white break-words overflow-y-auto min-h-[300px]">
                     <div className="markdown text-gray-700 dark:text-gray-300 leading-relaxed">
                       <ReactMarkdown>
@@ -422,32 +396,38 @@ const TaskDetail = (): ReactElement => {
             </div>
           </div>
 
-          {/* Dates and Actions Row */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8 pb-6 border-b border-gray-200 dark:border-gray-700">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 flex-1">
-              <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                  Created
-                </p>
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  {new Date(task.createdDate).toLocaleString(undefined, {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}
-                </p>
-              </div>
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            <div>
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                Created
+              </p>
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                {new Date(task.createdDate).toLocaleDateString(
+                  navigator.language,
+                  {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  },
+                )}
+              </p>
+            </div>
 
-              <div>
-                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
-                  Due Date
-                </p>
-                <p className="text-sm text-gray-700 dark:text-gray-300">
-                  {new Date(task.dueDate).toLocaleString(undefined, {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })}
-                </p>
-              </div>
+            <div>
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
+                Due Date
+              </p>
+              <p className="text-sm text-gray-700 dark:text-gray-300">
+                {new Date(task.dueDate).toLocaleDateString(navigator.language, {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </p>
             </div>
           </div>
 
