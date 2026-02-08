@@ -6,7 +6,8 @@
 		"useIgnoreFile": false
 	},
 	"files": {
-		"ignoreUnknown": false
+		"ignoreUnknown": false,
+		"includes": ["**", "!dist", "!src/generated"]
 	},
 	"formatter": {
 		"enabled": true,
@@ -14,10 +15,15 @@
 	},
 	"linter": {
 		"enabled": true,
-		"includes": ["src/**", "!src/App.css"],
-
+		"includes": ["src/**", "tests/**"],
 		"rules": {
-			"recommended": true
+			"recommended": true,
+			"style": {
+				"noNonNullAssertion": "off"
+			},
+			"nursery": {
+				"noFloatingPromises": "error"
+			}
 		}
 	},
 	"javascript": {

@@ -26,7 +26,9 @@ const mapApiFieldErrorsToRegisterFields = (
 });
 
 const hasAnyFieldError = (fieldErrors: RegisterFieldErrors): boolean =>
-	Object.values(fieldErrors).some((errorsForField) => errorsForField.length > 0);
+	Object.values(fieldErrors).some(
+		(errorsForField) => errorsForField.length > 0,
+	);
 
 const getInputClassName = (hasError: boolean): string =>
 	`bg-gray-50 border text-gray-900 text-sm rounded-lg block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white ${hasError ? "border-red-500 focus:ring-red-500 focus:border-red-500 dark:focus:ring-red-500 dark:focus:border-red-500" : "border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500"}`;
@@ -91,7 +93,10 @@ const Register = (): ReactElement => {
 			>
 				<div className="mb-4">
 					{fieldErrors.userName.map((fieldError) => (
-						<p key={`userName-${fieldError}`} className="text-red-500 text-sm mb-1">
+						<p
+							key={`userName-${fieldError}`}
+							className="text-red-500 text-sm mb-1"
+						>
 							{fieldError}
 						</p>
 					))}
@@ -111,7 +116,10 @@ const Register = (): ReactElement => {
 
 				<div className="mb-4">
 					{fieldErrors.email.map((fieldError) => (
-						<p key={`email-${fieldError}`} className="text-red-500 text-sm mb-1">
+						<p
+							key={`email-${fieldError}`}
+							className="text-red-500 text-sm mb-1"
+						>
 							{fieldError}
 						</p>
 					))}
@@ -131,7 +139,10 @@ const Register = (): ReactElement => {
 
 				<div className="mb-4">
 					{fieldErrors.password.map((fieldError) => (
-						<p key={`password-${fieldError}`} className="text-red-500 text-sm mb-1">
+						<p
+							key={`password-${fieldError}`}
+							className="text-red-500 text-sm mb-1"
+						>
 							{fieldError}
 						</p>
 					))}
@@ -151,7 +162,10 @@ const Register = (): ReactElement => {
 
 				<div className="mb-4">
 					{fieldErrors.passwordConfirm.map((fieldError) => (
-						<p key={`passwordConfirm-${fieldError}`} className="text-red-500 text-sm mb-1">
+						<p
+							key={`passwordConfirm-${fieldError}`}
+							className="text-red-500 text-sm mb-1"
+						>
 							{fieldError}
 						</p>
 					))}
@@ -165,7 +179,9 @@ const Register = (): ReactElement => {
 						}}
 						aria-invalid={fieldErrors.passwordConfirm.length > 0}
 						required
-						className={getInputClassName(fieldErrors.passwordConfirm.length > 0)}
+						className={getInputClassName(
+							fieldErrors.passwordConfirm.length > 0,
+						)}
 					/>
 				</div>
 

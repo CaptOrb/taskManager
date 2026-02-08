@@ -34,7 +34,9 @@ const mapApiFieldErrorsToPasswordFields = (
 });
 
 const hasAnyFieldError = (fieldErrors: PasswordFieldErrors): boolean =>
-	Object.values(fieldErrors).some((errorsForField) => errorsForField.length > 0);
+	Object.values(fieldErrors).some(
+		(errorsForField) => errorsForField.length > 0,
+	);
 
 const isPasswordField = (field: string): field is PasswordField =>
 	field === "currentPassword" ||
@@ -83,7 +85,9 @@ const MyAccount = (): ReactElement => {
 
 				if (!response.ok) {
 					const data: unknown = await response.json().catch(() => null);
-					throw new Error(getApiErrorMessageFromBody(data, "Failed to fetch user"));
+					throw new Error(
+						getApiErrorMessageFromBody(data, "Failed to fetch user"),
+					);
 				}
 
 				const data: unknown = await response.json();
@@ -151,7 +155,9 @@ const MyAccount = (): ReactElement => {
 				setPasswordChangeSuccess(false);
 			}, 3000);
 		} catch (error) {
-			setPasswordChangeError(getApiErrorMessage(error, "Failed to change password"));
+			setPasswordChangeError(
+				getApiErrorMessage(error, "Failed to change password"),
+			);
 		} finally {
 			setPasswordChangeLoading(false);
 		}

@@ -31,7 +31,9 @@ const mapApiFieldErrorsToTaskFields = (
 });
 
 const hasAnyFieldError = (fieldErrors: TaskFieldErrors): boolean =>
-	Object.values(fieldErrors).some((errorsForField) => errorsForField.length > 0);
+	Object.values(fieldErrors).some(
+		(errorsForField) => errorsForField.length > 0,
+	);
 
 const getInputClassName = (hasError: boolean): string =>
 	`bg-gray-50 border text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${hasError ? "border-red-500 focus:ring-red-500 focus:border-red-500 dark:focus:ring-red-500 dark:focus:border-red-500" : "border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500"}`;
@@ -180,7 +182,10 @@ const TaskDetail = (): ReactElement => {
 
 					<div className="mb-6">
 						{fieldErrors.title.map((fieldError) => (
-							<p key={`title-${fieldError}`} className="text-red-500 text-sm mb-1">
+							<p
+								key={`title-${fieldError}`}
+								className="text-red-500 text-sm mb-1"
+							>
 								{fieldError}
 							</p>
 						))}
@@ -218,12 +223,14 @@ const TaskDetail = (): ReactElement => {
 							</button>
 						</div>
 						<p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
-							Supports Markdown formatting (e.g., **bold**, *italic*, [links](url),
-							# headings)
+							Supports Markdown formatting (e.g., **bold**, *italic*,
+							[links](url), # headings)
 						</p>
 
 						<div
-							className={showPreview ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : ""}
+							className={
+								showPreview ? "grid grid-cols-1 lg:grid-cols-2 gap-4" : ""
+							}
 						>
 							<div className={showPreview ? "" : "w-full"}>
 								<textarea
@@ -253,7 +260,10 @@ const TaskDetail = (): ReactElement => {
 					<div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
 						<div>
 							{fieldErrors.status.map((fieldError) => (
-								<p key={`status-${fieldError}`} className="text-red-500 text-sm mb-1">
+								<p
+									key={`status-${fieldError}`}
+									className="text-red-500 text-sm mb-1"
+								>
 									{fieldError}
 								</p>
 							))}
@@ -277,7 +287,10 @@ const TaskDetail = (): ReactElement => {
 
 						<div>
 							{fieldErrors.priority.map((fieldError) => (
-								<p key={`priority-${fieldError}`} className="text-red-500 text-sm mb-1">
+								<p
+									key={`priority-${fieldError}`}
+									className="text-red-500 text-sm mb-1"
+								>
 									{fieldError}
 								</p>
 							))}
@@ -301,7 +314,10 @@ const TaskDetail = (): ReactElement => {
 
 						<div>
 							{fieldErrors.dueDate.map((fieldError) => (
-								<p key={`dueDate-${fieldError}`} className="text-red-500 text-sm mb-1">
+								<p
+									key={`dueDate-${fieldError}`}
+									className="text-red-500 text-sm mb-1"
+								>
 									{fieldError}
 								</p>
 							))}
