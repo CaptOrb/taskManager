@@ -4,6 +4,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -86,6 +87,31 @@ class UserServiceTest {
         request.setPasswordConfirm("differentPassword");
 
         assertThrows(ValidationException.class, () -> userService.registerUser(request));
+
+        verify(userRepository, never()).save(any(User.class));
+        verify(passwordEncoder, never()).encode(any());
+        verify(jwtService, never()).generateToken(any());
+    }
+
+    @Test
+    void testRegisterUserUsernameAndEmailAlreadyTaken() {
+        RegisterRequest request = new RegisterRequest();
+        request.setUserName("testUser");
+        request.setEmail("test@example.com");
+        request.setPassword("plainPassword");
+        request.setPasswordConfirm("plainPassword");
+
+        when(userRepository.existsByUserName("testUser")).thenReturn(true);
+        when(userRepository.existsByEmail("test@example.com")).thenReturn(true);
+
+        ValidationException exception = assertThrows(ValidationException.class, () -> userService.registerUser(request));
+
+        assertEquals("Validation failed", exception.getMessage());
+        assertEquals(2, exception.getErrors().size());
+        assertTrue(exception.getErrors().contains("Username is already taken"));
+        assertTrue(exception.getErrors().contains("Email is already taken"));
+        assertEquals(1, exception.getFieldErrors().get("userName").size());
+        assertEquals(1, exception.getFieldErrors().get("email").size());
 
         verify(userRepository, never()).save(any(User.class));
         verify(passwordEncoder, never()).encode(any());

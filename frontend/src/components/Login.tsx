@@ -9,6 +9,7 @@ import {
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { LoginResponse } from "@/types/auth";
 import { useAuth } from "../hooks/auth-context";
+import { getApiErrorMessage } from "../utils/apiError";
 
 function Login(): ReactElement {
 	const [username, setUsername] = useState("");
@@ -44,7 +45,9 @@ function Login(): ReactElement {
 			navigate("/");
 		} catch (error) {
 			console.error("Login failed", error);
-			setErrorMessage("Login failed. Check your credentials.");
+			setErrorMessage(
+				getApiErrorMessage(error, "Login failed. Check your credentials."),
+			);
 		}
 	};
 

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/auth-context";
 import type { Task } from "../types/task";
+import { getApiErrorMessage } from "../utils/apiError";
 
 const TaskList = (): ReactElement => {
 	const { loggedInUser } = useAuth();
@@ -36,8 +37,7 @@ const TaskList = (): ReactElement => {
 				if (Array.isArray(response.data)) setTasks(response.data);
 				else setError("Unexpected data format.");
 			} catch (err: unknown) {
-				const message = err instanceof Error ? err.message : String(err);
-				setError(`Error fetching tasks: ${message}`);
+				setError(`Error fetching tasks: ${getApiErrorMessage(err)}`);
 			} finally {
 				setLoading(false);
 			}
