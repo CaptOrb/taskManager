@@ -13,8 +13,25 @@ code {
 }
 
 /* Restore default browser styles for markdown content */
-.markdown :where(h1,h2,h3,h4,h5,h6,p,ul,ol,li,blockquote,pre,code,strong,em) {
-	all: revert;
+.markdown
+  :where(
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    p,
+    ul,
+    ol,
+    li,
+    blockquote,
+    pre,
+    code,
+    strong,
+    em
+  ) {
+  all: revert;
 }
 
 /* Style markdown links to be more obvious */
