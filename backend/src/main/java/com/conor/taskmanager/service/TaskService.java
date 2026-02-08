@@ -1,6 +1,7 @@
 package com.conor.taskmanager.service;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -64,6 +65,12 @@ public class TaskService {
 
         existingTask.setTitle(updatedTask.getTitle());
         existingTask.setDescription(updatedTask.getDescription());
+
+        if (!Objects.equals(existingTask.getDueDate(), updatedTask.getDueDate())
+                || (existingTask.getStatus() == Task.Status.COMPLETED && updatedTask.getStatus() != Task.Status.COMPLETED)) {
+            existingTask.setReminderSentAt(null);
+        }
+
         existingTask.setStatus(updatedTask.getStatus());
         existingTask.setPriority(updatedTask.getPriority());
         existingTask.setDueDate(updatedTask.getDueDate());
