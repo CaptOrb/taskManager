@@ -7,7 +7,7 @@ import Footer from "./components/Footer";
 import Header from "./components/Header";
 import Home from "./components/Home";
 import Login from "./components/Login";
-import MyAccount from "./components/MyAccount";
+import MyAccount from "./components/account/MyAccount";
 import NotFound from "./components/NotFound";
 import Register from "./components/Register";
 import TaskDetail from "./components/TaskDetail";

@@ -31,6 +31,14 @@ public class User {
 	@Column(nullable = false, length = 64)
 	private String userRole = "user";
 
+	@Column(name = "ntfy_enabled", nullable = false)
+	@JsonIgnore
+	private boolean ntfyEnabled = false;
+
+	@Column(name = "ntfy_topic", length = 128)
+	@JsonIgnore
+	private String ntfyTopic;
+
 	@JsonIgnore 
 	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Task> tasks = new ArrayList<>(); 
@@ -79,8 +87,24 @@ public class User {
 		return tasks;
 	}
 
+	public boolean isNtfyEnabled() {
+		return ntfyEnabled;
+	}
+
+	public String getNtfyTopic() {
+		return ntfyTopic;
+	}
+
 	public void setTasks(List<Task> tasks) {
 		this.tasks = tasks;
+	}
+
+	public void setNtfyEnabled(boolean ntfyEnabled) {
+		this.ntfyEnabled = ntfyEnabled;
+	}
+
+	public void setNtfyTopic(String ntfyTopic) {
+		this.ntfyTopic = ntfyTopic;
 	}
 
 	public void addTask(Task task) {
