@@ -1,5 +1,10 @@
 package com.conor.taskmanager.service;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -30,16 +35,21 @@ public class UserService {
 
     String userName = request.getUserName().trim();
     String email = request.getEmail().trim().toLowerCase();
+    Map<String, List<String>> fieldErrors = new LinkedHashMap<>();
 
     if (userRepository.existsByUserName(userName)) {
-      throw new ValidationException("Username is already taken");
+      addFieldError(fieldErrors, "userName", "Username is already taken");
     }
     if (userRepository.existsByEmail(email)) {
-      throw new ValidationException("Email is already taken");
+      addFieldError(fieldErrors, "email", "Email is already taken");
     }
 
     if (!request.getPassword().equals(request.getPasswordConfirm())) {
-      throw new ValidationException("Passwords do not match");
+      addFieldError(fieldErrors, "passwordConfirm", "Passwords do not match");
+    }
+
+    if (!fieldErrors.isEmpty()) {
+      throw new ValidationException(fieldErrors);
     }
 
     User user = new User();
@@ -91,5 +101,9 @@ public class UserService {
 
     user.setPassword(passwordEncoder.encode(request.getNewPassword()));
     userRepository.save(user);
+  }
+
+  private static void addFieldError(Map<String, List<String>> fieldErrors, String field, String message) {
+    fieldErrors.computeIfAbsent(field, key -> new ArrayList<>()).add(message);
   }
 }

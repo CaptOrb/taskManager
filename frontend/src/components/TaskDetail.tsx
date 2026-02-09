@@ -5,6 +5,35 @@ import ReactMarkdown from "react-markdown";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import type { Task } from "@/types/task";
 import { useAuth } from "../hooks/auth-context";
+import { getApiErrorMessage, getApiFieldErrors } from "../utils/apiError";
+
+type TaskField = "title" | "description" | "status" | "priority" | "dueDate";
+
+type TaskFieldErrors = Record<TaskField, string[]>;
+
+const createEmptyFieldErrors = (): TaskFieldErrors => ({
+	title: [],
+	description: [],
+	status: [],
+	priority: [],
+	dueDate: [],
+});
+
+const mapApiFieldErrorsToTaskFields = (
+	apiFieldErrors: Record<string, string[]>,
+): TaskFieldErrors => ({
+	title: apiFieldErrors["title"] ?? [],
+	description: apiFieldErrors["description"] ?? [],
+	status: apiFieldErrors["status"] ?? [],
+	priority: apiFieldErrors["priority"] ?? [],
+	dueDate: apiFieldErrors["dueDate"] ?? [],
+});
+
+const hasAnyFieldError = (fieldErrors: TaskFieldErrors): boolean =>
+	Object.values(fieldErrors).some((errorsForField) => errorsForField.length > 0);
+
+const getInputClassName = (hasError: boolean): string =>
+	`bg-gray-50 border text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${hasError ? "border-red-500 focus:ring-red-500 focus:border-red-500 dark:focus:ring-red-500 dark:focus:border-red-500" : "border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500"}`;
 
 const TaskDetail = (): ReactElement => {
 	const { id } = useParams();
@@ -12,6 +41,9 @@ const TaskDetail = (): ReactElement => {
 	const [loading, setLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string>("");
 	const [isEditing, setIsEditing] = useState(false);
+	const [fieldErrors, setFieldErrors] = useState<TaskFieldErrors>(() =>
+		createEmptyFieldErrors(),
+	);
 	const { loggedInUser } = useAuth();
 	const navigate = useNavigate();
 
@@ -26,6 +58,14 @@ const TaskDetail = (): ReactElement => {
 	const taskStatusId = useId();
 	const taskPriorityId = useId();
 	const taskDueDateId = useId();
+
+	const clearFieldError = (field: TaskField): void => {
+		setFieldErrors((previousErrors) => ({
+			...previousErrors,
+			[field]: [],
+		}));
+		setError("");
+	};
 
 	useEffect(() => {
 		const fetchTask = async (): Promise<void> => {
@@ -53,9 +93,7 @@ const TaskDetail = (): ReactElement => {
 					) {
 						navigate("/");
 					} else {
-						const errorMessage = error instanceof AxiosError
-							? (error.response?.data?.error || error.message)
-							: "Unknown error";
+						const errorMessage = getApiErrorMessage(error);
 						setError(`Error fetching task: ${errorMessage}`);
 					}
 				} finally {
@@ -70,6 +108,9 @@ const TaskDetail = (): ReactElement => {
 	}, [loggedInUser, id, navigate]);
 
 	const handleUpdate = async (): Promise<void> => {
+		setError("");
+		setFieldErrors(createEmptyFieldErrors());
+
 		const updatedTask = {
 			title: taskTitle,
 			description: taskDescription,
@@ -91,13 +132,19 @@ const TaskDetail = (): ReactElement => {
 					...response.data,
 				}));
 				setError("");
+				setFieldErrors(createEmptyFieldErrors());
 				setIsEditing(false);
 			}
 		} catch (error) {
-			const errorMessage = error instanceof AxiosError
-				? (error.response?.data?.error || error.message)
-				: "Unknown error";
-			setError(`Error updating task: ${errorMessage}`);
+			const fieldLevelErrors = mapApiFieldErrorsToTaskFields(
+				getApiFieldErrors(error),
+			);
+			setFieldErrors(fieldLevelErrors);
+
+			if (!hasAnyFieldError(fieldLevelErrors)) {
+				const errorMessage = getApiErrorMessage(error);
+				setError(`Error updating task: ${errorMessage}`);
+			}
 		}
 	};
 
@@ -114,9 +161,7 @@ const TaskDetail = (): ReactElement => {
 				});
 				navigate("/");
 			} catch (error) {
-				const errorMessage = error instanceof AxiosError
-					? (error.response?.data?.error || error.message)
-					: "Unknown error";
+				const errorMessage = getApiErrorMessage(error);
 				setError(`Error deleting task: ${errorMessage}`);
 			}
 		}
@@ -146,6 +191,11 @@ const TaskDetail = (): ReactElement => {
 					{error && <p style={{ color: "red" }}>{error}</p>}
 
 					<div className="mb-4">
+						{fieldErrors.title.map((fieldError) => (
+							<p key={`title-${fieldError}`} className="text-red-500 text-sm mb-1">
+								{fieldError}
+							</p>
+						))}
 						<label
 							htmlFor={taskTitleId}
 							className="block text-sm font-medium text-gray-700 dark:text-white"
@@ -156,12 +206,24 @@ const TaskDetail = (): ReactElement => {
 							id={taskTitleId}
 							type="text"
 							value={taskTitle}
-							onChange={(e) => setTaskTitle(e.target.value)}
-							className="bg-gray-50 border border-gray-300 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+							onChange={(e) => {
+								setTaskTitle(e.target.value);
+								clearFieldError("title");
+							}}
+							aria-invalid={fieldErrors.title.length > 0}
+							className={getInputClassName(fieldErrors.title.length > 0)}
 						/>
 					</div>
 
 					<div className="mb-4">
+						{fieldErrors.description.map((fieldError) => (
+							<p
+								key={`description-${fieldError}`}
+								className="text-red-500 text-sm mb-1"
+							>
+								{fieldError}
+							</p>
+						))}
 						<label
 							htmlFor={taskDescriptionId}
 							className="block text-sm font-medium text-gray-700 dark:text-white"
@@ -171,8 +233,12 @@ const TaskDetail = (): ReactElement => {
 						<textarea
 							id={taskDescriptionId}
 							value={taskDescription}
-							onChange={(e) => setTaskDescription(e.target.value)}
-							className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+							onChange={(e) => {
+								setTaskDescription(e.target.value);
+								clearFieldError("description");
+							}}
+							aria-invalid={fieldErrors.description.length > 0}
+							className={getInputClassName(fieldErrors.description.length > 0)}
 							wrap="hard"
 						/>
 					</div>
@@ -189,6 +255,11 @@ const TaskDetail = (): ReactElement => {
 					</div>
 
 					<div className="mb-4">
+						{fieldErrors.status.map((fieldError) => (
+							<p key={`status-${fieldError}`} className="text-red-500 text-sm mb-1">
+								{fieldError}
+							</p>
+						))}
 						<label
 							htmlFor={taskStatusId}
 							className="block text-sm font-medium text-gray-700 dark:text-white"
@@ -198,8 +269,12 @@ const TaskDetail = (): ReactElement => {
 						<select
 							id={taskStatusId}
 							value={taskStatus}
-							onChange={(e) => setTaskStatus(e.target.value)}
-							className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+							onChange={(e) => {
+								setTaskStatus(e.target.value);
+								clearFieldError("status");
+							}}
+							aria-invalid={fieldErrors.status.length > 0}
+							className={getInputClassName(fieldErrors.status.length > 0)}
 						>
 							<option value="PENDING">Pending</option>
 							<option value="IN_PROGRESS">In Progress</option>
@@ -208,6 +283,11 @@ const TaskDetail = (): ReactElement => {
 					</div>
 
 					<div className="mb-4">
+						{fieldErrors.priority.map((fieldError) => (
+							<p key={`priority-${fieldError}`} className="text-red-500 text-sm mb-1">
+								{fieldError}
+							</p>
+						))}
 						<label
 							htmlFor={taskPriorityId}
 							className="block text-sm font-medium text-gray-700 dark:text-white"
@@ -217,8 +297,12 @@ const TaskDetail = (): ReactElement => {
 						<select
 							id={taskPriorityId}
 							value={taskPriority}
-							onChange={(e) => setTaskPriority(e.target.value)}
-							className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+							onChange={(e) => {
+								setTaskPriority(e.target.value);
+								clearFieldError("priority");
+							}}
+							aria-invalid={fieldErrors.priority.length > 0}
+							className={getInputClassName(fieldErrors.priority.length > 0)}
 						>
 							<option value="LOW">Low</option>
 							<option value="MEDIUM">Medium</option>
@@ -227,6 +311,11 @@ const TaskDetail = (): ReactElement => {
 					</div>
 
 					<div className="mb-4">
+						{fieldErrors.dueDate.map((fieldError) => (
+							<p key={`dueDate-${fieldError}`} className="text-red-500 text-sm mb-1">
+								{fieldError}
+							</p>
+						))}
 						<label
 							htmlFor={taskDueDateId}
 							className="block text-sm font-medium text-gray-700 dark:text-white"
@@ -237,8 +326,12 @@ const TaskDetail = (): ReactElement => {
 							id={taskDueDateId}
 							type="datetime-local"
 							value={taskDueDate}
-							onChange={(e) => setTaskDueDate(e.target.value)}
-							className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+							onChange={(e) => {
+								setTaskDueDate(e.target.value);
+								clearFieldError("dueDate");
+							}}
+							aria-invalid={fieldErrors.dueDate.length > 0}
+							className={getInputClassName(fieldErrors.dueDate.length > 0)}
 						/>
 					</div>
 
@@ -254,6 +347,7 @@ const TaskDetail = (): ReactElement => {
 						type="button"
 						onClick={() => {
 							setError("");
+							setFieldErrors(createEmptyFieldErrors());
 							setIsEditing(false);
 							// Reset form fields to original task values
 							if (task) {
@@ -331,7 +425,11 @@ const TaskDetail = (): ReactElement => {
 						<div className="flex space-x-4">
 							<button
 								type="button"
-								onClick={() => setIsEditing(true)}
+								onClick={() => {
+									setError("");
+									setFieldErrors(createEmptyFieldErrors());
+									setIsEditing(true);
+								}}
 								className="flex-1 bg-yellow-500 text-white font-medium rounded-lg text-sm px-5 py-2.5 hover:bg-yellow-600"
 							>
 								Edit Task

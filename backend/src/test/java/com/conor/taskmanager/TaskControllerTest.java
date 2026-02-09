@@ -1,5 +1,6 @@
 package com.conor.taskmanager;
 
+import static org.hamcrest.Matchers.hasItems;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -80,7 +81,7 @@ public class TaskControllerTest {
 
                 mockMvc.perform(get("/api/tasks"))
                                 .andExpect(status().isNotFound())
-                                .andExpect(jsonPath("$.error").value("User not found"));
+                                .andExpect(jsonPath("$.message").value("User not found"));
         }
 
         @Test
@@ -105,7 +106,7 @@ public class TaskControllerTest {
 
                 mockMvc.perform(get("/api/tasks/1"))
                                 .andExpect(status().isNotFound())
-                                .andExpect(jsonPath("$.error").value("Task not found"));
+                                .andExpect(jsonPath("$.message").value("Task not found"));
         }
 
         @Test
@@ -116,7 +117,7 @@ public class TaskControllerTest {
 
                 mockMvc.perform(get("/api/tasks/1"))
                                 .andExpect(status().isForbidden())
-                                .andExpect(jsonPath("$.error")
+                                .andExpect(jsonPath("$.message")
                                                 .value("You do not have permission to access this task"));
         }
 
@@ -131,7 +132,8 @@ public class TaskControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.error").value("Title cannot be empty"));
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors", hasItems("Title cannot be empty")));
         }
 
         @Test
@@ -146,7 +148,8 @@ public class TaskControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.error").value("Title can only be 50 characters"));
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors", hasItems("Title can only be 50 characters")));
         }
 
         @Test
@@ -160,7 +163,8 @@ public class TaskControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.error").value("Description cannot be empty"));
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors", hasItems("Description cannot be empty")));
         }
 
         @Test
@@ -175,7 +179,8 @@ public class TaskControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isBadRequest())
-                                .andExpect(jsonPath("$.error").value("Description can only be 500 characters"));
+                                .andExpect(jsonPath("$.message").value("Validation failed"))
+                                .andExpect(jsonPath("$.errors", hasItems("Description can only be 500 characters")));
         }
 
         @Test
@@ -234,7 +239,7 @@ public class TaskControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updatedTask)))
                                 .andExpect(status().isNotFound())
-                                .andExpect(jsonPath("$.error").value("Task not found"));
+                                .andExpect(jsonPath("$.message").value("Task not found"));
         }
 
         @Test
@@ -251,7 +256,7 @@ public class TaskControllerTest {
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(updatedTask)))
                                 .andExpect(status().isForbidden())
-                                .andExpect(jsonPath("$.error")
+                                .andExpect(jsonPath("$.message")
                                                 .value("You do not have permission to update this task"));
         }
 
@@ -275,6 +280,6 @@ public class TaskControllerTest {
 
                 mockMvc.perform(delete("/api/tasks/1"))
                                 .andExpect(status().isNotFound())
-                                .andExpect(jsonPath("$.error").value("Task not found"));
+                                .andExpect(jsonPath("$.message").value("Task not found"));
         }
 }

@@ -1,0 +1,22 @@
+taskapp.conordev.com, taskapp.librepush.net {
+
+	handle /api/* {
+		reverse_proxy backend:8080
+	}
+
+	handle {
+		root * /usr/share/caddy
+		try_files {path} /index.html
+		file_server
+	}
+
+	header {
+		Strict-Transport-Security "max-age=15768000"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+	}
+
+	@blocked path_regexp (^|/)\.(env|git)(/|$)
+	respond @blocked 403
+}
