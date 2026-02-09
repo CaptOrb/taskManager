@@ -10,7 +10,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import com.conor.taskmanager.security.JwtService;
 
-import java.util.Date;
+import java.time.Instant;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -53,22 +53,22 @@ class JwtServiceTest {
         String username = "test@example.com";
         String token = jwtService.generateToken(username);
 
-        Date expiration = jwtService.extractExpiration(token);
+        Instant expiration = jwtService.extractExpiration(token);
 
         assertNotNull(expiration);
-        assertTrue(expiration.after(new Date()), "Expiration should be in the future");
+        assertTrue(expiration.isAfter(Instant.now()), "Expiration should be in the future");
     }
 
     @Test
     void testExtractExpiration_ShouldBeApproximatelyOneHour() {
         String username = "test@example.com";
-        Date beforeGeneration = new Date();
+        Instant beforeGeneration = Instant.now();
 
         String token = jwtService.generateToken(username);
-        Date expiration = jwtService.extractExpiration(token);
+        Instant expiration = jwtService.extractExpiration(token);
 
-        long expectedExpiration = beforeGeneration.getTime() + (1000 * 60 * 60); // 1 hour
-        long actualExpiration = expiration.getTime();
+        long expectedExpiration = beforeGeneration.plusSeconds(60 * 60).toEpochMilli(); // 1 hour
+        long actualExpiration = expiration.toEpochMilli();
         long tolerance = 5000; // 5 seconds tolerance
 
         assertTrue(Math.abs(actualExpiration - expectedExpiration) < tolerance,

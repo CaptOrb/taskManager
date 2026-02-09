@@ -9,7 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -21,6 +22,7 @@ import javax.crypto.SecretKey;
 
 @Component
 public class JwtService {
+    private static final Duration TOKEN_TTL = Duration.ofHours(1);
 
     // Secret Key for signing the JWT. It should be kept private.
     @Value("${jwt.secret}")
@@ -28,13 +30,14 @@ public class JwtService {
 
     public String generateToken(String userName) {
         Map<String, Object> claims = new HashMap<>();
+        Instant now = Instant.now();
 
         return Jwts
                 .builder()
                 .claims().add(claims).and()
                 .subject(userName)
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60))
+                .issuedAt(java.util.Date.from(now))
+                .expiration(java.util.Date.from(now.plus(TOKEN_TTL)))
                 .signWith(getSignKey(), Jwts.SIG.HS256)
                 .compact();
     }
@@ -50,8 +53,8 @@ public class JwtService {
         return extractClaim(token, Claims::getSubject);
     }
 
-    public Date extractExpiration(String token) {
-        return extractClaim(token, Claims::getExpiration);
+    public Instant extractExpiration(String token) {
+        return extractClaim(token, Claims::getExpiration).toInstant();
     }
 
     // Extracts a specific claim from the JWT token.
@@ -74,7 +77,7 @@ public class JwtService {
     }
 
     public Boolean isTokenExpired(String token) {
-        return extractExpiration(token).before(new Date());
+        return extractExpiration(token).isBefore(Instant.now());
     }
 
     public Boolean validateToken(String token, UserDetails userDetails) {
