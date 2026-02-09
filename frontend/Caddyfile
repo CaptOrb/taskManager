@@ -1,5 +1,4 @@
-taskapp.conordev.com, taskapp.librepush.net {
-
+http://:8080 {
 	handle /api/* {
 		reverse_proxy backend:8080
 	}

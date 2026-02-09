@@ -45,23 +45,18 @@ services:
     networks: [my_network]
 
   frontend:
-    image: conorb1/task-frontend:latest   # this should be Caddy (prod target)
+    image: conorb1/task-frontend:latest
     pull_policy: always
     container_name: task-frontend
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - caddy_data:/data
-      - caddy_config:/config
+    - "127.0.0.1:8080:8080"
+
     networks: [my_network]
     depends_on: [backend]
 
 volumes:
   db:
-  caddy_data:
-  caddy_config:
 
 networks:
   my_network:
