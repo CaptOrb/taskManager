@@ -1,5 +1,6 @@
 package com.conor.taskmanager.service;
 
+import com.conor.taskmanager.util.AppStringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -20,7 +21,7 @@ public class NtfySettings {
 		this.serverUrl = normalizeUrl(serverUrl);
 		this.publicUrl = normalizeUrl(publicUrl);
 		this.timeoutSeconds = timeoutSeconds;
-		this.accessToken = trimToNull(accessToken);
+		this.accessToken = AppStringUtils.trimToNull(accessToken);
 		this.requireAccessToken = requireAccessToken;
 	}
 
@@ -49,7 +50,7 @@ public class NtfySettings {
 	}
 
 	private static String normalizeUrl(String rawUrl) {
-		String normalizedUrl = trimToNull(rawUrl);
+		String normalizedUrl = AppStringUtils.trimToNull(rawUrl);
 		if (normalizedUrl == null) {
 			return null;
 		}
@@ -59,14 +60,5 @@ public class NtfySettings {
 		}
 
 		return normalizedUrl;
-	}
-
-	private static String trimToNull(String value) {
-		if (value == null) {
-			return null;
-		}
-
-		String trimmed = value.trim();
-		return trimmed.isEmpty() ? null : trimmed;
 	}
 }

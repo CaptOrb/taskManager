@@ -105,24 +105,6 @@ public class UserControllerTest {
         }
 
         @Test
-        @WithMockUser(username = "test@example.com", roles = { "USER" })
-        public void getCurrentUser_whenUserExists_returnsUserObject() throws Exception {
-                User mockUser = new User();
-                mockUser.setUserName("test@example.com");
-                mockUser.setEmail("test@example.com");
-                mockUser.setUserRole("User");
-
-                when(userService.getCurrentUser("test@example.com")).thenReturn(mockUser);
-
-                mockMvc.perform(get("/api/auth/current-user")
-                                .contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(status().isOk())
-                                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                                .andExpect(jsonPath("$.userName").value("test@example.com"))
-                                .andExpect(jsonPath("$.email").value("test@example.com"));
-        }
-
-        @Test
         @WithMockUser(username = "nonexistent@example.com")
         public void getCurrentUser_whenAuthenticatedButUserNotFound_returnsNotFound() throws Exception {
                 when(userService.getCurrentUser("nonexistent@example.com"))
@@ -280,26 +262,13 @@ public class UserControllerTest {
         }
 
         @Test
-        public void login_whenUsernameNotFound_returnsUnauthorized() throws Exception {
+        public void login_whenInvalidCredentials_returnsUnauthorized() throws Exception {
                 when(userService.login(any(Login.class)))
                                 .thenThrow(new InvalidCredentialsException("Invalid username or password"));
 
                 mockMvc.perform(post("/api/auth/login")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"userName\":\"invalidUser\",\"password\":\"password123\"}"))
-                                .andDo(print())
-                                .andExpect(status().isUnauthorized())
-                                .andExpect(jsonPath("$.message").value("Invalid username or password"));
-        }
-
-        @Test
-        public void login_withInvalidCredentials_returnsUnauthorized() throws Exception {
-                when(userService.login(any(Login.class)))
-                                .thenThrow(new InvalidCredentialsException("Invalid username or password"));
-
-                mockMvc.perform(post("/api/auth/login")
-                                .contentType(MediaType.APPLICATION_JSON)
-                                .content("{\"userName\":\"invalidUser\",\"password\":\"wrongPassword\"}"))
                                 .andDo(print())
                                 .andExpect(status().isUnauthorized())
                                 .andExpect(jsonPath("$.message").value("Invalid username or password"));

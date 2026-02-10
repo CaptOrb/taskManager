@@ -1,7 +1,6 @@
 package com.conor.taskmanager.service;
 
 import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,6 +17,8 @@ import com.conor.taskmanager.model.NotificationSettingsRequest;
 import com.conor.taskmanager.model.NotificationSettingsResponse;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.UserRepository;
+import com.conor.taskmanager.util.AppStringUtils;
+import com.conor.taskmanager.util.FieldErrorUtils;
 
 @Service
 public class NotificationSettingsService {
@@ -55,12 +56,12 @@ public class NotificationSettingsService {
 	public NotificationSettingsResponse updateSettings(String username, NotificationSettingsRequest request) {
 		User user = getUserByUsername(username);
 
-		String normalizedTopic = trimToNull(request.getTopic());
+		String normalizedTopic = AppStringUtils.trimToNull(request.getTopic());
 
 		Map<String, List<String>> fieldErrors = new LinkedHashMap<>();
 
 		if (request.isEnabled() && normalizedTopic == null) {
-			addFieldError(fieldErrors, "topic", "Topic is required when notifications are enabled");
+			FieldErrorUtils.addFieldError(fieldErrors, "topic", "Topic is required when notifications are enabled");
 		}
 
 		if (request.isEnabled() && !ntfySettings.isPublishAuthenticationConfigured()) {
@@ -68,7 +69,7 @@ public class NotificationSettingsService {
 		}
 
 		if (normalizedTopic != null && !TOPIC_PATTERN.matcher(normalizedTopic).matches()) {
-			addFieldError(fieldErrors, "topic", "Topic can only contain letters, numbers, _ and -");
+			FieldErrorUtils.addFieldError(fieldErrors, "topic", "Topic can only contain letters, numbers, _ and -");
 		}
 
 		if (!fieldErrors.isEmpty()) {
@@ -88,13 +89,13 @@ public class NotificationSettingsService {
 
 		Map<String, List<String>> fieldErrors = new LinkedHashMap<>();
 		if (ntfySettings.getServerUrl() == null) {
-			addFieldError(
+			FieldErrorUtils.addFieldError(
 					fieldErrors,
 					"serverUrl",
 					"Configure notifications.ntfy.server-url (or NTFY_SERVER_URL) before sending a test notification");
 		}
 		if (ntfyTopicResolver.resolvePublishTopic(user) == null) {
-			addFieldError(fieldErrors, "topic", "Configure a topic before sending a test notification");
+			FieldErrorUtils.addFieldError(fieldErrors, "topic", "Configure a topic before sending a test notification");
 		}
 		if (!ntfySettings.isPublishAuthenticationConfigured()) {
 			addPublishAuthenticationConfigurationError(fieldErrors);
@@ -143,28 +144,15 @@ public class NotificationSettingsService {
 				.orElseThrow(() -> new UserNotFoundException("User not found"));
 	}
 
-	private static String trimToNull(String value) {
-		if (value == null) {
-			return null;
-		}
-
-		String trimmed = value.trim();
-		return trimmed.isEmpty() ? null : trimmed;
-	}
-
-	private static void addFieldError(Map<String, List<String>> fieldErrors, String field, String message) {
-		fieldErrors.computeIfAbsent(field, key -> new ArrayList<>()).add(message);
-	}
-
 	private static void addPublishAuthenticationConfigurationError(Map<String, List<String>> fieldErrors) {
-		addFieldError(
+		FieldErrorUtils.addFieldError(
 				fieldErrors,
 				"configuration",
 				"Configure notifications.ntfy.access-token (or NTFY_ACCESS_TOKEN) before enabling ntfy notifications");
 	}
 
 	private static void addInvalidPublishAuthenticationConfigurationError(Map<String, List<String>> fieldErrors) {
-		addFieldError(
+		FieldErrorUtils.addFieldError(
 				fieldErrors,
 				"configuration",
 				"ntfy rejected the app token; update notifications.ntfy.access-token (or NTFY_ACCESS_TOKEN) and ensure write access to tm-* topics");

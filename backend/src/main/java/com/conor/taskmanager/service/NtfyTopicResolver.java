@@ -1,5 +1,6 @@
 package com.conor.taskmanager.service;
 
+import com.conor.taskmanager.util.AppStringUtils;
 import org.springframework.stereotype.Component;
 
 import com.conor.taskmanager.model.User;
@@ -13,7 +14,7 @@ public class NtfyTopicResolver {
 			return null;
 		}
 
-		String rawTopic = trimToNull(user.getNtfyTopic());
+		String rawTopic = AppStringUtils.trimToNull(user.getNtfyTopic());
 		String userTopicPrefix = getTopicPrefix(user);
 		if (rawTopic == null || userTopicPrefix == null) {
 			return null;
@@ -28,14 +29,5 @@ public class NtfyTopicResolver {
 		}
 
 		return TOPIC_PREFIX + "-" + user.getId() + "-";
-	}
-
-	private static String trimToNull(String value) {
-		if (value == null) {
-			return null;
-		}
-
-		String trimmed = value.trim();
-		return trimmed.isEmpty() ? null : trimmed;
 	}
 }
