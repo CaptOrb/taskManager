@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.conor.taskmanager.exception.NtfyAuthenticationException;
 import com.conor.taskmanager.exception.UserNotFoundException;
 import com.conor.taskmanager.exception.ValidationException;
 import com.conor.taskmanager.model.NotificationSettingsRequest;
@@ -62,6 +63,10 @@ public class NotificationSettingsService {
 			addFieldError(fieldErrors, "topic", "Topic is required when notifications are enabled");
 		}
 
+		if (request.isEnabled() && !ntfySettings.isPublishAuthenticationConfigured()) {
+			addPublishAuthenticationConfigurationError(fieldErrors);
+		}
+
 		if (normalizedTopic != null && !TOPIC_PATTERN.matcher(normalizedTopic).matches()) {
 			addFieldError(fieldErrors, "topic", "Topic can only contain letters, numbers, _ and -");
 		}
@@ -91,17 +96,27 @@ public class NotificationSettingsService {
 		if (ntfyTopicResolver.resolvePublishTopic(user) == null) {
 			addFieldError(fieldErrors, "topic", "Configure a topic before sending a test notification");
 		}
+		if (!ntfySettings.isPublishAuthenticationConfigured()) {
+			addPublishAuthenticationConfigurationError(fieldErrors);
+		}
 
 		if (!fieldErrors.isEmpty()) {
 			throw new ValidationException(fieldErrors);
 		}
 
-		ntfyNotificationService.sendTestNotification(user);
+		try {
+			ntfyNotificationService.sendTestNotification(user);
+		} catch (NtfyAuthenticationException ntfyAuthenticationException) {
+			Map<String, List<String>> publishAuthErrors = new LinkedHashMap<>();
+			addInvalidPublishAuthenticationConfigurationError(publishAuthErrors);
+			throw new ValidationException(publishAuthErrors);
+		}
 	}
 
 	public boolean canSendReminder(User user) {
 		return user.isNtfyEnabled()
 				&& ntfySettings.getServerUrl() != null
+				&& ntfySettings.isPublishAuthenticationConfigured()
 				&& ntfyTopicResolver.resolvePublishTopic(user) != null;
 	}
 
@@ -139,5 +154,19 @@ public class NotificationSettingsService {
 
 	private static void addFieldError(Map<String, List<String>> fieldErrors, String field, String message) {
 		fieldErrors.computeIfAbsent(field, key -> new ArrayList<>()).add(message);
+	}
+
+	private static void addPublishAuthenticationConfigurationError(Map<String, List<String>> fieldErrors) {
+		addFieldError(
+				fieldErrors,
+				"configuration",
+				"Configure notifications.ntfy.access-token (or NTFY_ACCESS_TOKEN) before enabling ntfy notifications");
+	}
+
+	private static void addInvalidPublishAuthenticationConfigurationError(Map<String, List<String>> fieldErrors) {
+		addFieldError(
+				fieldErrors,
+				"configuration",
+				"ntfy rejected the app token; update notifications.ntfy.access-token (or NTFY_ACCESS_TOKEN) and ensure write access to tm-* topics");
 	}
 }

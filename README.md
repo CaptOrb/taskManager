@@ -45,9 +45,7 @@ You can enable ntfy reminders from **My Account**.
 - Set a private topic name
 - Set `NTFY_SERVER_URL` in `.env` to your ntfy server URL (for example `https://ntfy.example.com`)
 - Set `NTFY_PUBLIC_URL` in `.env` to the subscribe URL users should use (for example `https://ntfy.example.com`)
-- Optional: set `NTFY_ACCESS_TOKEN` in `.env` if ntfy publish requires authentication
 - Local Docker default is `http://ntfy` internally; subscribe from your host at `http://localhost:2586/<topic>`
 - In `docker-compose-prodOracle.yml`, `NTFY_SERVER_URL` is required because ntfy runs outside the app stack
-- End users only set their topic; token management is app-level
 
 When enabled, the backend checks every minute and sends one reminder per task about 30 minutes before the due date.

@@ -41,7 +41,7 @@ services:
     environment:
       NTFY_SERVER_URL: ${NTFY_SERVER_URL:-http://ntfy}
       NTFY_PUBLIC_URL: ${NTFY_PUBLIC_URL:-http://localhost:2586}
-      NTFY_ACCESS_TOKEN: ${NTFY_ACCESS_TOKEN:-}
+      NOTIFICATIONS_NTFY_REQUIRE_ACCESS_TOKEN: "false"
       SPRING_APPLICATION_JSON: '{
         "spring.datasource.url"  : "jdbc:mysql://mysqldb:$MYSQLDB_DOCKER_PORT/$MYSQLDB_DATABASE?allowPublicKeyRetrieval=true&defaultAuthenticationPlugin=caching_sha2_password",
         "spring.datasource.username" : "$DB_USERNAME",

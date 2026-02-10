@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import com.conor.taskmanager.exception.NtfyAuthenticationException;
 import com.conor.taskmanager.model.Task;
 import com.conor.taskmanager.model.User;
 
@@ -109,6 +110,11 @@ public class NtfyNotificationService {
 		String serverUrl = ntfySettings.getServerUrl();
 		String accessToken = ntfySettings.getAccessToken();
 
+		if (!ntfySettings.isPublishAuthenticationConfigured()) {
+			throw new IllegalStateException(
+					"ntfy publish authentication is required; configure notifications.ntfy.access-token (or NTFY_ACCESS_TOKEN)");
+		}
+
 		if (topic == null || serverUrl == null) {
 			throw new IllegalStateException("ntfy topic and server URL are required");
 		}
@@ -137,9 +143,17 @@ public class NtfyNotificationService {
 					HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
 
 			if (response.statusCode() >= 400) {
+				if (response.statusCode() == 401 || response.statusCode() == 403) {
+					throw new NtfyAuthenticationException(
+							"ntfy rejected publish credentials with status %d".formatted(response.statusCode()));
+				}
+
 				throw new IllegalStateException(
 						"ntfy request failed with status %d".formatted(response.statusCode()));
 			}
+		} catch (NtfyAuthenticationException ntfyAuthenticationException) {
+			logger.warn("Failed to send ntfy notification: {}", ntfyAuthenticationException.getMessage());
+			throw ntfyAuthenticationException;
 		} catch (InterruptedException interruptedException) {
 			Thread.currentThread().interrupt();
 			throw new IllegalStateException("ntfy request interrupted", interruptedException);
