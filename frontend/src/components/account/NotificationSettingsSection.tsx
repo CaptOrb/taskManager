@@ -8,6 +8,7 @@ const NotificationSettingsSection = ({
 	notificationLoading,
 	notificationSaving,
 	notificationTesting,
+	topicSuggestionLoading,
 	notificationForm,
 	reminderMinutesBeforeDue,
 	publicNtfyBaseUrl,
@@ -20,6 +21,7 @@ const NotificationSettingsSection = ({
 	onNotificationSettingsSave,
 	onSendTestNotification,
 	onCopySubscribeUrl,
+	onGenerateTopic,
 }: NotificationSettingsSectionProps): ReactElement => (
 	<div className="mb-4 p-4 border border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
 		<h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
@@ -120,17 +122,29 @@ const NotificationSettingsSection = ({
 						<span className="font-mono">{ntfyTopicPrefixDisplay}</span>)
 					</span>
 				</label>
-				<input
-					type="text"
-					id={ntfyTopicId}
-					name="topic"
-					value={notificationForm.topic}
-					onChange={onNotificationInputChange}
-					placeholder="my-tasks-2025"
-					autoComplete="off"
-					disabled={notificationSaving}
-					className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 mb-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
-				/>
+				<div className="flex flex-col sm:flex-row gap-2 mb-2">
+					<input
+						type="text"
+						id={ntfyTopicId}
+						name="topic"
+						value={notificationForm.topic}
+						onChange={onNotificationInputChange}
+						placeholder="my-tasks-2025"
+						autoComplete="off"
+						disabled={notificationSaving}
+						className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+					/>
+					<button
+						type="button"
+						onClick={() => {
+							onGenerateTopic();
+						}}
+						disabled={notificationSaving || topicSuggestionLoading}
+						className="text-blue-700 border border-blue-700 hover:bg-blue-50 font-medium rounded-lg text-sm px-4 py-2.5 disabled:opacity-50 dark:text-blue-300 dark:border-blue-300 dark:hover:bg-gray-800"
+					>
+						{topicSuggestionLoading ? "Generating..." : "Generate random topic"}
+					</button>
+				</div>
 				<p className="text-xs text-gray-600 dark:text-gray-300 mb-3 break-all">
 					Full topic:{" "}
 					<span className="font-mono font-semibold">{ntfyTopicPreview}</span>

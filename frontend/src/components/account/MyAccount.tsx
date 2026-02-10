@@ -19,6 +19,7 @@ import PasswordSection from "./PasswordSection";
 import type {
 	NotificationForm,
 	NotificationSettingsResponse,
+	NotificationTopicSuggestionResponse,
 	PasswordField,
 	PasswordFieldErrors,
 	PasswordForm,
@@ -72,6 +73,8 @@ const MyAccount = (): ReactElement => {
 	const [notificationSaving, setNotificationSaving] = useState<boolean>(false);
 	const [notificationTesting, setNotificationTesting] =
 		useState<boolean>(false);
+	const [topicSuggestionLoading, setTopicSuggestionLoading] =
+		useState<boolean>(false);
 	const [notificationError, setNotificationError] = useState<string | null>(
 		null,
 	);
@@ -109,6 +112,72 @@ const MyAccount = (): ReactElement => {
 			Authorization: `Bearer ${token}`,
 		}),
 		[],
+	);
+
+	const fetchTopicSuggestion = useCallback(
+		async ({
+			replaceExisting,
+			silent = false,
+		}: {
+			replaceExisting: boolean;
+			silent?: boolean;
+		}): Promise<void> => {
+			const token = getAuthTokenOrRedirect();
+			if (token == null) {
+				return;
+			}
+
+			setTopicSuggestionLoading(true);
+			if (!silent) {
+				setNotificationError(null);
+				setNotificationSuccess(null);
+				setCopySubscribeUrlFeedback(null);
+			}
+
+			try {
+				const response = await fetch("/api/notifications/topic-suggestion", {
+					headers: createAuthHeaders(token),
+				});
+				const data: unknown = await response.json().catch(() => null);
+
+				if (!response.ok) {
+					throw new Error(
+						getApiErrorMessageFromBody(
+							data,
+							"Failed to generate a topic suggestion",
+						),
+					);
+				}
+
+				const suggestedTopic = (data as NotificationTopicSuggestionResponse).topic;
+				const suggestion =
+					typeof suggestedTopic === "string" ? suggestedTopic.trim() : "";
+
+				if (suggestion.length === 0) {
+					throw new Error("Failed to generate a topic suggestion");
+				}
+
+				setNotificationForm((prev) => {
+					if (!replaceExisting && prev.topic.trim().length > 0) {
+						return prev;
+					}
+					return { ...prev, topic: suggestion };
+				});
+				setCopySubscribeUrlFeedback(null);
+			} catch (suggestionError) {
+				if (!silent) {
+					setNotificationError(
+						getApiErrorMessage(
+							suggestionError,
+							"Failed to generate a topic suggestion",
+						),
+					);
+				}
+			} finally {
+				setTopicSuggestionLoading(false);
+			}
+		},
+		[createAuthHeaders, getAuthTokenOrRedirect],
 	);
 
 	const userNameId = useId();
@@ -209,6 +278,15 @@ const MyAccount = (): ReactElement => {
 					.json()
 					.catch(() => null);
 				applyNotificationSettings(notificationData);
+				const notificationSettings =
+					notificationData as NotificationSettingsResponse | null;
+				const existingTopic =
+					typeof notificationSettings?.topic === "string"
+						? notificationSettings.topic.trim()
+						: "";
+				if (existingTopic.length === 0) {
+					void fetchTopicSuggestion({ replaceExisting: false, silent: true });
+				}
 			} catch (fetchError) {
 				setError(getApiErrorMessage(fetchError, "Failed to fetch user"));
 			} finally {
@@ -218,7 +296,7 @@ const MyAccount = (): ReactElement => {
 		};
 
 		void fetchCurrentUser();
-	}, [applyNotificationSettings, createAuthHeaders, getAuthTokenOrRedirect]);
+	}, [applyNotificationSettings, createAuthHeaders, fetchTopicSuggestion, getAuthTokenOrRedirect]);
 
 	const handlePasswordChange = async (
 		e: FormEvent<HTMLFormElement>,
@@ -330,6 +408,10 @@ const MyAccount = (): ReactElement => {
 					return prev;
 			}
 		});
+	};
+
+	const handleGenerateTopic = (): void => {
+		void fetchTopicSuggestion({ replaceExisting: true });
 	};
 
 	const handleCopySubscribeUrl = async (): Promise<void> => {
@@ -483,6 +565,7 @@ const MyAccount = (): ReactElement => {
 				notificationLoading={notificationLoading}
 				notificationSaving={notificationSaving}
 				notificationTesting={notificationTesting}
+				topicSuggestionLoading={topicSuggestionLoading}
 				notificationForm={notificationForm}
 				reminderMinutesBeforeDue={reminderMinutesBeforeDue}
 				publicNtfyBaseUrl={publicNtfyBaseUrl}
@@ -495,6 +578,7 @@ const MyAccount = (): ReactElement => {
 				onNotificationSettingsSave={handleNotificationSettingsSave}
 				onSendTestNotification={handleSendTestNotification}
 				onCopySubscribeUrl={handleCopySubscribeUrl}
+				onGenerateTopic={handleGenerateTopic}
 			/>
 
 			<button

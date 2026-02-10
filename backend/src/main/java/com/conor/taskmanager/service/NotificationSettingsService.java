@@ -1,5 +1,6 @@
 package com.conor.taskmanager.service;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -19,7 +20,10 @@ import com.conor.taskmanager.repository.UserRepository;
 
 @Service
 public class NotificationSettingsService {
+	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 	private static final Pattern TOPIC_PATTERN = Pattern.compile("^[A-Za-z0-9_-]{1,128}$");
+	private static final String TOPIC_SUGGESTION_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
+	private static final int TOPIC_SUGGESTION_LENGTH = 10;
 
 	private final UserRepository userRepository;
 	private final NtfyNotificationService ntfyNotificationService;
@@ -99,6 +103,15 @@ public class NotificationSettingsService {
 		return user.isNtfyEnabled()
 				&& ntfySettings.getServerUrl() != null
 				&& ntfyTopicResolver.resolvePublishTopic(user) != null;
+	}
+
+	public String generateTopicSuggestion() {
+		StringBuilder builder = new StringBuilder(TOPIC_SUGGESTION_LENGTH);
+		for (int i = 0; i < TOPIC_SUGGESTION_LENGTH; i++) {
+			int index = SECURE_RANDOM.nextInt(TOPIC_SUGGESTION_ALPHABET.length());
+			builder.append(TOPIC_SUGGESTION_ALPHABET.charAt(index));
+		}
+		return builder.toString();
 	}
 
 	private NotificationSettingsResponse mapToResponse(User user) {

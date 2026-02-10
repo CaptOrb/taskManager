@@ -17,6 +17,10 @@ export type NotificationSettingsResponse = {
 	reminderMinutesBeforeDue?: number;
 };
 
+export type NotificationTopicSuggestionResponse = {
+	topic?: string;
+};
+
 export type NotificationForm = {
 	enabled: boolean;
 	topic: string;
@@ -52,6 +56,7 @@ export type NotificationSettingsSectionProps = {
 	notificationLoading: boolean;
 	notificationSaving: boolean;
 	notificationTesting: boolean;
+	topicSuggestionLoading: boolean;
 	notificationForm: NotificationForm;
 	reminderMinutesBeforeDue: number;
 	publicNtfyBaseUrl: string;
@@ -64,4 +69,5 @@ export type NotificationSettingsSectionProps = {
 	onNotificationSettingsSave: (e: FormEvent<HTMLFormElement>) => Promise<void>;
 	onSendTestNotification: () => Promise<void>;
 	onCopySubscribeUrl: () => Promise<void>;
+	onGenerateTopic: () => void;
 };

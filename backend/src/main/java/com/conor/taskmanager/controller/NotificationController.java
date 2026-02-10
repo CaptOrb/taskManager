@@ -17,14 +17,16 @@ import com.conor.taskmanager.model.NotificationSettingsResponse;
 import com.conor.taskmanager.service.NotificationSettingsService;
 
 import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/notifications")
-@RequiredArgsConstructor
 public class NotificationController {
 
 	private final NotificationSettingsService notificationSettingsService;
+
+	public NotificationController(NotificationSettingsService notificationSettingsService) {
+		this.notificationSettingsService = notificationSettingsService;
+	}
 
 	@GetMapping("/settings")
 	public ResponseEntity<NotificationSettingsResponse> getSettings() {
@@ -46,5 +48,11 @@ public class NotificationController {
 		String username = SecurityContextHolder.getContext().getAuthentication().getName();
 		notificationSettingsService.sendTestNotification(username);
 		return ResponseEntity.ok(Collections.singletonMap("message", "Test notification sent"));
+	}
+
+	@GetMapping("/topic-suggestion")
+	public ResponseEntity<Map<String, String>> getTopicSuggestion() {
+		String suggestion = notificationSettingsService.generateTopicSuggestion();
+		return ResponseEntity.ok(Collections.singletonMap("topic", suggestion));
 	}
 }
