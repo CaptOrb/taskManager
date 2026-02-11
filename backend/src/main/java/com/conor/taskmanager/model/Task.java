@@ -31,9 +31,9 @@ public class Task {
     @Size(max = 50, message = "Title can only be 50 characters")
     private String title;
 
-    @Column(length = 500, nullable = false)
+    @Column(length = 5000, nullable = false)
     @NotBlank(message = "Description cannot be empty")
-    @Size(max = 500, message = "Description can only be 500 characters")
+    @Size(max = 5000, message = "Description can only be 5000 characters")
     private String description;
 
     @Enumerated(EnumType.STRING)

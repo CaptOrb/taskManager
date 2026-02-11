@@ -171,7 +171,7 @@ public class TaskControllerTest {
         @WithMockUser(username = "1@1.com")
         public void createTask_whenDescriptionIsTooLong_returnsBadRequest() throws Exception {
                 // Bean Validation will catch this before reaching the service
-                String longDescription = "A".repeat(501); // 501 characters, exceeds max of 500
+                String longDescription = "A".repeat(5001); // exceeds max of 5000
                 Task newTask = new Task(null, "New Task", longDescription, Status.COMPLETED, Priority.MEDIUM,
                                 LocalDateTime.now().plusDays(1));
 
@@ -180,7 +180,7 @@ public class TaskControllerTest {
                                 .content(objectMapper.writeValueAsString(newTask)))
                                 .andExpect(status().isBadRequest())
                                 .andExpect(jsonPath("$.message").value("Validation failed"))
-                                .andExpect(jsonPath("$.errors", hasItems("Description can only be 500 characters")));
+                                .andExpect(jsonPath("$.errors", hasItems("Description can only be 5000 characters")));
         }
 
         @Test
