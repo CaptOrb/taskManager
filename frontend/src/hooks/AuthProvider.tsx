@@ -24,34 +24,41 @@ export const AuthProvider = ({ children }: AuthProviderProps): ReactElement => {
 	useEffect(() => {
 		const checkToken = (): void => {
 			const token = localStorage.getItem("token");
-			if (token) {
-				try {
-					const decodedToken = decodeToken(token);
-					if (decodedToken?.exp) {
-						const expiration = decodedToken.exp * 1000;
-						if (expiration < Date.now()) {
-							logout();
-							navigate("/login");
-							return;
-						}
-						setLoggedInUser(decodedToken.sub);
-					} else {
+			if (!token) {
+				if (loggedInUser !== null) {
+					logout();
+				}
+				setLoading(false);
+				return;
+			}
+
+			try {
+				const decodedToken = decodeToken(token);
+				if (decodedToken?.exp) {
+					const expiration = decodedToken.exp * 1000;
+					if (expiration < Date.now()) {
 						logout();
 						navigate("/login");
+						return;
 					}
-				} catch (error) {
-					console.error("Error decoding token:", error);
+					setLoggedInUser(decodedToken.sub);
+				} else {
 					logout();
 					navigate("/login");
 				}
+			} catch (error) {
+				console.error("Error decoding token:", error);
+				logout();
+				navigate("/login");
+			} finally {
+				setLoading(false);
 			}
-			setLoading(false);
 		};
 
 		checkToken();
 		const intervalId = setInterval(checkToken, 60000);
 		return (): void => clearInterval(intervalId);
-	}, [navigate, logout]);
+	}, [navigate, logout, loggedInUser]);
 
 	return (
 		<AuthContext.Provider value={{ loggedInUser, login, logout, loading }}>
