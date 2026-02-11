@@ -2,7 +2,6 @@ package com.conor.taskmanager;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.hamcrest.Matchers.hasItems;
 import static org.mockito.ArgumentMatchers.any;
@@ -11,16 +10,13 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -34,7 +30,7 @@ import com.conor.taskmanager.model.LoginResponse;
 import com.conor.taskmanager.model.PasswordChangeRequest;
 import com.conor.taskmanager.model.RegisterRequest;
 import com.conor.taskmanager.model.User;
-import com.conor.taskmanager.repository.UserRepository;
+import com.conor.taskmanager.security.CustomUserDetails;
 import com.conor.taskmanager.security.JwtService;
 import com.conor.taskmanager.security.SecurityConfig;
 import com.conor.taskmanager.security.UserDetailsService;
@@ -51,43 +47,34 @@ public class UserControllerTest {
         private MockMvc mockMvc;
 
         @MockitoBean
-        private UserRepository userRepository;
-
-        @MockitoBean
-        private PasswordEncoder passwordEncoder;
-
-        @MockitoBean
-        private AuthenticationManager authenticationManager;
-
-        @MockitoBean
         private UserService userService;
 
         @MockitoBean
         private JwtService jwtService;
 
-        @BeforeEach
-        void setUp() {
-                User testUser = new User();
-                testUser.setUserName("1@1.com");
-                testUser.setEmail("1@1.com");
-                testUser.setPassword("password");
-
-                when(userRepository.findByUserName("1@1.com")).thenReturn(Optional.of(testUser));
-                when(jwtService.extractUserName(any())).thenReturn("1@1.com");
-                when(jwtService.validateToken(any(), any())).thenReturn(true);
+        private CustomUserDetails createTestUserDetails(Long id, String username) {
+                User user = new User();
+                user.setId(id);
+                user.setUserName(username);
+                user.setEmail(username);
+                user.setPassword("password");
+                user.setUserRole("user");
+                return new CustomUserDetails(user);
         }
 
         @Test
-        @WithMockUser(username = "1@1.com", password = "password", roles = { "user" })
         public void getCurrentUser_whenUserExists_returnsUser() throws Exception {
+                CustomUserDetails userDetails = createTestUserDetails(1L, "1@1.com");
+
                 User testUser = new User();
                 testUser.setUserName("1@1.com");
                 testUser.setEmail("1@1.com");
                 testUser.setUserRole("user");
 
-                when(userService.getCurrentUser("1@1.com")).thenReturn(testUser);
+                when(userService.getCurrentUser(1L)).thenReturn(testUser);
 
                 mockMvc.perform(get("/api/auth/current-user")
+                                .with(user(userDetails))
                                 .contentType(MediaType.APPLICATION_JSON))
                                 .andDo(print())
                                 .andExpect(status().isOk())
@@ -97,20 +84,22 @@ public class UserControllerTest {
         }
 
         @Test
-        @WithMockUser(username = "test@example.com")
         public void getCurrentUserName_returnsAuthenticatedUsername() throws Exception {
-                mockMvc.perform(get("/api/auth/user"))
+                CustomUserDetails userDetails = createTestUserDetails(1L, "test@example.com");
+
+                mockMvc.perform(get("/api/auth/user").with(user(userDetails)))
                                 .andExpect(status().isOk())
                                 .andExpect(content().string("test@example.com"));
         }
 
         @Test
-        @WithMockUser(username = "nonexistent@example.com")
         public void getCurrentUser_whenAuthenticatedButUserNotFound_returnsNotFound() throws Exception {
-                when(userService.getCurrentUser("nonexistent@example.com"))
+                CustomUserDetails userDetails = createTestUserDetails(99L, "nonexistent@example.com");
+
+                when(userService.getCurrentUser(99L))
                                 .thenThrow(new UserNotFoundException("User not found"));
 
-                mockMvc.perform(get("/api/auth/current-user"))
+                mockMvc.perform(get("/api/auth/current-user").with(user(userDetails)))
                                 .andExpect(status().isNotFound())
                                 .andExpect(jsonPath("$.message").value("User not found"));
         }
@@ -288,11 +277,13 @@ public class UserControllerTest {
         }
 
         @Test
-        @WithMockUser(username = "test@example.com")
         public void changePassword_whenValidRequest_returnsSuccess() throws Exception {
-                doNothing().when(userService).changePassword(eq("test@example.com"), any(PasswordChangeRequest.class));
+                CustomUserDetails userDetails = createTestUserDetails(1L, "test@example.com");
+
+                doNothing().when(userService).changePassword(eq(1L), any(PasswordChangeRequest.class));
 
                 mockMvc.perform(post("/api/auth/change-password")
+                                .with(user(userDetails))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"currentPassword\":\"oldPassword\",\"newPassword\":\"newPassword123\",\"confirmPassword\":\"newPassword123\"}"))
                                 .andDo(print())
@@ -301,13 +292,15 @@ public class UserControllerTest {
         }
 
         @Test
-        @WithMockUser(username = "test@example.com")
         public void changePassword_whenCurrentPasswordIncorrect_returnsBadRequest() throws Exception {
+                CustomUserDetails userDetails = createTestUserDetails(1L, "test@example.com");
+
                 doThrow(new ValidationException("Current password is incorrect"))
                                 .when(userService)
-                                .changePassword(eq("test@example.com"), any(PasswordChangeRequest.class));
+                                .changePassword(eq(1L), any(PasswordChangeRequest.class));
 
                 mockMvc.perform(post("/api/auth/change-password")
+                                .with(user(userDetails))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"currentPassword\":\"wrongPassword\",\"newPassword\":\"newPassword123\",\"confirmPassword\":\"newPassword123\"}"))
                                 .andDo(print())
@@ -317,9 +310,11 @@ public class UserControllerTest {
         }
 
         @Test
-        @WithMockUser(username = "test@example.com")
         public void changePassword_whenNewPasswordTooShort_returnsBadRequest() throws Exception {
+                CustomUserDetails userDetails = createTestUserDetails(1L, "test@example.com");
+
                 mockMvc.perform(post("/api/auth/change-password")
+                                .with(user(userDetails))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"currentPassword\":\"oldPassword\",\"newPassword\":\"123\",\"confirmPassword\":\"123\"}"))
                                 .andDo(print())
@@ -330,13 +325,15 @@ public class UserControllerTest {
         }
 
         @Test
-        @WithMockUser(username = "test@example.com")
         public void changePassword_whenPasswordsDontMatch_returnsBadRequest() throws Exception {
+                CustomUserDetails userDetails = createTestUserDetails(1L, "test@example.com");
+
                 doThrow(new ValidationException("New password and confirmation password do not match"))
                                 .when(userService)
-                                .changePassword(eq("test@example.com"), any(PasswordChangeRequest.class));
+                                .changePassword(eq(1L), any(PasswordChangeRequest.class));
 
                 mockMvc.perform(post("/api/auth/change-password")
+                                .with(user(userDetails))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"currentPassword\":\"oldPassword\",\"newPassword\":\"newPassword123\",\"confirmPassword\":\"differentPassword\"}"))
                                 .andDo(print())
@@ -346,13 +343,15 @@ public class UserControllerTest {
         }
 
         @Test
-        @WithMockUser(username = "nonexistent@example.com")
         public void changePassword_whenUserNotFound_returnsNotFound() throws Exception {
+                CustomUserDetails userDetails = createTestUserDetails(99L, "nonexistent@example.com");
+
                 doThrow(new UserNotFoundException("User not found"))
                                 .when(userService)
-                                .changePassword(eq("nonexistent@example.com"), any(PasswordChangeRequest.class));
+                                .changePassword(eq(99L), any(PasswordChangeRequest.class));
 
                 mockMvc.perform(post("/api/auth/change-password")
+                                .with(user(userDetails))
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content("{\"currentPassword\":\"oldPassword\",\"newPassword\":\"newPassword123\",\"confirmPassword\":\"newPassword123\"}"))
                                 .andDo(print())

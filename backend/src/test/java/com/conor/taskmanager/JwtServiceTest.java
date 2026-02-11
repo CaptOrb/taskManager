@@ -4,10 +4,10 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import com.conor.taskmanager.model.User;
+import com.conor.taskmanager.security.CustomUserDetails;
 import com.conor.taskmanager.security.JwtService;
 
 import java.time.Instant;
@@ -29,9 +29,8 @@ class JwtServiceTest {
 
     @Test
     void testGenerateToken_ShouldCreateValidToken() {
-        String username = "test@example.com";
-
-        String token = jwtService.generateToken(username);
+        Long userid = 1L;
+        String token = jwtService.generateToken(userid, "testuser");
 
         assertNotNull(token);
         assertFalse(token.isEmpty());
@@ -39,19 +38,19 @@ class JwtServiceTest {
     }
 
     @Test
-    void testExtractUserName_ShouldReturnCorrectUsername() {
-        String username = "test@example.com";
-        String token = jwtService.generateToken(username);
+    void testExtractUserId_ShouldReturnCorrectUserId() {
+        Long userid = 1L;
+        String token = jwtService.generateToken(userid, "testuser");
 
-        String extractedUsername = jwtService.extractUserName(token);
+        Long extractedId = jwtService.extractUserId(token);
 
-        assertEquals(username, extractedUsername);
+        assertEquals(userid, extractedId);
     }
 
     @Test
     void testExtractExpiration_ShouldReturnFutureDate() {
-        String username = "test@example.com";
-        String token = jwtService.generateToken(username);
+        Long userid = 1L;
+        String token = jwtService.generateToken(userid, "testuser");
 
         Instant expiration = jwtService.extractExpiration(token);
 
@@ -61,10 +60,10 @@ class JwtServiceTest {
 
     @Test
     void testExtractExpiration_ShouldBeApproximatelyOneHour() {
-        String username = "test@example.com";
+        Long userid = 1L;
         Instant beforeGeneration = Instant.now();
 
-        String token = jwtService.generateToken(username);
+        String token = jwtService.generateToken(userid, "testuser");
         Instant expiration = jwtService.extractExpiration(token);
 
         long expectedExpiration = beforeGeneration.plusSeconds(60 * 60).toEpochMilli(); // 1 hour
@@ -77,8 +76,8 @@ class JwtServiceTest {
 
     @Test
     void testIsTokenExpired_WithValidToken_ShouldReturnFalse() {
-        String username = "test@example.com";
-        String token = jwtService.generateToken(username);
+        Long userid = 1L;
+        String token = jwtService.generateToken(userid, "testuser");
 
         Boolean isExpired = jwtService.isTokenExpired(token);
 
@@ -87,12 +86,16 @@ class JwtServiceTest {
 
     @Test
     void testValidateToken_WithValidTokenAndMatchingUser_ShouldReturnTrue() {
-        String username = "test@example.com";
-        String token = jwtService.generateToken(username);
-        UserDetails userDetails = User.builder()
-                .username(username)
-                .password("password")
-                .build();
+        Long userId = 1L;
+
+        String token = jwtService.generateToken(userId, "testuser");
+
+        User user = new User();
+        user.setId(userId);
+        user.setUserName("test@example.com");
+        user.setPassword("password");
+        user.setUserRole("user");
+        CustomUserDetails userDetails = new CustomUserDetails(user);
 
         Boolean isValid = jwtService.validateToken(token, userDetails);
 
@@ -100,13 +103,16 @@ class JwtServiceTest {
     }
 
     @Test
-    void testValidateToken_WithDifferentUsername_ShouldReturnFalse() {
-        String username = "test@example.com";
-        String token = jwtService.generateToken(username);
-        UserDetails userDetails = User.builder()
-                .username("different@example.com")
-                .password("password")
-                .build();
+    void testValidateToken_WithDifferentUserId_ShouldReturnFalse() {
+        Long userId = 1L;
+        String token = jwtService.generateToken(userId, "testuser");
+
+        User user = new User();
+        user.setId(2L);
+        user.setUserName("different@example.com");
+        user.setPassword("password");
+        user.setUserRole("user");
+        CustomUserDetails userDetails = new CustomUserDetails(user);
 
         Boolean isValid = jwtService.validateToken(token, userDetails);
 
@@ -114,23 +120,23 @@ class JwtServiceTest {
     }
 
     @Test
-    void testExtractUserName_WithInvalidToken_ShouldThrowException() {
+    void testExtractUserId_WithInvalidToken_ShouldThrowException() {
         String invalidToken = "invalid.token.here";
 
         assertThrows(MalformedJwtException.class, () -> {
-            jwtService.extractUserName(invalidToken);
+            jwtService.extractUserId(invalidToken);
         });
     }
 
     @Test
-    void testExtractUserName_WithTamperedToken_ShouldThrowSignatureException() {
-        String username = "test@example.com";
-        String validToken = jwtService.generateToken(username);
+    void testExtractUserId_WithTamperedToken_ShouldThrowSignatureException() {
+        Long userId = 1L;
+        String validToken = jwtService.generateToken(userId, "testuser");
         // Tamper with the token by changing a character
         String tamperedToken = validToken.substring(0, validToken.length() - 5) + "XXXXX";
 
         assertThrows(SignatureException.class, () -> {
-            jwtService.extractUserName(tamperedToken);
+            jwtService.extractUserId(tamperedToken);
         });
     }
 }

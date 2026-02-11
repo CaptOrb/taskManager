@@ -6,7 +6,6 @@ import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import java.time.Duration;
@@ -28,14 +27,15 @@ public class JwtService {
     @Value("${jwt.secret}")
     private String secret;
 
-    public String generateToken(String userName) {
+    public String generateToken(Long userId, String userName) {
         Map<String, Object> claims = new HashMap<>();
+        claims.put("displayName", userName);
         Instant now = Instant.now();
 
         return Jwts
                 .builder()
                 .claims().add(claims).and()
-                .subject(userName)
+                .subject(String.valueOf(userId))
                 .issuedAt(java.util.Date.from(now))
                 .expiration(java.util.Date.from(now.plus(TOKEN_TTL)))
                 .signWith(getSignKey(), Jwts.SIG.HS256)
@@ -49,8 +49,8 @@ public class JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String extractUserName(String token) {
-        return extractClaim(token, Claims::getSubject);
+    public Long extractUserId(String token) {
+        return Long.valueOf(extractClaim(token, Claims::getSubject));
     }
 
     public Instant extractExpiration(String token) {
@@ -80,8 +80,8 @@ public class JwtService {
         return extractExpiration(token).isBefore(Instant.now());
     }
 
-    public Boolean validateToken(String token, UserDetails userDetails) {
-        final String userName = extractUserName(token);
-        return (userName.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    public Boolean validateToken(String token, CustomUserDetails userDetails) {
+        final Long userId = extractUserId(token);
+        return (userId.equals(userDetails.getId()) && !isTokenExpired(token));
     }
 }

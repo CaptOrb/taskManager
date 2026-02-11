@@ -20,4 +20,10 @@ public class UserLookupService {
         return userRepository.findByUserName(username)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
     }
+
+    @Transactional(readOnly = true)
+    public User getUserById(Long id) {
+        return userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+    }
 }

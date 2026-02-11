@@ -60,7 +60,7 @@ public class UserService {
     user.setUserRole("user");
 
     User savedUser = userRepository.save(user);
-    String token = jwtService.generateToken(savedUser.getUserName());
+    String token = jwtService.generateToken(savedUser.getId(), savedUser.getUserName());
     return new LoginResponse(savedUser.getUserName(), token);
   }
 
@@ -77,19 +77,19 @@ public class UserService {
       throw new InvalidCredentialsException("Invalid username or password");
     }
 
-    String token = jwtService.generateToken(user.getUserName());
+    String token = jwtService.generateToken(user.getId(), user.getUserName());
     return new LoginResponse(user.getUserName(), token);
   }
 
   @Transactional(readOnly = true)
-  public User getCurrentUser(String username) {
-    return userRepository.findByUserName(username)
+  public User getCurrentUser(Long userId) {
+    return userRepository.findById(userId)
         .orElseThrow(() -> new UserNotFoundException("User not found"));
   }
 
   @Transactional
-  public void changePassword(String username, PasswordChangeRequest request) {
-    User user = userRepository.findByUserName(username)
+  public void changePassword(Long userId, PasswordChangeRequest request) {
+    User user = userRepository.findById(userId)
         .orElseThrow(() -> new UserNotFoundException("User not found"));
 
     if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {

@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): ReactElement => {
 	const login = (token: string): void => {
 		localStorage.setItem("token", token);
 		const decodedToken = decodeToken(token);
-		setLoggedInUser(decodedToken.sub);
+		setLoggedInUser(decodedToken.displayName);
 	};
 
 	useEffect(() => {
@@ -41,7 +41,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): ReactElement => {
 						navigate("/login");
 						return;
 					}
-					setLoggedInUser(decodedToken.sub);
+					setLoggedInUser(decodedToken.displayName);
 				} else {
 					logout();
 					navigate("/login");

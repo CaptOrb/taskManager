@@ -22,20 +22,20 @@ public class TaskService {
     private final UserLookupService userLookupService;
 
     @Transactional(readOnly = true)
-    public List<Task> getTasksForUser(String username) {
-        User user = userLookupService.getUserByUsername(username);
+    public List<Task> getTasksForUser(Long userId) {
+        User user = userLookupService.getUserById(userId);
         return taskRepository.findByUser(user);
     }
 
     @Transactional(readOnly = true)
-    public Task getTaskById(Integer id, String username) {
-        User user = userLookupService.getUserByUsername(username);
+    public Task getTaskById(Integer id, Long userId) {
+        User user = userLookupService.getUserById(userId);
         return getTaskByIdAndVerifyOwnership(id, user);
     }
 
     @Transactional
-    public Task createTask(Task task, String username) {
-        User user = userLookupService.getUserByUsername(username);
+    public Task createTask(Task task, Long userId) {
+        User user = userLookupService.getUserById(userId);
 
         task.setUser(user);
         task.setStatus(Task.Status.PENDING);
@@ -45,8 +45,8 @@ public class TaskService {
     }
 
     @Transactional
-    public Task updateTask(Integer id, Task updatedTask, String username) {
-        User user = userLookupService.getUserByUsername(username);
+    public Task updateTask(Integer id, Task updatedTask, Long userId) {
+        User user = userLookupService.getUserById(userId);
         Task existingTask = getTaskByIdAndVerifyOwnership(id, user);
 
         existingTask.setTitle(updatedTask.getTitle());
@@ -64,8 +64,8 @@ public class TaskService {
     }
 
     @Transactional
-    public void deleteTask(Integer id, String username) {
-        User user = userLookupService.getUserByUsername(username);
+    public void deleteTask(Integer id, Long userId) {
+        User user = userLookupService.getUserById(userId);
         Task task = getTaskByIdAndVerifyOwnership(id, user);
         taskRepository.delete(task);
     }

@@ -45,14 +45,14 @@ public class NotificationSettingsService {
 	}
 
 	@Transactional(readOnly = true)
-	public NotificationSettingsResponse getSettings(String username) {
-		User user = userLookupService.getUserByUsername(username);
+	public NotificationSettingsResponse getSettings(Long userId) {
+		User user = userLookupService.getUserById(userId);
 		return mapToResponse(user);
 	}
 
 	@Transactional
-	public NotificationSettingsResponse updateSettings(String username, NotificationSettingsRequest request) {
-		User user = userLookupService.getUserByUsername(username);
+	public NotificationSettingsResponse updateSettings(Long userId, NotificationSettingsRequest request) {
+		User user = userLookupService.getUserById(userId);
 
 		String normalizedTopic = AppStringUtils.trimToNull(request.getTopic());
 
@@ -81,8 +81,8 @@ public class NotificationSettingsService {
 	}
 
 	@Transactional(readOnly = true)
-	public void sendTestNotification(String username) {
-		User user = userLookupService.getUserByUsername(username);
+	public void sendTestNotification(Long userId) {
+		User user = userLookupService.getUserById(userId);
 
 		Map<String, List<String>> fieldErrors = new LinkedHashMap<>();
 		if (ntfySettings.getServerUrl() == null) {

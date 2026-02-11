@@ -8,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -23,15 +22,15 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, java.io.IOException {
         String authHeader = request.getHeader("Authorization");
         String token = null;
-        String userName = null;
+        Long userId = null;
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
-            userName = jwtService.extractUserName(token);
+            userId = jwtService.extractUserId(token);
         }
 
-        if (userName != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = userDetailsService.loadUserByUsername(userName);
+        if (userId != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+            CustomUserDetails userDetails = userDetailsService.loadUserById(userId);
 
             if (jwtService.validateToken(token, userDetails)) {
                 // Credentials should not be stored for JWT-authenticated requests so set null

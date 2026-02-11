@@ -45,10 +45,10 @@ public class TaskServiceTest {
     @Test
     void getTasksForUser_whenUserExists_returnsTaskList() {
 
-        String username = "test@test.com";
+        Long userId = 1L;
         User user = new User();
-        user.setId(1L);
-        user.setUserName(username);
+        user.setId(userId);
+        user.setUserName("test@test.com");
 
         Task task1 = new Task(1, "Task 1", "Description 1", Status.PENDING, Priority.LOW,
                 LocalDateTime.now().plusDays(1));
@@ -56,10 +56,10 @@ public class TaskServiceTest {
                 LocalDateTime.now().plusDays(2));
         List<Task> tasks = Arrays.asList(task1, task2);
 
-        when(userLookupService.getUserByUsername(username)).thenReturn(user);
+        when(userLookupService.getUserById(userId)).thenReturn(user);
         when(taskRepository.findByUser(user)).thenReturn(tasks);
 
-        List<Task> result = taskService.getTasksForUser(username);
+        List<Task> result = taskService.getTasksForUser(userId);
 
         assertNotNull(result);
         assertEquals(2, result.size());
@@ -68,30 +68,30 @@ public class TaskServiceTest {
     @Test
     void getTasksForUser_whenUserDoesNotExist_throwsException() {
 
-        String username = "nonexistent@test.com";
-        when(userLookupService.getUserByUsername(username)).thenThrow(new UserNotFoundException("User not found"));
+        Long userId = 99L;
+        when(userLookupService.getUserById(userId)).thenThrow(new UserNotFoundException("User not found"));
 
         assertThrows(UserNotFoundException.class, () -> {
-            taskService.getTasksForUser(username);
+            taskService.getTasksForUser(userId);
         });
     }
 
     @Test
     void getTaskById_whenTaskExistsAndUserOwnsIt_returnsTask() {
 
-        String username = "test@test.com";
+        Long userId = 1L;
         User user = new User();
-        user.setId(1L);
-        user.setUserName(username);
+        user.setId(userId);
+        user.setUserName("test@test.com");
 
         Task task = new Task(1, "Task 1", "Description", Status.PENDING, Priority.LOW,
                 LocalDateTime.now().plusDays(1));
         task.setUser(user);
 
-        when(userLookupService.getUserByUsername(username)).thenReturn(user);
+        when(userLookupService.getUserById(userId)).thenReturn(user);
         when(taskRepository.findById(1)).thenReturn(Optional.of(task));
 
-        Task result = taskService.getTaskById(1, username);
+        Task result = taskService.getTaskById(1, userId);
 
         assertNotNull(result);
         assertEquals("Task 1", result.getTitle());
@@ -100,10 +100,10 @@ public class TaskServiceTest {
     @Test
     void getTaskById_whenUserDoesNotOwnTask_throwsException() {
 
-        String username = "test@test.com";
+        Long userId = 1L;
         User user = new User();
-        user.setId(1L);
-        user.setUserName(username);
+        user.setId(userId);
+        user.setUserName("test@test.com");
 
         User otherUser = new User();
         otherUser.setId(2L);
@@ -113,37 +113,37 @@ public class TaskServiceTest {
                 LocalDateTime.now().plusDays(1));
         task.setUser(otherUser); // Different user owns this task
 
-        when(userLookupService.getUserByUsername(username)).thenReturn(user);
+        when(userLookupService.getUserById(userId)).thenReturn(user);
         when(taskRepository.findById(1)).thenReturn(Optional.of(task));
 
         assertThrows(ForbiddenException.class, () -> {
-            taskService.getTaskById(1, username);
+            taskService.getTaskById(1, userId);
         });
     }
 
     @Test
     void getTaskById_whenTaskDoesNotExist_throwsException() {
 
-        String username = "test@test.com";
+        Long userId = 1L;
         User user = new User();
-        user.setId(1L);
-        user.setUserName(username);
+        user.setId(userId);
+        user.setUserName("test@test.com");
 
-        when(userLookupService.getUserByUsername(username)).thenReturn(user);
+        when(userLookupService.getUserById(userId)).thenReturn(user);
         when(taskRepository.findById(1)).thenReturn(Optional.empty());
 
         assertThrows(TaskNotFoundException.class, () -> {
-            taskService.getTaskById(1, username);
+            taskService.getTaskById(1, userId);
         });
     }
 
     @Test
     void createTask_whenValidData_createsAndReturnsTask() {
 
-        String username = "test@test.com";
+        Long userId = 1L;
         User user = new User();
-        user.setId(1L);
-        user.setUserName(username);
+        user.setId(userId);
+        user.setUserName("test@test.com");
 
         Task newTask = new Task(null, "New Task", "Description", Status.PENDING, Priority.MEDIUM,
                 LocalDateTime.now().plusDays(1));
@@ -151,10 +151,10 @@ public class TaskServiceTest {
                 LocalDateTime.now().plusDays(1));
         savedTask.setUser(user);
 
-        when(userLookupService.getUserByUsername(username)).thenReturn(user);
+        when(userLookupService.getUserById(userId)).thenReturn(user);
         when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
 
-        Task result = taskService.createTask(newTask, username);
+        Task result = taskService.createTask(newTask, userId);
 
         assertNotNull(result);
         assertEquals(1, result.getId());
@@ -164,10 +164,10 @@ public class TaskServiceTest {
     @Test
     void updateTask_whenTaskExistsAndUserOwnsIt_updatesAndReturnsTask() {
 
-        String username = "test@test.com";
+        Long userId = 1L;
         User user = new User();
-        user.setId(1L);
-        user.setUserName(username);
+        user.setId(userId);
+        user.setUserName("test@test.com");
 
         Task existingTask = new Task(1, "Old Title", "Old Description", Status.PENDING, Priority.LOW,
                 LocalDateTime.now().plusDays(1));
@@ -176,11 +176,11 @@ public class TaskServiceTest {
         Task updatedTaskDetails = new Task(1, "New Title", "New Description", Status.IN_PROGRESS, Priority.HIGH,
                 LocalDateTime.now().plusDays(2));
 
-        when(userLookupService.getUserByUsername(username)).thenReturn(user);
+        when(userLookupService.getUserById(userId)).thenReturn(user);
         when(taskRepository.findById(1)).thenReturn(Optional.of(existingTask));
         when(taskRepository.save(existingTask)).thenReturn(existingTask);
 
-        Task result = taskService.updateTask(1, updatedTaskDetails, username);
+        Task result = taskService.updateTask(1, updatedTaskDetails, userId);
 
         assertNotNull(result);
         assertEquals("New Title", result.getTitle());
@@ -192,28 +192,29 @@ public class TaskServiceTest {
     @Test
     void updateTask_whenTaskDoesNotExist_throwsException() {
 
-        String username = "test@test.com";
+        Long userId = 1L;
         User user = new User();
-        user.setUserName(username);
+        user.setId(userId);
+        user.setUserName("test@test.com");
 
         Task updatedTaskDetails = new Task(1, "New Title", "New Description", Status.IN_PROGRESS, Priority.HIGH,
                 LocalDateTime.now().plusDays(2));
 
-        when(userLookupService.getUserByUsername(username)).thenReturn(user);
+        when(userLookupService.getUserById(userId)).thenReturn(user);
         when(taskRepository.findById(1)).thenReturn(Optional.empty());
 
         assertThrows(TaskNotFoundException.class, () -> {
-            taskService.updateTask(1, updatedTaskDetails, username);
+            taskService.updateTask(1, updatedTaskDetails, userId);
         });
     }
 
     @Test
     void updateTask_whenUserDoesNotOwnTask_throwsException() {
 
-        String username = "test@test.com";
+        Long userId = 1L;
         User user = new User();
-        user.setId(1L);
-        user.setUserName(username);
+        user.setId(userId);
+        user.setUserName("test@test.com");
 
         User otherUser = new User();
         otherUser.setId(2L);
@@ -225,47 +226,48 @@ public class TaskServiceTest {
         Task updatedTaskDetails = new Task(1, "New Title", "New Description", Status.IN_PROGRESS, Priority.HIGH,
                 LocalDateTime.now().plusDays(2));
 
-        when(userLookupService.getUserByUsername(username)).thenReturn(user);
+        when(userLookupService.getUserById(userId)).thenReturn(user);
         when(taskRepository.findById(1)).thenReturn(Optional.of(existingTask));
 
         assertThrows(ForbiddenException.class, () -> {
-            taskService.updateTask(1, updatedTaskDetails, username);
+            taskService.updateTask(1, updatedTaskDetails, userId);
         });
     }
 
     @Test
     void deleteTask_whenTaskExistsAndUserOwnsIt_deletesTask() {
 
-        String username = "test@test.com";
+        Long userId = 1L;
         User user = new User();
-        user.setId(1L);
-        user.setUserName(username);
+        user.setId(userId);
+        user.setUserName("test@test.com");
 
         Task task = new Task(1, "Task", "Description", Status.PENDING, Priority.LOW,
                 LocalDateTime.now().plusDays(1));
         task.setUser(user);
 
-        when(userLookupService.getUserByUsername(username)).thenReturn(user);
+        when(userLookupService.getUserById(userId)).thenReturn(user);
         when(taskRepository.findById(1)).thenReturn(Optional.of(task));
         doNothing().when(taskRepository).delete(task);
 
-        taskService.deleteTask(1, username);
+        taskService.deleteTask(1, userId);
 
         verify(taskRepository).delete(task);
     }
 
     @Test
     void deleteTask_whenTaskDoesNotExist_throwsException() {
-        
-        String username = "test@test.com";
-        User user = new User();
-        user.setUserName(username);
 
-        when(userLookupService.getUserByUsername(username)).thenReturn(user);
+        Long userId = 1L;
+        User user = new User();
+        user.setId(userId);
+        user.setUserName("test@test.com");
+
+        when(userLookupService.getUserById(userId)).thenReturn(user);
         when(taskRepository.findById(1)).thenReturn(Optional.empty());
 
         assertThrows(TaskNotFoundException.class, () -> {
-            taskService.deleteTask(1, username);
+            taskService.deleteTask(1, userId);
         });
     }
 }
