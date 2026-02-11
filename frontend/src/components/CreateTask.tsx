@@ -1,7 +1,7 @@
-import axios from "axios";
 import { type FormEvent, type ReactElement, useId, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { useNavigate } from "react-router-dom";
+import api from "../utils/api";
 import { getApiErrorMessage } from "../utils/apiError";
 
 const CreateTask = (): ReactElement => {
@@ -23,13 +23,7 @@ const CreateTask = (): ReactElement => {
 
 		try {
 			setError("");
-			await axios.post(
-				"/api/tasks",
-				{ title, description, dueDate, priority },
-				{
-					headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-				},
-			);
+			await api.post("/tasks", { title, description, dueDate, priority });
 			setSuccessMessage("Task created successfully.");
 			navigate("/?success=true");
 		} catch (error) {

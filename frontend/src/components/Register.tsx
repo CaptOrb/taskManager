@@ -1,8 +1,8 @@
-import axios from "axios";
 import { type FormEvent, type ReactElement, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { LoginResponse } from "@/types/auth";
 import { useAuth } from "../hooks/auth-context";
+import api from "../utils/api";
 import { getApiErrorMessage, getApiFieldErrors } from "../utils/apiError";
 
 type RegisterField = "userName" | "email" | "password" | "passwordConfirm";
@@ -59,7 +59,7 @@ const Register = (): ReactElement => {
 		setFieldErrors(createEmptyFieldErrors());
 
 		try {
-			const response = await axios.post<LoginResponse>("/api/auth/register", {
+			const response = await api.post<LoginResponse>("/auth/register", {
 				userName,
 				email,
 				password,

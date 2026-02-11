@@ -1,10 +1,11 @@
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 import type { ReactElement } from "react";
 import { useEffect, useId, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import type { Task } from "@/types/task";
 import { useAuth } from "../hooks/auth-context";
+import api from "../utils/api";
 import { getApiErrorMessage, getApiFieldErrors } from "../utils/apiError";
 
 type TaskField = "title" | "description" | "status" | "priority" | "dueDate";
@@ -30,7 +31,9 @@ const mapApiFieldErrorsToTaskFields = (
 });
 
 const hasAnyFieldError = (fieldErrors: TaskFieldErrors): boolean =>
-	Object.values(fieldErrors).some((errorsForField) => errorsForField.length > 0);
+	Object.values(fieldErrors).some(
+		(errorsForField) => errorsForField.length > 0,
+	);
 
 const getInputClassName = (hasError: boolean): string =>
 	`bg-gray-50 border text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${hasError ? "border-red-500 focus:ring-red-500 focus:border-red-500 dark:focus:ring-red-500 dark:focus:border-red-500" : "border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500"}`;
@@ -72,11 +75,7 @@ const TaskDetail = (): ReactElement => {
 			if (loggedInUser) {
 				try {
 					setLoading(true);
-					const response = await axios.get(`/api/tasks/${id}`, {
-						headers: {
-							Authorization: `Bearer ${localStorage.getItem("token")}`,
-						},
-					});
+					const response = await api.get<Task>(`/tasks/${id}`);
 					const fetchedTask = response.data;
 					setTask(fetchedTask);
 					setTaskTitle(fetchedTask.title);
@@ -120,11 +119,7 @@ const TaskDetail = (): ReactElement => {
 		};
 
 		try {
-			const response = await axios.put(`/api/tasks/${id}`, updatedTask, {
-				headers: {
-					Authorization: `Bearer ${localStorage.getItem("token")}`,
-				},
-			});
+			const response = await api.put<Task>(`/tasks/${id}`, updatedTask);
 
 			if (response.status === 200) {
 				setTask((prevTask) => ({
@@ -154,11 +149,7 @@ const TaskDetail = (): ReactElement => {
 		);
 		if (confirmDelete) {
 			try {
-				await axios.delete(`/api/tasks/${id}`, {
-					headers: {
-						Authorization: `Bearer ${localStorage.getItem("token")}`,
-					},
-				});
+				await api.delete(`/tasks/${id}`);
 				navigate("/");
 			} catch (error) {
 				const errorMessage = getApiErrorMessage(error);
@@ -192,7 +183,10 @@ const TaskDetail = (): ReactElement => {
 
 					<div className="mb-4">
 						{fieldErrors.title.map((fieldError) => (
-							<p key={`title-${fieldError}`} className="text-red-500 text-sm mb-1">
+							<p
+								key={`title-${fieldError}`}
+								className="text-red-500 text-sm mb-1"
+							>
 								{fieldError}
 							</p>
 						))}
@@ -256,7 +250,10 @@ const TaskDetail = (): ReactElement => {
 
 					<div className="mb-4">
 						{fieldErrors.status.map((fieldError) => (
-							<p key={`status-${fieldError}`} className="text-red-500 text-sm mb-1">
+							<p
+								key={`status-${fieldError}`}
+								className="text-red-500 text-sm mb-1"
+							>
 								{fieldError}
 							</p>
 						))}
@@ -284,7 +281,10 @@ const TaskDetail = (): ReactElement => {
 
 					<div className="mb-4">
 						{fieldErrors.priority.map((fieldError) => (
-							<p key={`priority-${fieldError}`} className="text-red-500 text-sm mb-1">
+							<p
+								key={`priority-${fieldError}`}
+								className="text-red-500 text-sm mb-1"
+							>
 								{fieldError}
 							</p>
 						))}
@@ -312,7 +312,10 @@ const TaskDetail = (): ReactElement => {
 
 					<div className="mb-4">
 						{fieldErrors.dueDate.map((fieldError) => (
-							<p key={`dueDate-${fieldError}`} className="text-red-500 text-sm mb-1">
+							<p
+								key={`dueDate-${fieldError}`}
+								className="text-red-500 text-sm mb-1"
+							>
 								{fieldError}
 							</p>
 						))}

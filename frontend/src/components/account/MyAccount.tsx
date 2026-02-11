@@ -1,3 +1,4 @@
+import { AxiosError } from "axios";
 import {
 	type ChangeEvent,
 	type FormEvent,
@@ -8,9 +9,9 @@ import {
 	useState,
 } from "react";
 import { useNavigate } from "react-router-dom";
+import api from "../../utils/api";
 import {
 	getApiErrorMessage,
-	getApiErrorMessageFromBody,
 	getApiFieldErrorsFromBody,
 } from "../../utils/apiError";
 import AccountInfoSection from "./AccountInfoSection";
@@ -96,23 +97,14 @@ const MyAccount = (): ReactElement => {
 		useState<string>(appNtfyProxyUrl);
 	const navigate = useNavigate();
 
-	const getAuthTokenOrRedirect = useCallback((): string | null => {
+	const checkAuthAndRedirect = useCallback((): boolean => {
 		const token = localStorage.getItem("token");
 		if (!token) {
 			navigate("/login");
-			return null;
+			return false;
 		}
-
-		return token;
+		return true;
 	}, [navigate]);
-
-	const createAuthHeaders = useCallback(
-		(token: string, includeJsonContentType = false): HeadersInit => ({
-			...(includeJsonContentType ? { "Content-Type": "application/json" } : {}),
-			Authorization: `Bearer ${token}`,
-		}),
-		[],
-	);
 
 	const fetchTopicSuggestion = useCallback(
 		async ({
@@ -122,8 +114,7 @@ const MyAccount = (): ReactElement => {
 			replaceExisting: boolean;
 			silent?: boolean;
 		}): Promise<void> => {
-			const token = getAuthTokenOrRedirect();
-			if (token == null) {
+			if (!checkAuthAndRedirect()) {
 				return;
 			}
 
@@ -135,21 +126,13 @@ const MyAccount = (): ReactElement => {
 			}
 
 			try {
-				const response = await fetch("/api/notifications/topic-suggestion", {
-					headers: createAuthHeaders(token),
-				});
-				const data: unknown = await response.json().catch(() => null);
+				const response = await api.get<NotificationTopicSuggestionResponse>(
+					"/notifications/topic-suggestion",
+				);
+				const data = response.data;
 
-				if (!response.ok) {
-					throw new Error(
-						getApiErrorMessageFromBody(
-							data,
-							"Failed to generate a topic suggestion",
-						),
-					);
-				}
-
-				const suggestedTopic = (data as NotificationTopicSuggestionResponse).topic;
+				const suggestedTopic = (data as NotificationTopicSuggestionResponse)
+					.topic;
 				const suggestion =
 					typeof suggestedTopic === "string" ? suggestedTopic.trim() : "";
 
@@ -177,7 +160,7 @@ const MyAccount = (): ReactElement => {
 				setTopicSuggestionLoading(false);
 			}
 		},
-		[createAuthHeaders, getAuthTokenOrRedirect],
+		[checkAuthAndRedirect],
 	);
 
 	const userNameId = useId();
@@ -229,63 +212,38 @@ const MyAccount = (): ReactElement => {
 	useEffect(() => {
 		const fetchCurrentUser = async (): Promise<void> => {
 			try {
-				const token = getAuthTokenOrRedirect();
-				if (token == null) {
+				if (!checkAuthAndRedirect()) {
 					return;
 				}
 
-				const authHeaders = createAuthHeaders(token);
-
-				const response = await fetch("/api/auth/current-user", {
-					headers: authHeaders,
-				});
-
-				if (!response.ok) {
-					const body: unknown = await response.json().catch(() => null);
-					throw new Error(
-						getApiErrorMessageFromBody(body, "Failed to fetch user"),
-					);
-				}
-
-				const data: unknown = await response.json();
-				if (typeof data === "object" && data !== null) {
-					const user = data as { userName?: string; email?: string };
-					setUserName(user.userName ?? "");
-					setEmail(user.email ?? "");
-				}
-
-				const notificationResponse = await fetch(
-					"/api/notifications/settings",
-					{
-						headers: authHeaders,
-					},
+				// Fetch user info
+				const userResponse = await api.get<{ userName: string; email: string }>(
+					"/auth/current-user",
 				);
+				setUserName(userResponse.data.userName ?? "");
+				setEmail(userResponse.data.email ?? "");
 
-				if (!notificationResponse.ok) {
-					const notificationData: unknown = await notificationResponse
-						.json()
-						.catch(() => null);
+				// Fetch notification settings
+				try {
+					const notificationResponse =
+						await api.get<NotificationSettingsResponse>(
+							"/notifications/settings",
+						);
+					applyNotificationSettings(notificationResponse.data);
+					const existingTopic =
+						typeof notificationResponse.data.topic === "string"
+							? notificationResponse.data.topic.trim()
+							: "";
+					if (existingTopic.length === 0) {
+						void fetchTopicSuggestion({ replaceExisting: false, silent: true });
+					}
+				} catch (notificationError) {
 					setNotificationError(
-						getApiErrorMessageFromBody(
-							notificationData,
+						getApiErrorMessage(
+							notificationError,
 							"Failed to fetch notification settings",
 						),
 					);
-					return;
-				}
-
-				const notificationData: unknown = await notificationResponse
-					.json()
-					.catch(() => null);
-				applyNotificationSettings(notificationData);
-				const notificationSettings =
-					notificationData as NotificationSettingsResponse | null;
-				const existingTopic =
-					typeof notificationSettings?.topic === "string"
-						? notificationSettings.topic.trim()
-						: "";
-				if (existingTopic.length === 0) {
-					void fetchTopicSuggestion({ replaceExisting: false, silent: true });
 				}
 			} catch (fetchError) {
 				setError(getApiErrorMessage(fetchError, "Failed to fetch user"));
@@ -296,15 +254,14 @@ const MyAccount = (): ReactElement => {
 		};
 
 		void fetchCurrentUser();
-	}, [applyNotificationSettings, createAuthHeaders, fetchTopicSuggestion, getAuthTokenOrRedirect]);
+	}, [applyNotificationSettings, checkAuthAndRedirect, fetchTopicSuggestion]);
 
 	const handlePasswordChange = async (
 		e: FormEvent<HTMLFormElement>,
 	): Promise<void> => {
 		e.preventDefault();
 
-		const token = getAuthTokenOrRedirect();
-		if (token == null) {
+		if (!checkAuthAndRedirect()) {
 			return;
 		}
 
@@ -314,30 +271,11 @@ const MyAccount = (): ReactElement => {
 		setPasswordFieldErrors(createEmptyPasswordFieldErrors());
 
 		try {
-			const response = await fetch("/api/auth/change-password", {
-				method: "POST",
-				headers: createAuthHeaders(token, true),
-				body: JSON.stringify({
-					currentPassword: passwordForm.currentPassword,
-					newPassword: passwordForm.newPassword,
-					confirmPassword: passwordForm.confirmPassword,
-				}),
+			await api.post("/auth/change-password", {
+				currentPassword: passwordForm.currentPassword,
+				newPassword: passwordForm.newPassword,
+				confirmPassword: passwordForm.confirmPassword,
 			});
-
-			if (!response.ok) {
-				const data: unknown = await response.json().catch(() => null);
-				const fieldErrors = mapApiFieldErrorsToPasswordFields(
-					getApiFieldErrorsFromBody(data),
-				);
-				if (Object.values(fieldErrors).some((errors) => errors.length > 0)) {
-					setPasswordFieldErrors(fieldErrors);
-					return;
-				}
-
-				throw new Error(
-					getApiErrorMessageFromBody(data, "Failed to change password"),
-				);
-			}
 
 			setPasswordChangeSuccess("Password changed successfully");
 			setPasswordForm({
@@ -348,6 +286,15 @@ const MyAccount = (): ReactElement => {
 			setPasswordFieldErrors(createEmptyPasswordFieldErrors());
 			setShowPasswordForm(false);
 		} catch (changeError) {
+			if (changeError instanceof AxiosError && changeError.response?.data) {
+				const fieldErrors = mapApiFieldErrorsToPasswordFields(
+					getApiFieldErrorsFromBody(changeError.response.data),
+				);
+				if (Object.values(fieldErrors).some((errors) => errors.length > 0)) {
+					setPasswordFieldErrors(fieldErrors);
+					return;
+				}
+			}
 			setPasswordChangeError(
 				getApiErrorMessage(changeError, "Failed to change password"),
 			);
@@ -444,8 +391,7 @@ const MyAccount = (): ReactElement => {
 	): Promise<void> => {
 		e.preventDefault();
 
-		const token = getAuthTokenOrRedirect();
-		if (token == null) {
+		if (!checkAuthAndRedirect()) {
 			return;
 		}
 
@@ -454,29 +400,15 @@ const MyAccount = (): ReactElement => {
 		setNotificationSuccess(null);
 
 		try {
-			const payload: Record<string, unknown> = {
-				enabled: notificationForm.enabled,
-				topic: notificationForm.topic.trim(),
-			};
+			const response = await api.put<NotificationSettingsResponse>(
+				"/notifications/settings",
+				{
+					enabled: notificationForm.enabled,
+					topic: notificationForm.topic.trim(),
+				},
+			);
 
-			const response = await fetch("/api/notifications/settings", {
-				method: "PUT",
-				headers: createAuthHeaders(token, true),
-				body: JSON.stringify(payload),
-			});
-
-			if (!response.ok) {
-				const data: unknown = await response.json().catch(() => null);
-				throw new Error(
-					getApiErrorMessageFromBody(
-						data,
-						"Failed to save notification settings",
-					),
-				);
-			}
-
-			const data: unknown = await response.json().catch(() => null);
-			applyNotificationSettings(data);
+			applyNotificationSettings(response.data);
 			setNotificationSuccess("Notification settings saved");
 		} catch (saveError) {
 			setNotificationError(
@@ -488,8 +420,7 @@ const MyAccount = (): ReactElement => {
 	};
 
 	const handleSendTestNotification = async (): Promise<void> => {
-		const token = getAuthTokenOrRedirect();
-		if (token == null) {
+		if (!checkAuthAndRedirect()) {
 			return;
 		}
 
@@ -498,21 +429,10 @@ const MyAccount = (): ReactElement => {
 		setNotificationSuccess(null);
 
 		try {
-			const response = await fetch("/api/notifications/test", {
-				method: "POST",
-				headers: createAuthHeaders(token),
-			});
-
-			const body: unknown = await response.json().catch(() => null);
-			if (!response.ok) {
-				throw new Error(
-					getApiErrorMessageFromBody(body, "Failed to send test notification"),
-				);
-			}
-
-			setNotificationSuccess(
-				getApiErrorMessageFromBody(body, "Test notification sent"),
+			const response = await api.post<{ message: string }>(
+				"/notifications/test",
 			);
+			setNotificationSuccess(response.data.message || "Test notification sent");
 		} catch (testError) {
 			setNotificationError(
 				getApiErrorMessage(testError, "Failed to send test notification"),

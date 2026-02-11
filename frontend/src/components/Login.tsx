@@ -1,4 +1,3 @@
-import axios from "axios";
 import {
 	type FormEvent,
 	type ReactElement,
@@ -9,6 +8,7 @@ import {
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import type { LoginResponse } from "@/types/auth";
 import { useAuth } from "../hooks/auth-context";
+import api from "../utils/api";
 import { getApiErrorMessage } from "../utils/apiError";
 
 function Login(): ReactElement {
@@ -34,7 +34,7 @@ function Login(): ReactElement {
 		e.preventDefault();
 
 		try {
-			const response = await axios.post<LoginResponse>("/api/auth/login", {
+			const response = await api.post<LoginResponse>("/auth/login", {
 				userName: username,
 				password: password,
 			});
