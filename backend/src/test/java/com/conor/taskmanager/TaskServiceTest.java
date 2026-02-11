@@ -8,8 +8,8 @@ import com.conor.taskmanager.model.Task.Priority;
 import com.conor.taskmanager.model.Task.Status;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.TaskRepository;
-import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.service.TaskService;
+import com.conor.taskmanager.service.UserLookupService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -33,13 +33,13 @@ public class TaskServiceTest {
     private TaskRepository taskRepository;
 
     @Mock
-    private UserRepository userRepository;
+    private UserLookupService userLookupService;
 
     private TaskService taskService;
 
     @BeforeEach
     void setUp() {
-        taskService = new TaskService(taskRepository, userRepository);
+        taskService = new TaskService(taskRepository, userLookupService);
     }
 
     @Test
@@ -56,7 +56,7 @@ public class TaskServiceTest {
                 LocalDateTime.now().plusDays(2));
         List<Task> tasks = Arrays.asList(task1, task2);
 
-        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(userLookupService.getUserByUsername(username)).thenReturn(user);
         when(taskRepository.findByUser(user)).thenReturn(tasks);
 
         List<Task> result = taskService.getTasksForUser(username);
@@ -69,7 +69,7 @@ public class TaskServiceTest {
     void getTasksForUser_whenUserDoesNotExist_throwsException() {
 
         String username = "nonexistent@test.com";
-        when(userRepository.findByUserName(username)).thenReturn(Optional.empty());
+        when(userLookupService.getUserByUsername(username)).thenThrow(new UserNotFoundException("User not found"));
 
         assertThrows(UserNotFoundException.class, () -> {
             taskService.getTasksForUser(username);
@@ -88,7 +88,7 @@ public class TaskServiceTest {
                 LocalDateTime.now().plusDays(1));
         task.setUser(user);
 
-        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(userLookupService.getUserByUsername(username)).thenReturn(user);
         when(taskRepository.findById(1)).thenReturn(Optional.of(task));
 
         Task result = taskService.getTaskById(1, username);
@@ -113,7 +113,7 @@ public class TaskServiceTest {
                 LocalDateTime.now().plusDays(1));
         task.setUser(otherUser); // Different user owns this task
 
-        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(userLookupService.getUserByUsername(username)).thenReturn(user);
         when(taskRepository.findById(1)).thenReturn(Optional.of(task));
 
         assertThrows(ForbiddenException.class, () -> {
@@ -129,7 +129,7 @@ public class TaskServiceTest {
         user.setId(1L);
         user.setUserName(username);
 
-        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(userLookupService.getUserByUsername(username)).thenReturn(user);
         when(taskRepository.findById(1)).thenReturn(Optional.empty());
 
         assertThrows(TaskNotFoundException.class, () -> {
@@ -151,7 +151,7 @@ public class TaskServiceTest {
                 LocalDateTime.now().plusDays(1));
         savedTask.setUser(user);
 
-        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(userLookupService.getUserByUsername(username)).thenReturn(user);
         when(taskRepository.save(any(Task.class))).thenReturn(savedTask);
 
         Task result = taskService.createTask(newTask, username);
@@ -176,7 +176,7 @@ public class TaskServiceTest {
         Task updatedTaskDetails = new Task(1, "New Title", "New Description", Status.IN_PROGRESS, Priority.HIGH,
                 LocalDateTime.now().plusDays(2));
 
-        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(userLookupService.getUserByUsername(username)).thenReturn(user);
         when(taskRepository.findById(1)).thenReturn(Optional.of(existingTask));
         when(taskRepository.save(existingTask)).thenReturn(existingTask);
 
@@ -199,7 +199,7 @@ public class TaskServiceTest {
         Task updatedTaskDetails = new Task(1, "New Title", "New Description", Status.IN_PROGRESS, Priority.HIGH,
                 LocalDateTime.now().plusDays(2));
 
-        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(userLookupService.getUserByUsername(username)).thenReturn(user);
         when(taskRepository.findById(1)).thenReturn(Optional.empty());
 
         assertThrows(TaskNotFoundException.class, () -> {
@@ -225,7 +225,7 @@ public class TaskServiceTest {
         Task updatedTaskDetails = new Task(1, "New Title", "New Description", Status.IN_PROGRESS, Priority.HIGH,
                 LocalDateTime.now().plusDays(2));
 
-        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(userLookupService.getUserByUsername(username)).thenReturn(user);
         when(taskRepository.findById(1)).thenReturn(Optional.of(existingTask));
 
         assertThrows(ForbiddenException.class, () -> {
@@ -245,7 +245,7 @@ public class TaskServiceTest {
                 LocalDateTime.now().plusDays(1));
         task.setUser(user);
 
-        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(userLookupService.getUserByUsername(username)).thenReturn(user);
         when(taskRepository.findById(1)).thenReturn(Optional.of(task));
         doNothing().when(taskRepository).delete(task);
 
@@ -261,7 +261,7 @@ public class TaskServiceTest {
         User user = new User();
         user.setUserName(username);
 
-        when(userRepository.findByUserName(username)).thenReturn(Optional.of(user));
+        when(userLookupService.getUserByUsername(username)).thenReturn(user);
         when(taskRepository.findById(1)).thenReturn(Optional.empty());
 
         assertThrows(TaskNotFoundException.class, () -> {

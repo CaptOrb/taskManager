@@ -8,11 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.conor.taskmanager.exception.TaskNotFoundException;
 import com.conor.taskmanager.exception.ForbiddenException;
-import com.conor.taskmanager.exception.UserNotFoundException;
 import com.conor.taskmanager.model.Task;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.TaskRepository;
-import com.conor.taskmanager.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -21,30 +19,23 @@ import lombok.RequiredArgsConstructor;
 public class TaskService {
 
     private final TaskRepository taskRepository;
-    private final UserRepository userRepository;
+    private final UserLookupService userLookupService;
 
     @Transactional(readOnly = true)
     public List<Task> getTasksForUser(String username) {
-        User user = getUserByUsername(username);
+        User user = userLookupService.getUserByUsername(username);
         return taskRepository.findByUser(user);
     }
 
     @Transactional(readOnly = true)
     public Task getTaskById(Integer id, String username) {
-        User user = getUserByUsername(username);
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new TaskNotFoundException("Task not found"));
-
-        if (!task.getUser().getId().equals(user.getId())) {
-            throw new ForbiddenException("You do not have permission to access this task");
-        }
-
-        return task;
+        User user = userLookupService.getUserByUsername(username);
+        return getTaskByIdAndVerifyOwnership(id, user);
     }
 
     @Transactional
     public Task createTask(Task task, String username) {
-        User user = getUserByUsername(username);
+        User user = userLookupService.getUserByUsername(username);
 
         task.setUser(user);
         task.setStatus(Task.Status.PENDING);
@@ -55,19 +46,13 @@ public class TaskService {
 
     @Transactional
     public Task updateTask(Integer id, Task updatedTask, String username) {
-        User user = getUserByUsername(username);
-        Task existingTask = taskRepository.findById(id)
-                .orElseThrow(() -> new TaskNotFoundException("Task not found"));
-
-        if (!existingTask.getUser().getId().equals(user.getId())) {
-            throw new ForbiddenException("You do not have permission to update this task");
-        }
+        User user = userLookupService.getUserByUsername(username);
+        Task existingTask = getTaskByIdAndVerifyOwnership(id, user);
 
         existingTask.setTitle(updatedTask.getTitle());
         existingTask.setDescription(updatedTask.getDescription());
 
-        if (!Objects.equals(existingTask.getDueDate(), updatedTask.getDueDate())
-                || (existingTask.getStatus() == Task.Status.COMPLETED && updatedTask.getStatus() != Task.Status.COMPLETED)) {
+        if (shouldResetReminder(existingTask, updatedTask)) {
             existingTask.setReminderSentAt(null);
         }
 
@@ -80,19 +65,28 @@ public class TaskService {
 
     @Transactional
     public void deleteTask(Integer id, String username) {
-        User user = getUserByUsername(username);
-        Task task = taskRepository.findById(id)
-                .orElseThrow(() -> new TaskNotFoundException("Task not found"));
-
-        if (!task.getUser().getId().equals(user.getId())) {
-            throw new ForbiddenException("You do not have permission to delete this task");
-        }
-
+        User user = userLookupService.getUserByUsername(username);
+        Task task = getTaskByIdAndVerifyOwnership(id, user);
         taskRepository.delete(task);
     }
 
-    private User getUserByUsername(String username) {
-        return userRepository.findByUserName(username)
-                .orElseThrow(() -> new UserNotFoundException("User not found"));
+    private boolean shouldResetReminder(Task existingTask, Task updatedTask) {
+        boolean dueDateChanged = !Objects.equals(existingTask.getDueDate(), updatedTask.getDueDate());
+        boolean taskReopened = existingTask.getStatus() == Task.Status.COMPLETED
+                            && updatedTask.getStatus() != Task.Status.COMPLETED;
+        return dueDateChanged || taskReopened;
+    }
+
+    private Task getTaskByIdAndVerifyOwnership(Integer id, User user) {
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new TaskNotFoundException("Task not found"));
+        verifyTaskOwnership(task, user);
+        return task;
+    }
+
+    private void verifyTaskOwnership(Task task, User user) {
+        if (!task.getUser().getId().equals(user.getId())) {
+            throw new ForbiddenException("You do not have permission to access this task");
+        }
     }
 }

@@ -19,8 +19,8 @@ import com.conor.taskmanager.service.UserService;
 
 import jakarta.validation.Valid;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import lombok.RequiredArgsConstructor;
 
@@ -44,22 +44,19 @@ public class UserController {
     }
 
     @PostMapping("/change-password")
-    public ResponseEntity<Map<String, String>> changePassword(@Valid @RequestBody PasswordChangeRequest request) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        userService.changePassword(username, request);
+    public ResponseEntity<Map<String, String>> changePassword(@Valid @RequestBody PasswordChangeRequest request, @AuthenticationPrincipal UserDetails userDetails) {
+        userService.changePassword(userDetails.getUsername(), request);
         return ResponseEntity.ok(Collections.singletonMap("message", "Password changed successfully"));
     }
 
     @GetMapping("/user")
-    public String getCurrentUserName() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getName();
+    public String getCurrentUserName(@AuthenticationPrincipal UserDetails userDetails) {
+        return userDetails.getUsername();
     }
 
     @GetMapping("/current-user")
-    public ResponseEntity<User> getCurrentUser() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        User currentUser = userService.getCurrentUser(username);
+    public ResponseEntity<User> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
+        User currentUser = userService.getCurrentUser(userDetails.getUsername());
         return ResponseEntity.ok(currentUser);
     }
 }

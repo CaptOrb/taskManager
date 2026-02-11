@@ -11,12 +11,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.conor.taskmanager.exception.NtfyAuthenticationException;
-import com.conor.taskmanager.exception.UserNotFoundException;
 import com.conor.taskmanager.exception.ValidationException;
 import com.conor.taskmanager.model.NotificationSettingsRequest;
 import com.conor.taskmanager.model.NotificationSettingsResponse;
 import com.conor.taskmanager.model.User;
-import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.util.AppStringUtils;
 import com.conor.taskmanager.util.FieldErrorUtils;
 
@@ -27,19 +25,19 @@ public class NotificationSettingsService {
 	private static final String TOPIC_SUGGESTION_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
 	private static final int TOPIC_SUGGESTION_LENGTH = 10;
 
-	private final UserRepository userRepository;
+	private final UserLookupService userLookupService;
 	private final NtfyNotificationService ntfyNotificationService;
 	private final NtfySettings ntfySettings;
 	private final NtfyTopicResolver ntfyTopicResolver;
 	private final int reminderMinutesBeforeDue;
 
 	public NotificationSettingsService(
-			UserRepository userRepository,
+			UserLookupService userLookupService,
 			NtfyNotificationService ntfyNotificationService,
 			NtfySettings ntfySettings,
 			NtfyTopicResolver ntfyTopicResolver,
 			@Value("${notifications.reminder.minutes-before-due:30}") int reminderMinutesBeforeDue) {
-		this.userRepository = userRepository;
+		this.userLookupService = userLookupService;
 		this.ntfyNotificationService = ntfyNotificationService;
 		this.ntfySettings = ntfySettings;
 		this.ntfyTopicResolver = ntfyTopicResolver;
@@ -48,13 +46,13 @@ public class NotificationSettingsService {
 
 	@Transactional(readOnly = true)
 	public NotificationSettingsResponse getSettings(String username) {
-		User user = getUserByUsername(username);
+		User user = userLookupService.getUserByUsername(username);
 		return mapToResponse(user);
 	}
 
 	@Transactional
 	public NotificationSettingsResponse updateSettings(String username, NotificationSettingsRequest request) {
-		User user = getUserByUsername(username);
+		User user = userLookupService.getUserByUsername(username);
 
 		String normalizedTopic = AppStringUtils.trimToNull(request.getTopic());
 
@@ -79,13 +77,12 @@ public class NotificationSettingsService {
 		user.setNtfyEnabled(request.isEnabled());
 		user.setNtfyTopic(normalizedTopic);
 
-		User savedUser = userRepository.save(user);
-		return mapToResponse(savedUser);
+		return mapToResponse(user);
 	}
 
 	@Transactional(readOnly = true)
 	public void sendTestNotification(String username) {
-		User user = getUserByUsername(username);
+		User user = userLookupService.getUserByUsername(username);
 
 		Map<String, List<String>> fieldErrors = new LinkedHashMap<>();
 		if (ntfySettings.getServerUrl() == null) {
@@ -137,11 +134,6 @@ public class NotificationSettingsService {
 				ntfyTopicResolver.getTopicPrefix(user),
 				user.getNtfyTopic(),
 				reminderMinutesBeforeDue);
-	}
-
-	private User getUserByUsername(String username) {
-		return userRepository.findByUserName(username)
-				.orElseThrow(() -> new UserNotFoundException("User not found"));
 	}
 
 	private static void addPublishAuthenticationConfigurationError(Map<String, List<String>> fieldErrors) {

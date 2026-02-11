@@ -6,7 +6,7 @@ import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -28,37 +28,32 @@ public class TaskController {
     private final TaskService taskService;
 
     @GetMapping(value = "/api/tasks", produces = "application/json")
-    public ResponseEntity<List<Task>> getTasks() {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        List<Task> tasks = taskService.getTasksForUser(username);
+    public ResponseEntity<List<Task>> getTasks(Authentication authentication) {
+        List<Task> tasks = taskService.getTasksForUser(authentication.getName());
         return ResponseEntity.ok(tasks);
     }
 
     @GetMapping(value = "/api/tasks/{id}", produces = "application/json")
-    public ResponseEntity<Task> getTask(@PathVariable int id) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Task task = taskService.getTaskById(id, username);
+    public ResponseEntity<Task> getTask(@PathVariable int id, Authentication authentication) {
+        Task task = taskService.getTaskById(id, authentication.getName());
         return ResponseEntity.ok(task);
     }
 
     @PostMapping(value = "/api/tasks", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<Task> createTask(@Valid @RequestBody Task task) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Task savedTask = taskService.createTask(task, username);
+    public ResponseEntity<Task> createTask(@Valid @RequestBody Task task, Authentication authentication) {
+        Task savedTask = taskService.createTask(task, authentication.getName());
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTask);
     }
 
     @DeleteMapping(value = "/api/tasks/{id}", produces = "application/json")
-    public ResponseEntity<Map<String, String>> deleteTask(@PathVariable int id) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        taskService.deleteTask(id, username);
+    public ResponseEntity<Map<String, String>> deleteTask(@PathVariable int id, Authentication authentication) {
+        taskService.deleteTask(id, authentication.getName());
         return ResponseEntity.ok(Collections.singletonMap("message", "Task deleted successfully"));
     }
 
     @PutMapping("/api/tasks/{id}")
-    public ResponseEntity<Task> updateTask(@PathVariable int id, @Valid @RequestBody Task updatedTask) {
-        String username = SecurityContextHolder.getContext().getAuthentication().getName();
-        Task task = taskService.updateTask(id, updatedTask, username);
+    public ResponseEntity<Task> updateTask(@PathVariable int id, @Valid @RequestBody Task updatedTask, Authentication authentication) {
+        Task task = taskService.updateTask(id, updatedTask, authentication.getName());
         return ResponseEntity.ok(task);
     }
 }
