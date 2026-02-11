@@ -12,7 +12,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import com.conor.taskmanager.exception.InvalidCredentialsException;
-import com.conor.taskmanager.exception.UserNotFoundException;
 import com.conor.taskmanager.exception.ValidationException;
 import com.conor.taskmanager.model.Login;
 import com.conor.taskmanager.model.LoginResponse;
@@ -27,6 +26,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class UserService {
   private final UserRepository userRepository;
+  private final UserLookupService userLookupService;
   private final PasswordEncoder passwordEncoder;
   private final AuthenticationManager authManager;
   private final JwtService jwtService;
@@ -83,14 +83,12 @@ public class UserService {
 
   @Transactional(readOnly = true)
   public User getCurrentUser(Long userId) {
-    return userRepository.findById(userId)
-        .orElseThrow(() -> new UserNotFoundException("User not found"));
+    return userLookupService.getUserById(userId);
   }
 
   @Transactional
   public void changePassword(Long userId, PasswordChangeRequest request) {
-    User user = userRepository.findById(userId)
-        .orElseThrow(() -> new UserNotFoundException("User not found"));
+    User user = userLookupService.getUserById(userId);
 
     if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
       throw new ValidationException("Current password is incorrect");

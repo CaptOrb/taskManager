@@ -30,6 +30,7 @@ import com.conor.taskmanager.model.RegisterRequest;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.security.JwtService;
+import com.conor.taskmanager.service.UserLookupService;
 import com.conor.taskmanager.service.UserService;
 
 @ExtendWith(MockitoExtension.class)
@@ -37,6 +38,9 @@ class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+
+    @Mock
+    private UserLookupService userLookupService;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -51,7 +55,7 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository, passwordEncoder, authManager, jwtService);
+        userService = new UserService(userRepository, userLookupService, passwordEncoder, authManager, jwtService);
     }
 
     @Test
@@ -207,7 +211,7 @@ class UserServiceTest {
 
         PasswordChangeRequest request = new PasswordChangeRequest("oldPassword", "newPassword123", "newPassword123");
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userLookupService.getUserById(1L)).thenReturn(user);
         when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);
         when(passwordEncoder.encode("newPassword123")).thenReturn("encodedNewPassword");
         when(userRepository.save(any(User.class))).thenReturn(user);
@@ -221,7 +225,7 @@ class UserServiceTest {
     void testChangePassword_UserNotFound() {
         PasswordChangeRequest request = new PasswordChangeRequest("oldPassword", "newPassword123", "newPassword123");
 
-        when(userRepository.findById(99L)).thenReturn(Optional.empty());
+        when(userLookupService.getUserById(99L)).thenThrow(new UserNotFoundException("User not found"));
 
         assertThrows(UserNotFoundException.class, () -> userService.changePassword(99L, request));
     }
@@ -235,7 +239,7 @@ class UserServiceTest {
 
         PasswordChangeRequest request = new PasswordChangeRequest("wrongPassword", "newPassword123", "newPassword123");
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userLookupService.getUserById(1L)).thenReturn(user);
         when(passwordEncoder.matches("wrongPassword", "encodedOldPassword")).thenReturn(false);
 
         assertThrows(ValidationException.class, () -> userService.changePassword(1L, request));
@@ -250,7 +254,7 @@ class UserServiceTest {
 
         PasswordChangeRequest request = new PasswordChangeRequest("oldPassword", "newPassword123", "differentPassword");
 
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(userLookupService.getUserById(1L)).thenReturn(user);
         when(passwordEncoder.matches("oldPassword", "encodedOldPassword")).thenReturn(true);
 
         assertThrows(ValidationException.class, () -> userService.changePassword(1L, request));
