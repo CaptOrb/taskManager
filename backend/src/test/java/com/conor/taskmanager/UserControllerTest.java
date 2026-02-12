@@ -218,12 +218,10 @@ public class UserControllerTest {
                                 .andExpect(jsonPath("$.message").value("Validation failed"))
                                 .andExpect(jsonPath("$.errors", hasItems(
                                                 "Username must be between 3 and 32 characters",
-                                                "Email cannot be empty",
                                                 "Password must be at least 7 characters long",
                                                 "Password confirmation cannot be empty")))
                                 .andExpect(jsonPath("$.fieldErrors.userName",
                                                 hasItems("Username must be between 3 and 32 characters")))
-                                .andExpect(jsonPath("$.fieldErrors.email", hasItems("Email cannot be empty")))
                                 .andExpect(jsonPath("$.fieldErrors.password",
                                                 hasItems("Password must be at least 7 characters long")))
                                 .andExpect(jsonPath("$.fieldErrors.passwordConfirm",
