@@ -38,7 +38,7 @@ const NotificationSettingsSection = ({
 				<li>
 					Install the ntfy app ({" "}
 					<a
-						href="https://ntfy.sh/app/"
+						href="https://ntfy.sh"
 						target="_blank"
 						rel="noreferrer"
 						className="underline hover:text-blue-900 dark:hover:text-blue-200"
