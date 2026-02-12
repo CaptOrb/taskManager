@@ -1,4 +1,4 @@
-import { AxiosError } from "axios";
+import axios from "axios";
 import {
 	type ChangeEvent,
 	type FormEvent,
@@ -286,7 +286,7 @@ const MyAccount = (): ReactElement => {
 			setPasswordFieldErrors(createEmptyPasswordFieldErrors());
 			setShowPasswordForm(false);
 		} catch (changeError) {
-			if (changeError instanceof AxiosError && changeError.response?.data) {
+			if (axios.isAxiosError(changeError) && changeError.response?.data) {
 				const fieldErrors = mapApiFieldErrorsToPasswordFields(
 					getApiFieldErrorsFromBody(changeError.response.data),
 				);
@@ -504,7 +504,7 @@ const MyAccount = (): ReactElement => {
 			<button
 				type="button"
 				onClick={() => {
-					navigate("/tasks");
+					navigate("/");
 				}}
 				className="text-white bg-gray-700 hover:bg-gray-800 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-600 dark:hover:bg-gray-500"
 			>

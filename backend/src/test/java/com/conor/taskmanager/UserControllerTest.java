@@ -33,7 +33,7 @@ import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.security.CustomUserDetails;
 import com.conor.taskmanager.security.JwtService;
 import com.conor.taskmanager.security.SecurityConfig;
-import com.conor.taskmanager.security.UserDetailsService;
+import com.conor.taskmanager.security.CustomUserDetailsService;
 import com.conor.taskmanager.service.UserService;
 
 @WebMvcTest(controllers = UserController.class)
@@ -41,7 +41,7 @@ import com.conor.taskmanager.service.UserService;
 public class UserControllerTest {
 
         @MockitoBean
-        private UserDetailsService userDetailsService;
+        private CustomUserDetailsService userDetailsService;
 
         @Autowired
         private MockMvc mockMvc;

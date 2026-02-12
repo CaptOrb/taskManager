@@ -4,7 +4,7 @@ import java.util.Optional;
 
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.UserRepository;
-import com.conor.taskmanager.security.UserDetailsService;
+import com.conor.taskmanager.security.CustomUserDetailsService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,11 +22,11 @@ public class UserDetailsServiceTest {
     @Mock
     private UserRepository userRepository;
 
-    private UserDetailsService userDetailsService;
+    private CustomUserDetailsService userDetailsService;
 
     @BeforeEach
     void setUp() {
-        userDetailsService = new UserDetailsService(userRepository);
+        userDetailsService = new CustomUserDetailsService(userRepository);
     }
 
     @Test

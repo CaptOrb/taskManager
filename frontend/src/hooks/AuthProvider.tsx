@@ -25,9 +25,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): ReactElement => {
 		const checkToken = (): void => {
 			const token = localStorage.getItem("token");
 			if (!token) {
-				if (loggedInUser !== null) {
-					logout();
-				}
+				logout();
 				setLoading(false);
 				return;
 			}
@@ -58,7 +56,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): ReactElement => {
 		checkToken();
 		const intervalId = setInterval(checkToken, 60000);
 		return (): void => clearInterval(intervalId);
-	}, [navigate, logout, loggedInUser]);
+	}, [navigate, logout]);
 
 	return (
 		<AuthContext.Provider value={{ loggedInUser, login, logout, loading }}>

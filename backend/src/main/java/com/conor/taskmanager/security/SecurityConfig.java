@@ -21,9 +21,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
-    private final UserDetailsService userDetailsService;
+    private final CustomUserDetailsService userDetailsService;
 
-    public SecurityConfig(JwtFilter jwtFilter, UserDetailsService userDetailsService) {
+    public SecurityConfig(JwtFilter jwtFilter, CustomUserDetailsService userDetailsService) {
         this.jwtFilter = jwtFilter;
         this.userDetailsService = userDetailsService;
     }
