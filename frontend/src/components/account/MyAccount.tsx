@@ -218,7 +218,7 @@ const MyAccount = (): ReactElement => {
 
 				// Fetch user info
 				const userResponse = await api.get<{ userName: string; email: string }>(
-					"/auth/current-user",
+					"/account/current-user",
 				);
 				setUserName(userResponse.data.userName ?? "");
 				setEmail(userResponse.data.email ?? "");
@@ -271,7 +271,7 @@ const MyAccount = (): ReactElement => {
 		setPasswordFieldErrors(createEmptyPasswordFieldErrors());
 
 		try {
-			await api.post("/auth/change-password", {
+			await api.post("/account/change-password", {
 				currentPassword: passwordForm.currentPassword,
 				newPassword: passwordForm.newPassword,
 				confirmPassword: passwordForm.confirmPassword,
