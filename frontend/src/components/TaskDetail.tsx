@@ -411,7 +411,7 @@ const TaskDetail = (): ReactElement => {
 									Created Date:
 								</p>
 								<p className="text-gray-900 dark:text-gray-300">
-									{new Date(task.createdDate).toLocaleString()}
+									{new Date(task.createdDate).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
 								</p>
 							</div>
 
@@ -420,7 +420,7 @@ const TaskDetail = (): ReactElement => {
 									Due Date:
 								</p>
 								<p className="text-gray-900 dark:text-gray-300">
-									{new Date(task.dueDate).toLocaleString()}
+									{new Date(task.dueDate).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
 								</p>
 							</div>
 						</div>

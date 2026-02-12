@@ -156,13 +156,13 @@ const TaskList = (): ReactElement => {
 							<span className="font-semibold text-gray-500 dark:text-gray-400">
 								Created Date:{" "}
 							</span>
-							{new Date(task.createdDate).toLocaleString()}
+							{new Date(task.createdDate).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
 						</p>
 						<p className="text-sm">
 							<span className="font-semibold text-gray-500 dark:text-gray-400">
 								Due Date:{" "}
 							</span>
-							{new Date(task.dueDate).toLocaleString()}
+							{new Date(task.dueDate).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
 						</p>
 						<p className="text-sm">
 							<span className="font-semibold text-gray-500 dark:text-gray-400">
