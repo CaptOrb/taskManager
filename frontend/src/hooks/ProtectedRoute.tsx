@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "./auth-context";
 
 interface ProtectedRouteProps {
@@ -8,13 +8,18 @@ interface ProtectedRouteProps {
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps): ReactElement => {
 	const { loggedInUser, loading } = useAuth();
+	const location = useLocation();
 
 	if (loading) {
 		return <div>Loading...</div>;
 	}
 
 	if (!loggedInUser) {
-		return <Navigate to="/login" />;
+		return (
+			<Navigate
+				to={`/login?then=${encodeURIComponent(location.pathname)}`}
+			/>
+		);
 	}
 
 	return <>{children}</>;

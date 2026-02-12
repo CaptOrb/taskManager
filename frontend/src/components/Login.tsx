@@ -5,11 +5,12 @@ import {
 	useId,
 	useState,
 } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import type { LoginResponse } from "@/types/auth";
 import { useAuth } from "../hooks/auth-context";
 import api from "../utils/api";
 import { getApiErrorMessage } from "../utils/apiError";
+import { getValidRedirectPath } from "../utils/redirect";
 
 function Login(): ReactElement {
 	const [username, setUsername] = useState("");
@@ -19,12 +20,14 @@ function Login(): ReactElement {
 	const [errorMessage, setErrorMessage] = useState<string>("");
 	const { login, loggedInUser } = useAuth();
 	const navigate = useNavigate();
+	const [searchParams] = useSearchParams();
+	const redirectTo = getValidRedirectPath(searchParams.get("then"));
 
 	useEffect(() => {
 		if (loggedInUser) {
-			navigate("/");
+			navigate(redirectTo);
 		}
-	}, [loggedInUser, navigate]);
+	}, [loggedInUser, navigate, redirectTo]);
 
 	const location = useLocation();
 	const query = new URLSearchParams(location.search);
@@ -42,7 +45,7 @@ function Login(): ReactElement {
 			const { jwtToken } = response.data;
 			login(jwtToken);
 			setErrorMessage("");
-			navigate("/");
+			navigate(redirectTo);
 		} catch (error) {
 			console.error("Login failed", error);
 			setErrorMessage(

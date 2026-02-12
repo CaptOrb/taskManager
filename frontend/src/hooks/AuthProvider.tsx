@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import type { AuthProviderProps, DecodedToken } from "../types/auth";
 import { AuthContext } from "./auth-context";
 
@@ -8,6 +8,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): ReactElement => {
 	const [loggedInUser, setLoggedInUser] = useState<string | null>(null);
 	const [loading, setLoading] = useState(true);
 	const navigate = useNavigate();
+	const location = useLocation();
 
 	// Memoized logout so it can safely be used in useEffect
 	const logout = useCallback(() => {
@@ -36,18 +37,18 @@ export const AuthProvider = ({ children }: AuthProviderProps): ReactElement => {
 					const expiration = decodedToken.exp * 1000;
 					if (expiration < Date.now()) {
 						logout();
-						navigate("/login");
+						navigate(`/login?then=${encodeURIComponent(location.pathname)}`);
 						return;
 					}
 					setLoggedInUser(decodedToken.displayName);
 				} else {
 					logout();
-					navigate("/login");
+					navigate(`/login?then=${encodeURIComponent(location.pathname)}`);
 				}
 			} catch (error) {
 				console.error("Error decoding token:", error);
 				logout();
-				navigate("/login");
+				navigate(`/login?then=${encodeURIComponent(location.pathname)}`);
 			} finally {
 				setLoading(false);
 			}
@@ -56,7 +57,7 @@ export const AuthProvider = ({ children }: AuthProviderProps): ReactElement => {
 		checkToken();
 		const intervalId = setInterval(checkToken, 60000);
 		return (): void => clearInterval(intervalId);
-	}, [navigate, logout]);
+	}, [navigate, logout, location.pathname]);
 
 	return (
 		<AuthContext.Provider value={{ loggedInUser, login, logout, loading }}>
