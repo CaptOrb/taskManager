@@ -66,6 +66,11 @@ jobs:
         run: |
           cd frontend
           npm run lint
+
+      - name: Prettier check Frontend
+        run: |
+          cd frontend
+          npx prettier . --check
       
       - name: Build Frontend
         run: |

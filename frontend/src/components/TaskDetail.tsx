@@ -1,10 +1,40 @@
-import axios, { AxiosError } from "axios";
+import { AxiosError } from "axios";
 import type { ReactElement } from "react";
 import { useEffect, useId, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import type { Task } from "@/types/task";
 import { useAuth } from "../hooks/auth-context";
+import api from "../utils/api";
+import { getApiErrorMessage, getApiFieldErrors } from "../utils/apiError";
+
+type TaskField = "title" | "description" | "status" | "priority" | "dueDate";
+
+type TaskFieldErrors = Record<TaskField, string[]>;
+
+const createEmptyFieldErrors = (): TaskFieldErrors => ({
+	title: [],
+	description: [],
+	status: [],
+	priority: [],
+	dueDate: [],
+});
+
+const mapApiFieldErrorsToTaskFields = (
+	apiFieldErrors: Record<string, string[]>,
+): TaskFieldErrors => ({
+	title: apiFieldErrors["title"] ?? [],
+	description: apiFieldErrors["description"] ?? [],
+	status: apiFieldErrors["status"] ?? [],
+	priority: apiFieldErrors["priority"] ?? [],
+	dueDate: apiFieldErrors["dueDate"] ?? [],
+});
+
+const hasAnyFieldError = (fieldErrors: TaskFieldErrors): boolean =>
+	Object.values(fieldErrors).some((errorsForField) => errorsForField.length > 0);
+
+const getInputClassName = (hasError: boolean): string =>
+	`bg-gray-50 border text-gray-900 text-sm rounded-lg w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:text-white ${hasError ? "border-red-500 focus:ring-red-500 focus:border-red-500 dark:focus:ring-red-500 dark:focus:border-red-500" : "border-gray-300 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-500 dark:focus:border-blue-500"}`;
 
 const TaskDetail = (): ReactElement => {
 	const { id } = useParams();
@@ -12,6 +42,9 @@ const TaskDetail = (): ReactElement => {
 	const [loading, setLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string>("");
 	const [isEditing, setIsEditing] = useState(false);
+	const [fieldErrors, setFieldErrors] = useState<TaskFieldErrors>(() =>
+		createEmptyFieldErrors(),
+	);
 	const { loggedInUser } = useAuth();
 	const navigate = useNavigate();
 
@@ -28,16 +61,20 @@ const TaskDetail = (): ReactElement => {
 	const taskPriorityId = useId();
 	const taskDueDateId = useId();
 
+	const clearFieldError = (field: TaskField): void => {
+		setFieldErrors((previousErrors) => ({
+			...previousErrors,
+			[field]: [],
+		}));
+		setError("");
+	};
+
 	useEffect(() => {
 		const fetchTask = async (): Promise<void> => {
 			if (loggedInUser) {
 				try {
 					setLoading(true);
-					const response = await axios.get(`/api/tasks/${id}`, {
-						headers: {
-							Authorization: `Bearer ${localStorage.getItem("token")}`,
-						},
-					});
+					const response = await api.get<Task>(`/tasks/${id}`);
 					const fetchedTask = response.data;
 					setTask(fetchedTask);
 					setTaskTitle(fetchedTask.title);
@@ -54,9 +91,8 @@ const TaskDetail = (): ReactElement => {
 					) {
 						navigate("/");
 					} else {
-						setError(
-							`Error fetching task: ${error instanceof AxiosError ? error.response?.data || error.message : "Unknown error"}`,
-						);
+						const errorMessage = getApiErrorMessage(error);
+						setError(`Error fetching task: ${errorMessage}`);
 					}
 				} finally {
 					setLoading(false);
@@ -70,6 +106,9 @@ const TaskDetail = (): ReactElement => {
 	}, [loggedInUser, id, navigate]);
 
 	const handleUpdate = async (): Promise<void> => {
+		setError("");
+		setFieldErrors(createEmptyFieldErrors());
+
 		const updatedTask = {
 			title: taskTitle,
 			description: taskDescription,
@@ -79,11 +118,7 @@ const TaskDetail = (): ReactElement => {
 		};
 
 		try {
-			const response = await axios.put(`/api/tasks/${id}`, updatedTask, {
-				headers: {
-					Authorization: `Bearer ${localStorage.getItem("token")}`,
-				},
-			});
+			const response = await api.put<Task>(`/tasks/${id}`, updatedTask);
 
 			if (response.status === 200) {
 				setTask((prevTask) => ({
@@ -91,12 +126,19 @@ const TaskDetail = (): ReactElement => {
 					...response.data,
 				}));
 				setError("");
+				setFieldErrors(createEmptyFieldErrors());
 				setIsEditing(false);
 			}
 		} catch (error) {
-			setError(
-				`Error updating task: ${error instanceof AxiosError ? error.response?.data || error.message : "Unknown error"}`,
+			const fieldLevelErrors = mapApiFieldErrorsToTaskFields(
+				getApiFieldErrors(error),
 			);
+			setFieldErrors(fieldLevelErrors);
+
+			if (!hasAnyFieldError(fieldLevelErrors)) {
+				const errorMessage = getApiErrorMessage(error);
+				setError(`Error updating task: ${errorMessage}`);
+			}
 		}
 	};
 
@@ -106,16 +148,11 @@ const TaskDetail = (): ReactElement => {
 		);
 		if (confirmDelete) {
 			try {
-				await axios.delete(`/api/tasks/delete/${id}`, {
-					headers: {
-						Authorization: `Bearer ${localStorage.getItem("token")}`,
-					},
-				});
+				await api.delete(`/tasks/${id}`);
 				navigate("/");
 			} catch (error) {
-				setError(
-					`Error deleting task: ${error instanceof AxiosError ? error.response?.data || error.message : "Unknown error"}`,
-				);
+				const errorMessage = getApiErrorMessage(error);
+				setError(`Error deleting task: ${errorMessage}`);
 			}
 		}
 	};
