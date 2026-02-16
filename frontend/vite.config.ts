@@ -8,12 +8,12 @@ export default defineConfig({
     port: 3000,
     proxy: {
       "/api": {
-        target: "http://backend:8080",
+        target: process.env.API_TARGET ?? "http://localhost:8080",
         changeOrigin: true,
         secure: false,
       },
       "/ntfy": {
-        target: "http://ntfy:80",
+        target: process.env.NTFY_TARGET ?? "http://localhost:2586",
         changeOrigin: true,
         secure: false,
       },

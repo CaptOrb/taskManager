@@ -64,6 +64,8 @@ services:
       target: development
     environment:
       - NODE_ENV=development
+      - API_TARGET=http://backend:8080
+      - NTFY_TARGET=http://ntfy:80
     container_name: task-frontend
     networks:
       - my_network

@@ -1,0 +1,46 @@
+services:
+  mysqldb:
+    image: mysql:8.4
+    restart: unless-stopped
+    env_file: ./.env
+    environment:
+      - MYSQL_ROOT_PASSWORD=$MYSQL_ROOT_PASSWORD
+      - MYSQL_DATABASE=$MYSQLDB_DATABASE
+      - MYSQL_USER=$DB_USERNAME
+      - MYSQL_PASSWORD=$DB_PASSWORD
+    ports:
+      - "${MYSQLDB_LOCAL_PORT}:${MYSQLDB_DOCKER_PORT}"
+    volumes:
+      - db:/var/lib/mysql
+    networks:
+      - my_network
+    healthcheck:
+          test: ["CMD", "mysqladmin", "ping", "-h", "mysqldb"]
+          interval: 10s
+          retries: 5
+          timeout: 5s
+
+
+  ntfy:
+    image: binwiederhier/ntfy
+    container_name: ntfy
+    command: serve
+    environment:
+      TZ: UTC
+    volumes:
+      - ntfy_cache:/var/cache/ntfy
+    ports:
+      - "2586:80"
+    networks: [my_network]
+    restart: unless-stopped
+    init: true
+
+
+
+volumes:
+  db:
+  ntfy_cache:
+
+networks:
+  my_network:
+    driver: bridge
