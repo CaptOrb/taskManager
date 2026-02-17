@@ -106,7 +106,6 @@ public class NotificationSettingsService {
 			ntfyNotificationService.sendTestNotification(user);
 		} catch (NtfyAuthenticationException ntfyAuthenticationException) {
 			Map<String, List<String>> publishAuthErrors = new LinkedHashMap<>();
-			addInvalidPublishAuthenticationConfigurationError(publishAuthErrors);
 			throw new ValidationException(publishAuthErrors);
 		}
 	}
@@ -141,12 +140,5 @@ public class NotificationSettingsService {
 				fieldErrors,
 				"configuration",
 				"Configure notifications.ntfy.access-token (or NTFY_ACCESS_TOKEN) before enabling ntfy notifications");
-	}
-
-	private static void addInvalidPublishAuthenticationConfigurationError(Map<String, List<String>> fieldErrors) {
-		FieldErrorUtils.addFieldError(
-				fieldErrors,
-				"configuration",
-				"ntfy rejected the app token; update notifications.ntfy.access-token (or NTFY_ACCESS_TOKEN) and ensure write access to tm-* topics");
 	}
 }
