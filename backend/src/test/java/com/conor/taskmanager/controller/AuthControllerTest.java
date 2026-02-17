@@ -1,4 +1,4 @@
-package com.conor.taskmanager;
+package com.conor.taskmanager.controller;
 
 import java.util.List;
 import java.util.Map;
@@ -19,7 +19,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.conor.taskmanager.controller.AuthController;
 import com.conor.taskmanager.exception.GlobalExceptionHandler;
 import com.conor.taskmanager.exception.InvalidCredentialsException;
 import com.conor.taskmanager.exception.ValidationException;

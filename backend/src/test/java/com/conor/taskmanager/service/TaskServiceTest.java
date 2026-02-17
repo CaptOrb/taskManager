@@ -1,4 +1,4 @@
-package com.conor.taskmanager;
+package com.conor.taskmanager.service;
 
 import com.conor.taskmanager.exception.TaskNotFoundException;
 import com.conor.taskmanager.exception.ForbiddenException;
@@ -8,9 +8,6 @@ import com.conor.taskmanager.model.Task.Priority;
 import com.conor.taskmanager.model.Task.Status;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.TaskRepository;
-import com.conor.taskmanager.service.TaskService;
-import com.conor.taskmanager.service.UserLookupService;
-
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

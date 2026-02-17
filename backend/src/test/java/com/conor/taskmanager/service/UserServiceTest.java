@@ -1,4 +1,4 @@
-package com.conor.taskmanager;
+package com.conor.taskmanager.service;
 
 import java.util.Optional;
 
@@ -30,8 +30,6 @@ import com.conor.taskmanager.model.RegisterRequest;
 import com.conor.taskmanager.model.User;
 import com.conor.taskmanager.repository.UserRepository;
 import com.conor.taskmanager.security.JwtService;
-import com.conor.taskmanager.service.UserLookupService;
-import com.conor.taskmanager.service.UserService;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceTest {
