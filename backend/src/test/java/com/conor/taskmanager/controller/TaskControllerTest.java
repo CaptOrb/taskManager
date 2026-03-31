@@ -1,4 +1,4 @@
-package com.conor.taskmanager;
+package com.conor.taskmanager.controller;
 
 import static org.hamcrest.Matchers.hasItems;
 import static org.mockito.ArgumentMatchers.any;
@@ -16,7 +16,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.conor.taskmanager.controller.TaskController;
 import com.conor.taskmanager.exception.GlobalExceptionHandler;
 import com.conor.taskmanager.exception.TaskNotFoundException;
 import com.conor.taskmanager.exception.ForbiddenException;

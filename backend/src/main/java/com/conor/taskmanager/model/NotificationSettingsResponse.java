@@ -32,16 +32,8 @@ public class NotificationSettingsResponse {
 		return publicUrl;
 	}
 
-	public void setPublicUrl(String publicUrl) {
-		this.publicUrl = publicUrl;
-	}
-
 	public String getTopicPrefix() {
 		return topicPrefix;
-	}
-
-	public void setTopicPrefix(String topicPrefix) {
-		this.topicPrefix = topicPrefix;
 	}
 
 	public String getTopic() {

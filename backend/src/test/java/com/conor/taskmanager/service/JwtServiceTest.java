@@ -1,4 +1,4 @@
-package com.conor.taskmanager;
+package com.conor.taskmanager.service;
 
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
