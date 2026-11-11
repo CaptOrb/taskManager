@@ -13,19 +13,18 @@
   "dependencies": {
     "@testing-library/user-event": "^14.6.1",
     "axios": "^1.13.2",
-    "flowbite": "^3.1.2",
     "flowbite-react": "^0.12.14",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "react-markdown": "^9.0.1",
-    "react-router-dom": "^6.27.0"
+    "react-router-dom": "^7.18.5"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
     "@tsconfig/strictest": "^2.0.8",
     "@types/node": "^25.0.3",
-    "@types/react": "^19.2.7",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
     "@typescript-eslint/eslint-plugin": "^8.50.1",
     "@typescript-eslint/parser": "^8.50.1",
     "@vitejs/plugin-react": "^5.1.2",
@@ -41,5 +40,13 @@
     "tailwindcss": "^3.4.14",
     "typescript": "^5.9.3",
     "vite": "^7.3.0"
+  },
+  "overrides": {
+    "@typescript-eslint/typescript-estree": {
+      "minimatch": "^11.0.1"
+    },
+    "flowbite-react": {
+      "deepmerge-ts": "^8.0.2"
+    }
   }
 }

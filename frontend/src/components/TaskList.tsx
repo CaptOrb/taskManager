@@ -68,7 +68,9 @@ const TaskList = (): ReactElement => {
   const totalPages = Math.ceil(filteredTasks.length / tasksPerPage);
 
   //  Handlers
-  const handleNavigate = (id: number): void => navigate(`/tasks/${id}`);
+  const handleNavigate = (id: number): void => {
+    navigate(`/tasks/${id}`);
+  };
   const handleNextPage = (): void =>
     setCurrentPage((p) => Math.min(p + 1, totalPages));
   const handlePreviousPage = (): void =>
