@@ -48,5 +48,8 @@
     "flowbite-react": {
       "deepmerge-ts": "^8.0.2"
     }
+  },
+  "allowScripts": {
+    "esbuild@0.28.2": true
   }
 }
